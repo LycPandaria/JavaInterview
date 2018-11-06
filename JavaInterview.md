@@ -196,12 +196,95 @@ public class Test{
 class OuterClass{
 	public void f(){ class innerClass{} } 	//	局部内部类
 }
+```
 4.匿名内部类
    1.没有类名，不使用关键字class,extends,implements
    2.不能有构造函数
    3.不能定义静态成员，方法和类
    4.不能是public,protected,private,static
    5.一个匿名内部类一定是在new后面，这个匿名类必须继承一个父类或实现一个接口。
+   
+##关键字
+###static关键字有什么用
+1.static成员变量：静态变量属于类，在内存中只有一个复制（所以实例都指向同一个内存地址）--达到一种全局的效果
+2.static成员方法：static方法中不能使用this和super，只能访问所属类的静态成员变量和成员方法。  
+static方法一个重要的应用是**单例模式**：隐藏构造函数，只能通过类的方法获取类的唯一对象。
+```
+class Singleton{
+	private static Singleton instance = null;
+	private Singleton() {} //private构造函数
+	public static getInstance() {
+		if(instance==null)
+			instance=new Singleton();
+		return instance;
+	}
+}
+```
+3.static代码块：独立于成员变量和成员函数的代码块。常用来初始化静态变量。**只会执行一次**
+4.static内部类：可以不依赖于外部类实例对象而被实例化，只能访问外部类中的静态成员和静态方法。
+```
+public class Outer{
+	static int n = 5;
+	static class Inner{
+		void access(){System.out.println("n="+n);}
+	}
+	public static void main(String[] args){
+		**Outer.Inner inner = new Outer.Inner()**;	//不依赖于外部类实例对象而被实例化
+		inner.access();		//可以访问到 n=5
+	}
+}
+```
+
+###switch的使用
+1.由于byte，short，char可以隐式转换为int，所以这些类以及他们的包装类都可以作为swith的变量。但是long，float，double不行。
+2.Java 7开始支持String类，实现是通过hashcode实现的
+
+###volatile
+1.在Java中，编译器为了提高效率，把经常被访问的变量缓存（比如寄存器中）起来，程序读取这个变量的时候直接去缓存中读取，而不是内存中。在多线程编程中，另外的线程如果改了该指（在内存中），就会引起问题。
+2.volatile是一个类型修饰符，被volatile类型定义的变量，系统每次用到它都是直接从对应的内存中提取，所以所有线程在任何时候所看到的变量的值都是相同的。
+3.可以用来停止线程。
+```
+...
+private volatile Boolean flag;
+public void stop(){flag = false;}
+public void run(){
+	whilc(flag)
+		//do something
+} 
+```
+###strictfp
+strictfp是strict float point的缩写。JVM在计算浮点数时候，如果没有指定strictfp，浮点计算可能不精确，而且结果在不同平台上可能不一样。  
+可以用strictfp来修饰一个类，接口或者方法，那么在该范围内，浮点计算都是精确的。  
+当一个类被strictfp修饰时候，它的所有方法都会被strictfp修饰。  
+```
+public strictfp class Test{...}
+```
+
+##基本类型和运算
+###Java基本类型
+8种：byte,short,int,long,float,double,char,boolean  
+他们都有相应的封装类  
+区别：
+1.原始数据类型在传递参数时候是传值传递，封装类型是引用传递
+2.默认值不同：原始数据类型默认值根据类型不同，封装类型实例变量默认值为null
+
+###不可变类
+1.不可变类是指创建了这个类的实例后，不允许修改他的值，它的成员变量就不能被修改了。
+2.如何创建不可变类：
+   1.类中所有成员变量被private修饰
+   2.类中没有写或者修改成员变量的方法
+   3.确保类中所有方法不会被子类覆盖
+   4.如果一个类成员不是不可变量，在成员初始化或者使用get方法获得该成员变量时候，通过clone方法确保类的不可变性。
+   5.如果有必要，覆盖Object类中的equals和hashcode方法。
+   6.由于类的不可变性，在创建对象时候就需要初始化成员变量，因此最好提供一个带参数的构造函数来初始化成员变量
+```
+class ImmutableClass{
+	private Date d;
+	public ImmutableClass(Date d){
+		this.d=(Date)d.clone();	//解除引用关系
+	}
+	public Date getDate(){return (Date)d.clone();}
+}
 ```
 
 
