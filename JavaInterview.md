@@ -294,5 +294,84 @@ class ImmutableClass{
 ### 运算符优先级
 ![运算符优先级](/pic/operator.jpg)
 
+### "<<" 和 ">>"异同
+1. "<<"运算符标识左移，左移n位表示原来的值乘2的n次方，可以用来代替乘法，因为更快。
+2. ">>"右移，分为">>"有符号右移，若参与运算的数字为正数，则在高位补0，若为负数，在高位补1,。">>>"为无符号右移，不管正负数，都在高位补0
+
+### char型变量是否可以存储一个汉字
+1. 可以，因为Java默认使用Unicode编码方式，每个字符占两个字节
+2. 在String中，英文字符占用一个字符，中文占两个字符，以减少存储空间，提高效率。
+
+## 字符串与数组
+### new String("abc")创建了几个对象？
+1个或2个，取决于字符串常量池中是否已经存在"abc".
+
+### "==",equals 和 hashCode
+1."=="可以用来比较两个基础数据类型的值，但如果是两个对象（引用类型），==可以比较两个变量是否指向同一个地址，但是内容就不能比较了。
+2. Object类中的equals是直接调用==的，它和==的区别就是equals是可以覆盖的，通过覆盖达到比较内容的目的。
+3.hashCode()是从Object类继承过来，hashCode()返回对象在内存中地址转换成的一个int值，所以如果不重写，任何对象的hashCode()方法都是不相等的。
+   1. 一般来讲，equals是给用户调用的，hashCode()一般不会，它更多用在hashmap，hashset，hashtable中判断key是不是重复的
+   2. 一般在覆盖equals方法的同时就应该覆盖hashCode方法，不然会导致该类在和基于三列的集合类结合一起使用时候会出问题。
+
+### String，StringBuffer，StringBuilder，StringTokenizer
+String是不可变类，StringBuffer是可变类。当一个字符串需要经常被修改的时候，使用StringBuffer比String好很多。  
+
+String实例化有两种方法：
+```
+String s = "Hello"；
+String s = new String("Hello");
+```
+StringBuffer实例化只有一种方法：
+```
+StringBuffer sb = new StringBuffer("Hello");
+```
+String字符串修改实现原理：  
+首先先创建一个StringBuffer,其次调用StringBuffer的append()方法，最后调用toString()方法。示例如下：
+```
+String s="Hello"; s+="World";
+等价于：  
+StringBuffer sb = new StringBuffer(s);
+sb.append("World");
+s=sb.toString();
+```
+  
+StringBuilder和StringBuffer一样都是字符串缓冲区，StringBuilder不是线程安全的，在单线程环境下，Stringbuilder效率会更高一点。  
+StringTokenizer是用来分割字符串的工具类。
+
+### Java中数组是不是对象
+数组是对象，数组不仅有其自己的属性，也有一些方法可以调用。  
+每个数组类型都有其对应的类型，可以使用instanceof来判断数据类型，例如:
+```
+int[] a = {1,2};
+int[][] b = new int[2][4];
+String[] args = {"a","b"};
+
+a instanceof int[]
+b instanceof int[][]
+c instanceof String[]
+```
+
+### Java数组初始化方式：
+1. int[] a = new int[5];
+2. int[] a = {1,2,3,4,5};
+3. int[] a; a = new int[5];
+4. int[] a; a = new int[]{1,2,3,4,5};
+二维数组：  
+声明：
+1. type name[][]
+2. type[][] name
+3. type[] namep[]
+初始化：
+1.int[][] arr = {{1,3},{3,4,5}};
+2.int[][] a = new int[2][];
+a[0] = new int[]{1,2};
+a[1] = new int[]{3,4,5};
+
+### length属性和length()方法
+1. 在数组中，数组是一个对象，里面含有length属性来获取数组的长度
+2. length()方法是针对字符串而言的，String提供了length()方法来计算字符串的长度。
+
+## 异常处理
+
 
 
