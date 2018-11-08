@@ -372,6 +372,108 @@ a[1] = new int[]{3,4,5};
 2. length()方法是针对字符串而言的，String提供了length()方法来计算字符串的长度。
 
 ## 异常处理
+### finally块中代码什么时候执行
+finally块的代码也会在return之前执行。  
+如果try-finally或者catch-finally中都有return，finally中的return会覆盖别处的return，最终返回到调用者那里的是finally中的return值。  
+finally是不是一定执行？   
+不一定。
+1. 当程序进入到try之前就出现异常。
+2. 程序在try中强制退出时候也不会执行finally代码。  
 
+### 运行时异常和普通异常
+Java提供了两种错误异常类：Error和Exception,父类都是Throwable
+1. Error表示程序在运行期间出了非常严重的错误，这种错误是不克恢复的，属于JVM层次的错误。会导致程序终止执行。也不推荐程序去捕捉Error，因为这是应该被修复的错误。OutOfMemoryError，ThreadDeath都属于错误。
+2.Exception包含checked exception和runtime exception
+   1.检查异常 checked exception
+   常见于IO和SQL异常，这种异常都发生在编译阶段，Java编译器强制程序去捕捉此类型异常，一般在如下几种情况中使用：
+      1. 异常发生不会导致程序出错，进行处理之后可以继续。比如：连接数据库失败之后，重新尝试连接
+	  2. 程序依赖于不可靠的外部条件，例如系统IO
+   2. runtime exception
+   编译器没有强制对其进行捕获并处理。如果不对这类异常进行处理，当出现这种异常时候，JVM会来处理。常见的包括：NullPointerException,ClassCastException,ArrayIndexOutOfBoundsException,ArithmeticException等。
+   出现运行时异常时候，系统会把异常一直往上层抛，知道遇到处理代码为止。如果没有处理快，就会由线程或者main抛出，线程或程序也就退出了。
+3. 在处理异常时候，还要注意：
+   1. 先捕获子类，再捕获基类的异常处理
+   2. 尽早抛出异常，同时对捕获的异常进行处理
+   3. 可以根据实际的需求自定义异常类
+   4. 异常能处理就处理，不能处理就抛出
+   
+## 输入输出流
+###Java IO流的实现机制是什么？
+流可以分为两大类：字节流和字符流。
+1. 字节流以字节（8bit）为单位，包含两个抽象类：InputStream和OutputStream。
+2. 字符流以字符（16bit）为单位，一次可以读取多个字节，它包含两个抽象类：Reader和Writer
+3. 两者最主要的区别为：在处理输入输出时候，字节流不会用到缓存，而字符流用到缓存。
+4. Java IO类在涉及时候采用了Decorator 装饰者设计模式。
+
+### 管理文件和目录的类：
+File类，常用的几个方法为：File(String pathname), createNewFile(), delete(), isFile(), isDirectory(), listFiles(), mkdir(), exists()
+题：如何列出某个目录下的所有目录和文件？
+```
+class Test{
+	public static void main(String[] args){
+		File file = new File("C:\\testDir");
+		if(!file.exists()){ // 判断目录是否存在
+			System.out.println("dirctory is empty");
+			return;
+		}
+		File[] fileList = file.listFiles();
+		for(int i=0; i < fileList.length; i++){
+			if(fileList[i].isDirectory())
+				System.out.println("dictory is: " + fileList[i].getName());
+			else
+				System.out.println("file is: " + fileList[i].getName());
+		}
+	}
+}
+```
+
+### Java NIO(待写，不了解)
+
+### System.out.println
+```
+System.out.println(1+2+"");	// 3
+System.out.println(""+1+2);	// 12
+```
+
+## Java平台与内存管理
+### JVM加载class文件机制
+当运行指定程序时，JVM会将编译生成的.class文件按照需求和一定的规则加载到内存中。
+这个过程是由类加载器来完成的，ClassLoader和它的子类。
+Java的三种类加载器：
+1. Bootstrap Loader（C++写的）：负责加载系统类（jre/lib/rt.jar的类）
+2. ExtClass Loader：负责加载扩展类（jar/lib/ext/*/jar的类）
+3. APPClassLoader：负责加载应用类
+
+### 什么是GC--垃圾回收器
+GC主要负责：分配内存，确保被引用对象的内存不被错误地回收，回收不再被引用的对象的内存空间。  
+对于垃圾回收器来说，它使用有向图来记录和管理堆内存中的所有对象，通过这个有向图可以识别哪些对象是可达的，哪些是不可达的。  
+几种垃圾回收器算法：
+1. 引用计数算法 reference counting collector
+简单但是效率低下。在堆中对每个对象都有个引用计数器；当对象被引用时，计数器加1，当引用被置空或者离开作用域时，计数器减1.JVM并没有采用这种方法，因为它没法解决互相引用问题。
+2. 追踪回收算法  tracing collector
+追踪回收算法利用JVM维护的对象引用图，从根节点开始遍历对象的引用图，同时标记遍历到的对象，当遍历结束后收回未被标记的对象。
+3. 压缩回收算法  compacting collector
+把堆中活动的对象移动到堆的一端，这样就会在堆中另一端留出很大的空闲区域，相当于对堆中碎片进行了处理，但是代价是性能损失。
+4. 复制回收算法  coping collector
+把堆分成两个大小相同的区域，在任何时候，只有一个区域被使用，知道该区域被用完，此时GC中断程序执行，通过变量方式把活动对象复制到另一个区域，在复制过程中他们是紧挨着分布的，这样可以消除碎片。
+5.按代回收算法 generation collector
+复制回收算法主要缺点是复制次数太多。由于程序有“程序创建的大部分对象的生命周期都很短，只有一部分对象有很长的生命周期”的特点，按代回收将堆分成两个或者多个子堆，每个子堆代表一代。算法在运行过程中优先收集“年幼的对象”，如果一个对象经过多次收集仍然存活，就把该对象转移到高一级的堆中，减少对其的扫描次数。  
+
+开发人员可以通过System.gc()通知垃圾回收器运行，但不推荐，因为该方法会停止所有响应。
+
+### Java是否存在内存泄漏
+Java中容易引起内存泄漏的几个方面：
+1. 静态集合类，例如hashmap和vector。如果这些容器是静态的，由于他们生命周期与程序一致，容易引起内存泄漏。
+2. 各种连接没有关闭，比如Connection，Statement，ResultSet。数据库链接，网络和IO。
+3. 没有关闭监听器
+4. 变量不合理的作用域。
+5. 单例模式可能会造成内存泄漏。例子看书131页。主要是说：在Singleton中存在一个对对象BigClass的引用，由于单例对象是以静态变量的方式存储，所以导致BigClass类的对象不能够被回收。
+
+### Java中堆和栈
+栈内存主要用来存放基本数据类型和引用变量。  
+堆内存用来存放运行时创建的对象，通过new关键字创建出来的对象都存放在堆中，一个JVM实例维护一个堆，多线程也是共享这个堆。
+
+
+   
 
 
