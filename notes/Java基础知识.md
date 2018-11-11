@@ -1,5 +1,7 @@
 # 目录
 - [基本概念](#基本概念)
+- [Java容器](#Java容器)
+- [多线程](#多线程)
 
 # 基本概念
 
@@ -270,7 +272,7 @@ public class Outer{
 1.在Java中，编译器为了提高效率，把经常被访问的变量缓存（比如寄存器中）起来，程序读取这个变量的时候直接去缓存中读取，而不是内存中。在多线程编程中，另外的线程如果改了该指（在内存中），就会引起问题。
 2.volatile是一个类型修饰符，被volatile类型定义的变量，系统每次用到它都是直接从对应的内存中提取，所以所有线程在任何时候所看到的变量的值都是相同的。
 3.可以用来停止线程。
-```
+```java
 ...
 private volatile Boolean flag;
 public void stop(){flag = false;}
@@ -285,7 +287,6 @@ strictfp是strict float point的缩写。JVM在计算浮点数时候，如果没
 当一个类被strictfp修饰时候，它的所有方法都会被strictfp修饰。  
 ```
 public strictfp class Test{...}
-
 ```
 
 ## 泛型
@@ -512,7 +513,136 @@ Java中容易引起内存泄漏的几个方面：
 栈内存主要用来存放基本数据类型和引用变量。  
 堆内存用来存放运行时创建的对象，通过new关键字创建出来的对象都存放在堆中，一个JVM实例维护一个堆，多线程也是共享这个堆。
 
+# Java容器
+容器主要包括Collection和 Map 两种，Collection 存储着对象的集合，而 Map 存储着键值对（两个对象）的映射表。
+## Collection
+![Collection框架](../pic/java容器.png)
+1. Set
+- TreeSet：基于红黑树实现，支持有序性操作，例如根据一个范围查找元素的操作。但是查找效率不如 HashSet，HashSet 查找的时间复杂度为 O(1)，TreeSet 则为 O(logN)。
+- HashSet：基于哈希表实现，支持快速查找，但不支持有序性操作。并且失去了元素的插入顺序信息，也就是说使用 Iterator 遍历 HashSet 得到的结果是不确定的。
+- LinkedHashSet：具有 HashSet 的查找效率，且内部使用双向链表维护元素的插入顺序。
+2. List
+- ArrayList：基于动态数组实现，支持随机访问。
+- Vector：和 ArrayList 类似，但它是线程安全的。
+- LinkedList：基于双向链表实现，只能顺序访问，但是可以快速地在链表中间插入和删除元素。不仅如此，LinkedList 还可以用作栈、队列和双向队列。
+3. Queue
+- LinkedList：可以用它来实现双向队列。
+- PriorityQueue：基于堆结构实现，可以用它来实现优先队列。
 
-   
+## Map
+![Map框架](../pic/map.png)
+- TreeMap：基于红黑树实现。
+- HashMap：基于哈希表实现。
+- HashTable：和 HashMap 类似，但它是线程安全的，这意味着同一时刻多个线程可以同时写入 HashTable 并且不会导致数据不一致。它是遗留类，不应该去使用它。现在可以使用 ConcurrentHashMap 来支持线程安全，并且 ConcurrentHashMap 的效率会更高，因为 ConcurrentHashMap 引入了分段锁。
+- LinkedHashMap：使用双向链表来维护元素的顺序，顺序为插入顺序或者最近最少使用（LRU）顺序。
+
+
+## 迭代器 Iterator
+迭代器(Iterator)是一个对象，工作室遍历并选择序列中的对象。使用的注意事项：
+1. 使用容器的iterator()方法返回一个Iterator对象，然后通过Iterator的next()方法返回第一个元素
+2. Iterator的hasNext()方法判断容器是否还有元素，如果有可以通过next()访问 
+3. remove()可以删除容器中元素
+
+在使用iterator方法时候经常遇到CurrentModificationException是因为在遍历容器的同时增加或者删除，或者多线程操作时候。原理是：  
+在调用容器的iterator()方法返回Iterator对象时候，容器中的个数的值会传给一个遍历expectedModCount，在调用next()时候会比较expectedModCount和真是熟练modCount比较，不匹配的话就会报异常。   
+解决的办法可以是：
+1. 在遍历时候把要删除的元素放在另外一个集合，遍历结束后调用removeAll()或者iter.remove()
+2. 在多线程中可以使用线程安全的容器如CurrentHashMap，CopyOnWriteArrayList等。
+3. 可以在时候迭代器遍历容器的时候，把对容器的操作放到synchronized代码块中，但是在并发比较高的时候，这种做法严重影响效率。
+
+## ArrayList, Vector, LinkedList
+均为可伸缩数组，即可以动态改变长度数组。ArrayList和Vector都是基于Object[] array来实现的，数据存储是连续的，所以访问速度快，但是插入元素需要移动容器元素，所以慢。两者都有初始化容量大小，Vector默认每次扩充到2倍（扩充大小可设置），ArrayList为1.5倍，且不可以设置。两者最大的不同是Vector是线程安全的。   
+LinkedList是采用双向列表实现的，对数据的索引需要从列表头开始遍历，随机访问效率较低，但是插入元素效率较高。LinkedList是线程不安全的。
+
+## HashMap，HashTable，TreeMap，WeakHashMap
+1. HashMap是HashTable的非线程安全实现，HashTable不允许null作为键值。
+2. HashMap把HashTable的contains方法改成了containsValue和containsKey方便理解
+3. Hashtable使用Enumeration，HashMap使用Iterator
+4. 使用的hash算法一样，性能差距不大
+TreeMap实现了SortMap接口，能够把保存的记录按键排序，因此，取出来的是排序后的键值。LinkedHashMap是HashMap的一个子类，如果需要输出的顺序和输入的顺序相同，便可以采用。   
+如何实现HashMap同步？  
+Map m = Collections.synchronizedMap(new HashMap()).原理是：该方法返回了一个同步的Map，该Map封装了底层的HashMap的所有方法。   
+
+## Collection和Collections
+Collection是一个接口集合。它提供了对集合对象进行基本操作的通用接口方法。实现该接口的类主要是List和Set。该接口设计的目的是为各类具体的集合提供最大化的统一的操作方式。   
+Collections是针对集合类的一个包装类，它提供一系列静态方法以实现对各种集合的搜索，排序，线程安全等操作。Collections类不能实例化，如图一个工具类，服务于Collection框架。
+
+# 多线程
+## 如何实现多线程
+1. 继承Thread类，重写run
+Thread本质上也是实现了Runnable接口的一个实例，它代表一个线程的实例，启动线程的唯一办法是通过Thread的start方法，这是一个native方法。
+```java
+class MyThread extends Thread{
+	public void run{ System.out.println("Thread Body");}
+}
+public class Test{
+	public static void main(String[] args){
+		MyThread t = new MyThread();
+		t.start();
+	}
+}
+```
+2. 实现Runnable接口，并实现run()方法
+```java
+class MyThread implements Runnable{
+	public void run{ System.out.println("Thread Body");}
+}
+public class Test{
+	public static void main(String[] args){
+		MyThread t = new MyThread();
+		Thread thread = new Thread(t);
+		thread.start();
+	}
+}
+```
+不管是通过继承Thread类还是通过Runnable接口实现多线程方法，最终都是要通过调用Thread对象的API来控制线程。
+
+3. 实现Callable接口，重写call()方法。
+Callable接口实际是属于Executor框架中的功能类：
+   1. Callable可以在任务结束后提供一个返回值，Runnable不行
+   2. Callable中的call()可以抛出异常
+   3. 运行Callable可以拿到一个Future对象，表示异步计算的结果，它提供了检查计算是否完成的方法。可以使用Future监视目标线程调用call()方法的情况，当调用Future的get()方法获取结果，当前线程就会阻塞，直到call()方法结束返回结果。
+```java
+import java.util.concurrent.*;
+public class CallableAndFuture{
+//创建线程类
+	public static class CallableTest implements Callable<String> {
+		public String call() throws Exception{ return "Hello World";}
+	}
+	public static void main(String[] args){
+		ExecutorService threadPool = Executor.newSingleThreadExecutor();
+		//启动线程
+		Future<String> future = threadPool.submit(new CallableTest());
+		try{
+			System.out.println(future.get());
+		}catch(Exception e)(e.printStackTrack();)
+	}
+}
+```   
+## run()和start()
+系统通过start()方法启动线程，此刻线程处于就绪状态，JVM调用run方法完成实际操作。   
+如果直接调用线程类的run()方法，这会被当做一个普通的函数调用。
+
+## 终止线程的方法
+终止线程可以使用suspend()和stop()，两者区别为：stop()在终止线程，会释放所有已经锁定的监视资源。调用suspend()方法容易发生死锁，因为该方法不会释放锁。所以这两种方法已经不建议用来停止线程了。   
+建议的方法有：   
+1. 设置flag来控制循环
+```java
+...
+private volatile Boolean flag;
+public void stop(){flag = false;}
+public void run(){
+	whilc(flag)
+		//do something
+} 
+```
+2. 如果线程处于非运行状态时候（sleep和IO阻塞），可以用interrupt()。
+
+## synchronized和Lock
+synchronized使用Object对象本身的notify，wait，notifyAll控制调度，而Lock主要通过Condition控制线程。区别主要有：
+1. 用法不一样。synchronized既可以加到方法上，也可以在特定代码块中。Lock需要显式地指出起始位置。
+2. 性能不一样。Lock不仅拥有和synchronized相同的并发性和内存语义，还有锁投票，定时，等候和中断锁。在竞争不激烈时候，性能差距不大，但是竞争激烈时候，synchronized性能下降很快，ReentrantLock性格基本不变。
+3. 锁机制不一样。synchronized获得锁和释放的方式都是在块结构中，，当获取多个锁时，必须以相反的顺序释放，并自动解锁
+
 
 
