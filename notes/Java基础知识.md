@@ -2,6 +2,7 @@
 - [基本概念](#基本概念)
 - [Java容器](#Java容器)
 - [多线程](#多线程)
+- [设计模式](#设计模式)
 
 # 基本概念
 
@@ -642,7 +643,9 @@ public void run(){
 synchronized使用Object对象本身的notify，wait，notifyAll控制调度，而Lock主要通过Condition控制线程。区别主要有：
 1. 用法不一样。synchronized既可以加到方法上，也可以在特定代码块中。Lock需要显式地指出起始位置。
 2. 性能不一样。Lock不仅拥有和synchronized相同的并发性和内存语义，还有锁投票，定时，等候和中断锁。在竞争不激烈时候，性能差距不大，但是竞争激烈时候，synchronized性能下降很快，ReentrantLock性格基本不变。
-3. 锁机制不一样。synchronized获得锁和释放的方式都是在块结构中，，当获取多个锁时，必须以相反的顺序释放，并自动解锁
+3. 锁机制不一样。synchronized获得锁和释放的方式都是在块结构中，当获取多个锁时，必须以相反的顺序释放，并自动解锁。Lock需要开发人员手动释放锁，并且必须在finally中释放。Lock的tryLock()方法可以采用非阻塞的方式获取锁。
+
+
 
 
 
