@@ -1,8 +1,33 @@
-# 目录
+
+<!-- TOC START min:1 max:3 link:true update:true -->
 - [基本概念](#基本概念)
-- [Java容器](#Java容器)
-- [多线程](#多线程)
-- [设计模式](#设计模式)
+	- [main(String[] args) 方法](#mainstring-args-方法)
+	- [如何在main()方法前输出hello](#如何在main方法前输出hello)
+	- [Java程序初始化](#java程序初始化)
+	- [构造函数](#构造函数)
+	- [有些接口没有任何方法](#有些接口没有任何方法)
+	- [clone](#clone)
+	- [反射机制](#反射机制)
+	- [如何实现C语言的函数指针](#如何实现c语言的函数指针)
+- [面向对象技术](#面向对象技术)
+	- [面向对象的主要特征：抽象，继承，封装和多态。](#面向对象的主要特征抽象继承封装和多态)
+	- [继承](#继承)
+	- [多态的实现机制](#多态的实现机制)
+	- [内部类](#内部类)
+- [关键字](#关键字)
+	- [static关键字有什么用](#static关键字有什么用)
+	- [switch的使用](#switch的使用)
+	- [volatile](#volatile)
+	- [strictfp](#strictfp)
+	- [泛型](#泛型)
+- [基本类型和运算](#基本类型和运算)
+	- [Java基本类型](#java基本类型)
+	- [不可变类](#不可变类)
+	- [强制类型转换注意事项](#强制类型转换注意事项)
+
+<!-- TOC END -->
+
+
 
 # 基本概念
 
@@ -168,7 +193,7 @@ class CmpDESC implements IntCmp{
 public class Test{
 	//在排序函数中用接口作为参数
 	public static void insertSort(int[] array, **IntCmp cmp***){...}
-	
+
 	public static void main(String[] args){
 		// 在调用函数时候传入实例对象
 		int[] array=[7,3,11,26,4,2,56];
@@ -216,7 +241,7 @@ public class Test{
    1.接口只有定义
    2.接口用implements，抽象类用extends
    3.接口中定义的成员变量默认为**public static final修饰,而且必须赋值,所以方法只能用public，abstract修饰** 4.抽象类中可以有自己的成员数据变量，默认为default，可以用private，protected，public，方法不能用private, static,synchronized,native等修饰
-   
+
 ## 内部类
 1.静态内部类只能访问外部类中的静态成员和静态方法
 2.非静态内部类可以自由引用外部类的属性和方法，但是不可以定义静态的属性和方法。**非静态内部类中不能有静态成员**
@@ -233,7 +258,7 @@ class OuterClass{
    3.不能定义静态成员，方法和类
    4.不能是public,protected,private,static
    5.一个匿名内部类一定是在new后面，这个匿名类必须继承一个父类或实现一个接口。
-   
+
 # 关键字
 ## static关键字有什么用
 1.static成员变量：静态变量属于类，在内存中只有一个复制（所以实例都指向同一个内存地址）--达到一种全局的效果
@@ -264,7 +289,7 @@ public class Outer{
 	}
 }
 ```
- 
+
 ## switch的使用
 1.由于byte，short，char可以隐式转换为int，所以这些类以及他们的包装类都可以作为swith的变量。但是long，float，double不行。
 2.Java 7开始支持String类，实现是通过hashcode实现的
@@ -280,7 +305,7 @@ public void stop(){flag = false;}
 public void run(){
 	whilc(flag)
 		//do something
-} 
+}
 ```
 ## strictfp
 strictfp是strict float point的缩写。JVM在计算浮点数时候，如果没有指定strictfp，浮点计算可能不精确，而且结果在不同平台上可能不一样。  
@@ -375,7 +400,7 @@ StringBuffer sb = new StringBuffer(s);
 sb.append("World");
 s=sb.toString();
 ```
-  
+
 StringBuilder和StringBuffer一样都是字符串缓冲区，StringBuilder不是线程安全的，在单线程环境下，Stringbuilder效率会更高一点。  
 StringTokenizer是用来分割字符串的工具类。
 
@@ -437,7 +462,7 @@ Java提供了两种错误异常类：Error和Exception,父类都是Throwable
    2. 尽早抛出异常，同时对捕获的异常进行处理
    3. 可以根据实际的需求自定义异常类
    4. 异常能处理就处理，不能处理就抛出
-   
+
 # 输入输出流
 ##Java IO流的实现机制是什么？
 流可以分为两大类：字节流和字符流。
@@ -541,7 +566,7 @@ Java中容易引起内存泄漏的几个方面：
 ## 迭代器 Iterator
 迭代器(Iterator)是一个对象，工作室遍历并选择序列中的对象。使用的注意事项：
 1. 使用容器的iterator()方法返回一个Iterator对象，然后通过Iterator的next()方法返回第一个元素
-2. Iterator的hasNext()方法判断容器是否还有元素，如果有可以通过next()访问 
+2. Iterator的hasNext()方法判断容器是否还有元素，如果有可以通过next()访问
 3. remove()可以删除容器中元素
 
 在使用iterator方法时候经常遇到CurrentModificationException是因为在遍历容器的同时增加或者删除，或者多线程操作时候。原理是：  
@@ -635,7 +660,7 @@ public void stop(){flag = false;}
 public void run(){
 	whilc(flag)
 		//do something
-} 
+}
 ```
 2. 如果线程处于非运行状态时候（sleep和IO阻塞），可以用interrupt()。
 
@@ -644,8 +669,3 @@ synchronized使用Object对象本身的notify，wait，notifyAll控制调度，�
 1. 用法不一样。synchronized既可以加到方法上，也可以在特定代码块中。Lock需要显式地指出起始位置。
 2. 性能不一样。Lock不仅拥有和synchronized相同的并发性和内存语义，还有锁投票，定时，等候和中断锁。在竞争不激烈时候，性能差距不大，但是竞争激烈时候，synchronized性能下降很快，ReentrantLock性格基本不变。
 3. 锁机制不一样。synchronized获得锁和释放的方式都是在块结构中，当获取多个锁时，必须以相反的顺序释放，并自动解锁。Lock需要开发人员手动释放锁，并且必须在finally中释放。Lock的tryLock()方法可以采用非阻塞的方式获取锁。
-
-
-
-
-
