@@ -37,8 +37,8 @@
 3. main函数返回值必须是void
 
 ## 如何在main()方法前输出hello
-静态块会在类被加载前调用
-```
+静态块会在类被加载前调用。
+```java
 public class Test{
 	static{System.out.println("Hello")};
 	public static void main(String[] args){
@@ -68,16 +68,15 @@ public class Test{
 例子见书54页
 
 ## clone
-1.Java在处理基本数据类型（int,char,double）时候，采用按值传递，除此之外其他类型都是采用引用传递。
-2.对象除了在函数调用时候是按引用传递，在使用“=”赋值时候也是引用传递。
-3.在不影响原因对象的情况下创建一个具有相同状态的对象，就需要使用clone方法。
-   1.实现clone的类需要继承Cloneable接口（这是一个标识接口）
-   2.在类中重写Object类的clone方法
-   3.在clone方法中调用super.clone()方法。
-   4.把浅复制的引用指向原型对象新的克隆体。
-例子：
-1.浅复制
-```
+1. Java在处理基本数据类型（int,char,double）时候，采用按值传递，除此之外其他类型都是采用引用传递。
+2. 对象除了在函数调用时候是按引用传递，在使用“=”赋值时候也是引用传递。
+3. 在不影响原因对象的情况下创建一个具有相同状态的对象，就需要使用clone方法。
+   1. 实现clone的类需要继承Cloneable接口（这是一个标识接口）
+   2. 在类中重写Object类的clone方法
+   3. 在clone方法中调用super.clone()方法。
+   4. 把浅复制的引用指向原型对象新的克隆体。
+```java
+// 浅复制
 class Obj implements Cloneable{
 	private a=0;
 	public int getA(){return a;}
@@ -96,8 +95,8 @@ class Obj implements Cloneable{
 	}
 }
 ```
-2.深复制--在用clone方法复制完后，对对象中的非基本类型的属性也调用clone方法完成深复制。
-```
+```java
+// 深复制--在用clone方法复制完后，对对象中的非基本类型的属性也调用clone方法完成深复制。
 class Obj implements Cloneable{
 	private Data data = new Date();
 	...
