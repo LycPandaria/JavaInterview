@@ -1,4 +1,3 @@
-
 <!-- TOC START min:1 max:3 link:true update:true -->
 - [基本概念](#基本概念)
 	- [main(String[] args) 方法](#mainstring-args-方法)
@@ -58,6 +57,9 @@
 	- [Collection和Collections](#collection和collections)
 - [多线程](#多线程)
 	- [如何实现多线程](#如何实现多线程)
+	- [run()和start()](#run和start)
+	- [终止线程的方法](#终止线程的方法)
+	- [synchronized和Lock](#synchronized和lock)
 
 <!-- TOC END -->
 
@@ -683,8 +685,10 @@ public class CallableAndFuture{
 		Future<String> future = threadPool.submit(new CallableTest());
 		try{
 			System.out.println(future.get());
-		}catch(Exception e)(e.printStackTrack();)
+		}catch(Exception e){
+			e.printStackTrack();)
 	}
+}
 }
 ```
 
