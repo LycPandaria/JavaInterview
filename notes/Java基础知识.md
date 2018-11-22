@@ -686,7 +686,8 @@ public class CallableAndFuture{
 		}catch(Exception e)(e.printStackTrack();)
 	}
 }
-```   
+```
+
 ## run()和start()
 系统通过start()方法启动线程，此刻线程处于就绪状态，JVM调用run方法完成实际操作。   
 如果直接调用线程类的run()方法，这会被当做一个普通的函数调用。
