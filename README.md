@@ -1,6 +1,6 @@
 | Ⅰ | Ⅱ | Ⅲ |
 | :--------: | :---------: | :---------: |
-| 数据结构与算法[:pencil2:](#pencil2-算法)  |  Java [:coffee:](#coffee-java)| 面向对象[:couple:](#couple-面向对象) |
+| 数据结构与算法 <br> [:pencil2:](#pencil2-算法)  |  Java <br> [:coffee:](#coffee-java)| 面向对象 <br> [:couple:](#couple-面向对象) |
 
 
 ### :pencil2: 算法
