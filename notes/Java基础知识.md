@@ -4,8 +4,8 @@
 	- [如何在main()方法前输出hello](#如何在main方法前输出hello)
 	- [Java程序初始化](#java程序初始化)
 	- [构造函数](#构造函数)
-	- [有些接口没有任何方法](#有些接口没有任何方法)
-	- [clone](#clone)
+	- [为什么有些接口没有任何方法?](#为什么有些接口没有任何方法)
+	- [clone()](#clone)
 	- [反射机制](#反射机制)
 	- [如何实现C语言的函数指针](#如何实现c语言的函数指针)
 - [面向对象技术](#面向对象技术)
@@ -69,8 +69,8 @@
 
 ## main(String[] args) 方法
 1. main函数必须由public和static修饰，也可以加上final，synchronized，但是不可以用abstract
-2. 每个类都可以申请main函数，但只有和文件名相同的类的main函数会在启动时候调用
-3. main函数返回值必须是void
+2. 每个类都可以申请main()函数，但只有和文件名相同的类的main函数会在启动时候调用
+3. main()函数返回值必须是void
 
 ## 如何在main()方法前输出hello
 静态块会在类被加载前调用。
@@ -85,7 +85,7 @@ public class Test{
 
 ## Java程序初始化
 父类静态变量--父类静态代码块--子类静态变量--子类静态代码块--父类非静态变量--父类非静态代码块--父类构造函数--子类非静态变量--子类非静态块--子类构造函数。  
-例题见书50页。
+例题见书([Java程序员面试笔试宝典](https://book.douban.com/subject/20270192/))50页。
 
 ## 构造函数
 1. 构造函数与类名相同，不能有返回值，也不能用void
@@ -93,21 +93,22 @@ public class Test{
 3. 构造函数可以有0个，1个及以上个参数
 4. 主要完成对象的初始化工作
 5. 构造函数不能被继承，因此，不能被覆盖(override)，但是构造函数能被重载(overload)
-6. 子类可以通过super关键字显式调用父类构造函数，当父类没有提供无参数的构造函数时候，子类的构造函数必须显式调用父类的构造函数。
+6. 子类可以通过super关键字显式调用父类构造函数，**当父类没有提供无参数的构造函数时候，子类的构造函数必须显式调用父类的构造函数。**
 7. 如果父类和子类都没有定义构造函数，编译器会为父类和子类默认生产一个无参构造。
 
-## 有些接口没有任何方法
-1. 接口中成员的作用域修饰符都是public，接口中的常亮默认使用public static final修饰
-2. 有些接口内部没有声明任何办法，叫做标识接口
+## 为什么有些接口没有任何方法?
+1. 接口中成员的作用域修饰符都是public，接口中的常量默认使用public static final修饰
+2. **有些接口内部没有声明任何办法，叫做标识接口**
 3. Java中已存在的标识接口有Cloneable和Serializable等
 4. 主要的作用是配合instanceof来判断对象的类型是否实现了一个给定的标识接口  
-例子见书54页
 
-## clone
+例子见书([Java程序员面试笔试宝典](https://book.douban.com/subject/20270192/))54页
+
+## clone()
 1. Java在处理基本数据类型（int,char,double）时候，采用按值传递，除此之外其他类型都是采用引用传递。
 2. 对象除了在函数调用时候是按引用传递，在使用“=”赋值时候也是引用传递。
-3. 在不影响原因对象的情况下创建一个具有相同状态的对象，就需要使用clone方法。
-   1. 实现clone的类需要继承Cloneable接口（这是一个标识接口）
+3. 在不影响原因对象的情况下创建一个具有相同状态的对象，就需要使用clone()方法。
+   1. 实现clone()的类需要继承Cloneable接口（这是一个标识接口）
    2. 在类中重写Object类的clone方法
    3. 在clone方法中调用super.clone()方法。
    4. 把浅复制的引用指向原型对象新的克隆体。
@@ -123,7 +124,7 @@ class Obj implements Cloneable{
 		Object o = null;
 		try{
 		//在clone方法中调用super.clone()方法
-			**o = (Obj)super.clone();**
+			o = (Obj)super.clone();
 		}catch(CloneNotSupportedException e) {
 			e.printStackTrack();
 		}
@@ -140,7 +141,7 @@ class Obj implements Cloneable{
 		Object o = null;
 		try{
 		//在clone方法中调用super.clone()方法
-			**o = (Obj)super.clone();**
+			o = (Obj)super.clone();
 		}catch(CloneNotSupportedException e) {
 			e.printStackTrack();
 		}
@@ -259,8 +260,8 @@ public class Test{
 4. 成员变量无法实现多态的，成员变量的取值是父类的还是子类不取决于创建对象的类型，而是取决于所定义变量的类型，是在编译期间决定的。   
 
 java提供了两种多态机制：
-1.编译时多态--重载
-2.运行时多态--方法覆盖
+1. 编译时多态--重载
+2. 运行时多态--方法覆盖
 
 ## 重载和覆盖
 1. 使用重载时：
@@ -280,7 +281,8 @@ java提供了两种多态机制：
 2. 不同：
    1. 接口只有定义
    2. 接口用implements，抽象类用extends
-   3. 接口中定义的成员变量默认为**public static final修饰,而且必须赋值,所以方法只能用public，abstract修饰** 4.抽象类中可以有自己的成员数据变量，默认为default，可以用private，protected，public，方法不能用private, static,synchronized,native等修饰
+   3. 接口中定义的成员变量默认为**public static final修饰,而且必须赋值,所以方法只能用public，abstract修饰**
+	 4. 抽象类中可以有自己的成员数据变量，默认为default，可以用private，protected，public，方法不能用private, static,synchronized,native等修饰
 
 ## 内部类
 1. 静态内部类只能访问外部类中的静态成员和静态方法
