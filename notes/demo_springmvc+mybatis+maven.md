@@ -20,13 +20,13 @@
 ![7](../pic/demo7.png)
 再打开Project Facets ->勾选 Dynamic Web Module 选择3.0版本时，下面有个 Further configuration available... ->点击
 ![8](../pic/demo8.png)
-输入 content directory 地址： src/main/webapp
+输入 content directory 地址： src/main/webapp, **勾选generate web.xml**
 ![9](../pic/demo9.png)
 
 ## 2.配置springmvc
-添加包的依赖，编辑pom.xml文件添加如下依赖：（因为我的JDK版本是1.8所以Spring 版本必须为4.0以上）
+### 添加包的依赖，编辑pom.xml文件添加如下依赖：（因为我的JDK版本是1.8所以Spring 版本必须为4.0以上）
 
-pom.xml
+**pom.xml**
 ```xml
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
@@ -37,7 +37,7 @@ pom.xml
 
   <properties>
         <!-- spring版本号 -->
-        <spring.version>4.1.5.RELEASE</spring.version>
+        <spring.version>4.2.0.RELEASE</spring.version>
         <!-- log4j日志文件管理包版本 -->
         <slf4j.version>1.6.6</slf4j.version>
         <log4j.version>1.2.12</log4j.version>
@@ -150,12 +150,20 @@ pom.xml
             <artifactId>mysql-connector-java</artifactId>
             <version>5.1.29</version>
         </dependency>
+
+        <!-- fastjson -->
+        <dependency>
+    		<groupId>com.alibaba</groupId>
+    		<artifactId>fastjson</artifactId>
+    		<version>1.2.7</version>
+		</dependency>
+
     </dependencies>
 
 </project>
 ```
 
-web.xml
+**web.xml** (按上面 **勾选generate web.xml** 操作之后，web.xml一般都生成在src/main/webapp/WEB-INF/下)
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -164,14 +172,19 @@ web.xml
 	http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
 	id="WebApp_ID" version="3.1">
 
-	<!-- 配置spring核心监听器，默认会以 /WEB-INF/applicationContext.xml作为配置文件 -->
+	<!-- 注意这里的路径要写对 -->
+	<welcome-file-list>
+		<welcome-file>/WEB-INF/views/index.jsp</welcome-file>
+	</welcome-file-list>
+
+	<!-- 配置spring核心监听器 -->
 	<listener>
 		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
 	</listener>
 	<!-- contextConfigLocation参数用来指定Spring的配置文件 -->
 	<context-param>
 		<param-name>contextConfigLocation</param-name>
-		<param-value>/../resources/application*.xml</param-value>
+		<param-value>classpath:/application*.xml</param-value>
 	</context-param>
 
 	<!-- 定义Spring MVC的前端控制器 -->
@@ -182,7 +195,7 @@ web.xml
     </servlet-class>
     <init-param>
       <param-name>contextConfigLocation</param-name>
-      <param-value>/WEB-INF/springmvc-config.xml</param-value>
+      <param-value>classpath:/springmvc/spring-mvc.xml</param-value>
     </init-param>
     <load-on-startup>1</load-on-startup>
   </servlet>
@@ -206,20 +219,20 @@ web.xml
 		<filter-name>characterEncodingFilter</filter-name>
 		<url-pattern>/*</url-pattern>
 	</filter-mapping>
-
 </web-app>
 ```
-加入配置文件
+
+### 加入配置文件
 ![10](../pic/demo10.png)
 
-jdbc.properties(注意自己修改相应配置)
+**jdbc.properties**(注意自己修改相应配置)
 ```
 jdbc_driverClassName=com.mysql.jdbc.Driver
 jdbc_url=jdbc:mysql://localhost:3306/test
 jdbc_username=yourUserName
 jdbc_password=123456
 ```
-application.xml(注意自己修改相应配置)
+**application.xml(注意自己修改相应配置,如包名)**
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context" xmlns:aop="http://www.springframework.org/schema/aop" xsi:schemaLocation=" http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.0.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd">
@@ -267,13 +280,14 @@ application.xml(注意自己修改相应配置)
         <!-- <property name="typeAliasesPackage" value="com.tiantian.ckeditor.model" /> -->
     </bean>
 
-    <!-- 自动扫描注解的bean -->
+    <!-- spring可以自动去扫描base-pack下面的包或者子包下面的java文件，
+    	如果扫描到有Spring的相关注解的类，则把这些类注册为Spring的bean -->
     <context:component-scan base-package="com.ynrcc.simpleserver.service" />
 
 </beans>
 ```
 
-mybatis-config.xml
+**mybatis-config.xml**
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>  
 <!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">  
@@ -281,7 +295,7 @@ mybatis-config.xml
 </configuration>
 ```
 
-spring-mvc.xml
+**spring-mvc.xml**
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:p="http://www.springframework.org/schema/p"
@@ -289,17 +303,52 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.
 xmlns:mvc="http://www.springframework.org/schema/mvc"
 xsi:schemaLocation=" http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.2.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.2.xsd http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-3.2.xsd">
 
-   <mvc:annotation-driven />
    <!-- 扫描controller（controller层注入） -->
-   <context:component-scan base-package="com.ynrcc.simpleserver.controller"/>  
+   <context:component-scan base-package="com.ynrcc.simpleserver.web"/>  
+
+	<!-- 使用默认的Servlet来响应静态文件 -->
+    <mvc:default-servlet-handler/>
 
    <!-- 对模型视图添加前后缀 -->
-   <bean id="viewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver"
-   p:prefix="/WEB-INF/view/" p:suffix=".jsp"/>
+   <bean id="viewResolver"
+          class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <!-- 前缀 -->
+        <property name="prefix">
+            <value>/WEB-INF/views/</value>
+        </property>
+        <!-- 后缀 -->
+        <property name="suffix">
+            <value>.jsp</value>
+        </property>
+    </bean>
+
+	<!-- 设置配置方案 -->
+    <mvc:annotation-driven>
+    	<!-- 设置不使用默认的消息转换器 -->
+        <mvc:message-converters register-defaults="false">
+        	<!-- 配置Spring的转换器 -->
+        	<bean class="org.springframework.http.converter.StringHttpMessageConverter"/>
+    		<bean class="org.springframework.http.converter.xml.XmlAwareFormHttpMessageConverter"/>
+    		<bean class="org.springframework.http.converter.ByteArrayHttpMessageConverter"/>
+    		<bean class="org.springframework.http.converter.BufferedImageHttpMessageConverter"/>
+            <!-- 配置fastjson中实现HttpMessageConverter接口的转换器 -->
+            <bean id="fastJsonHttpMessageConverter"
+            	class="com.alibaba.fastjson.support.spring.FastJsonHttpMessageConverter">
+                <!-- 加入支持的媒体类型：返回contentType -->
+                <property name="supportedMediaTypes">
+                    <list>
+                        <!-- 这里顺序不能反，一定先写text/html,不然ie下会出现下载提示 -->
+                        <value>text/html;charset=UTF-8</value>
+                        <value>application/json;charset=UTF-8</value>
+                    </list>
+                </property>
+            </bean>
+        </mvc:message-converters>
+    </mvc:annotation-driven>
 </beans>
 ```
 
-trunkItemMapper.xml
+**trunkItemMapper.xml**
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>  
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  
@@ -314,7 +363,7 @@ trunkItemMapper.xml
 	</sql>
 	<!-- 定义返回类型 -->
     <resultMap id="TrunkItem" type="com.ynrcc.simpleserver.model.TrunkItem">
-        <result column="trunk_type" property="trunkType" jdbcType="INT" />
+        <result column="trunk_type" property="trunkType" jdbcType="INTEGER" />
         <result column="item_code" property="itemCode" jdbcType="VARCHAR" />
         <result column="item_name" property="itemName" jdbcType="VARCHAR" />
     </resultMap>
@@ -328,7 +377,8 @@ trunkItemMapper.xml
     </select>
 </mapper>
 ```
-编写 java 类
+
+### 编写 java 类
 ![11](../pic/demo11.png)
 
 **TrunkItemDao.java**
@@ -459,3 +509,84 @@ public class TrunkItemServiceTest extends SpringTest{
 ![14](../pic/demo14.png)
 
 ## 新建Controller
+**TrunkItemConteoller.java**
+```java
+package com.ynrcc.simpleserver.web;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.ynrcc.simpleserver.model.TrunkItem;
+import com.ynrcc.simpleserver.service.TrunkItemService;
+
+@Controller
+@RequestMapping(value="/trunk")
+public class TrunkItemController {
+	@Autowired
+	private TrunkItemService trunkItemService;
+
+	// 指定映射路径
+	@RequestMapping(value="/select")
+	// @ResponseBody会将集合数据转换json格式返回客户端
+    @ResponseBody
+	public TrunkItem selectItemByCode(Integer trunkType, String itemCode) {
+		System.out.println(trunkType + " " + itemCode);
+		return trunkItemService.selectItemByCode(trunkType, itemCode);
+	}
+}
+```
+
+### 在 /webapp/下新建 js 目录，放入 jquery 和 jason2 两个js包，可自行下载，也可以从源代码里找
+![15](../pic/demo15.png)
+
+### 在WEB-INF/ 下新建目录views，然后编写index.jsp
+**index.jsp**
+```html
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>测试返回JSON格式的数据</title>
+<script type="text/javascript" src="js/jquery-1.11.0.min.js"></script>
+<script type="text/javascript" src="js/json2.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){
+	testResponseBody();
+});
+function testResponseBody(){
+	$.post("${pageContext.request.contextPath}/trunk/select",
+			{
+				trunkType : 1,
+				itemCode : "39"
+			},
+			function(data){
+
+			var tr  = $("<tr align='center'/>");
+            $("<td/>").html(data.trunkType).appendTo(tr);
+            $("<td/>").html(data.itemCode).appendTo(tr);
+            $("<td/>").html(data.itemName).appendTo(tr);
+            $("#itemtable").append(tr);
+
+	},"json");
+}
+</script>
+</head>
+<body>
+<table id="itemtable" border="1"  style="border-collapse: collapse;">
+	<tr align="center">
+	  <th>尾箱类型</th>
+	  <th>物品代码</th>
+	  <th>物品名称</th>
+	</tr>
+
+</table>
+</body>
+</html>
+```
+
+## 最后便可以将应用在tomcat跑起来
+![16](../pic/demo.png)
