@@ -13,6 +13,8 @@
     - [settings 设置](#settings-设置)
     - [typeAliases 类型别名](#typealiases-类型别名)
     - [typeHandlers 类型处理器](#typehandlers-类型处理器)
+    - [objectFactory 对象工厂](#objectfactory-对象工厂)
+    - [environments 环境配置](#environments-环境配置)
 
 <!-- TOC END -->
 
@@ -202,3 +204,73 @@ password=xx
 ```
 
 ### typeHandlers 类型处理器
+无论是 Mybatis 在预处理语句中设置一个参数，还是从结果集中取出一个值，都会用类型处理器将获取的值以合适的方式转换成 Java 类型。
+
+[Mybatis 默认的类型处理器详解](#https://blog.csdn.net/orzxxx01/article/details/50889532)
+
+### objectFactory 对象工厂
+Mybatis 每次创建结果对象的新实例时，它都会使用一个对象工厂实例来完成。默认的对象工厂需要做的仅仅是实例化目标类，要么通过默认构造方法，要么在参数映射存在的时候通过参数构造方法来实例化。如果想覆盖对象工厂的默认行为，则可以通过创建自己的对象工厂来实现。
+
+[MyBatis之ObjectFactory](https://www.cnblogs.com/yulinfeng/p/5995200.html)
+
+### environments 环境配置
+Mybatis 的环境配置其实就是数据源的配置。Mybatis 可以配置多种环境，这种机制使得 Mybatis 可以将 SQL 映射应用于多种数据库中。
+
+**注意：可以配置多个环境，每个 SqlSessionFactory 实例只能选择其一**。如果想连接两个数据库，就需要创建两个SQlSessionFactory实例，每个数据库对应一个。而如果是三个数据库，就需要三个实例，以此类推。
+
+环境配置实例如下：
+```xml
+
+<environments default="development">
+   <environment id="development">
+       <transactionManager type="JDBC" />
+       <!-- 配置数据库连接信息 -->
+       <dataSource type="POOLED">
+           <!-- value属性值引用db.properties配置文件中配置的值 -->
+           <property name="driver" value="${driver}" />
+           <property name="url" value="${url}" />
+           <property name="username" value="${name}" />
+           <property name="password" value="${password}" />
+       </dataSource>
+   </environment>
+</environments>
+```
+
+- 默认的环境ID（比如：default:"development"）development : 开发模式    work : 工作模式
+- 每个 environment 元素定义的环境 ID（比如:id=”development”）。
+- 事务管理器的配置（比如:type=”JDBC”）
+- 数据源的配置（比如:type=”POOLED”）。
+
+**事务管理器**
+
+事务管理器有两种：type="[ JDBC | MANAGED ]":
+
+JDBC:这个配置就是直接使用了JDBC 的提交和回滚设置，它依赖于从数据源得到的连接来管理事务范围。
+
+MANAGED ：这个配置从来都不提交和回滚一个连接，而是让容器来管理事务的整个生命周期（比如JEE应用服务的上下文）。默认情况下他会关闭连接，然而一些容器并不希望这样，因此需要将closeConnection属性设置为false来阻止它默认的关闭行为。
+
+**如果你正在使用 Spring + MyBatis，则没有必要配置事务管理器， 因为 Spring 模块会使用自带的管理器来覆盖前面的配置。**
+
+**dataSource--数据源**
+
+dataSource元素使用标准的JDBC数据源接口来配置JDBC连接对象的资源。
+
+三种内建的数据源类型：type=[ UNPOOLED | POOLED | JNDI ]
+- UNPOOLED - 这个数据源的实现只是每次请求时打开和关闭连接。虽然一点慢，他对在及时可用连接方面没有性能要求的简单应用程序是一个很好的选择，不同的数据库在这方面表现也是不一样的，所以对某些数据库来说使用连接池并不重要，这个配置也是理想的。UNPOOLED类型的数据源仅仅需要配置一下5种属性：
+
+  - driver：JDBC驱动的java类的完全限定名
+  - url：数据库的JDBC URL地址
+  - userName： 登录数据库的用户名
+  - password ： 登录数据库的密码
+  - dedaultTransactionIsolationLevel– 默认的连接事务隔离级别。
+
+作为可选项，你也可以传递属性给数据库驱动，要这样做，属性的前缀为“driver.”,例如：driver.encoding=UTF8.这将通过DriverManager.getConnection(url,driverProperties) 方法传递值为UTF8的encoding 属性给数据库驱动。
+
+- POOLED - 这种数据源的实现利用“池”的概念将JDBC连接对象组织起来，避免了创建先的连接实例时所必须的初始化和认证时间。这是一种使得并发WEb应用快速响应请求的流行的处理方式。除了上述提到UNPOOLED下的属性外，还有以下属性来配置POOLED的数据源：
+
+  - poolMaximumActiveConnections-在任意时间可以存在的活动（也就是正在使用）连接数量，默认值：10
+  - poolMaximumIdleConnections - 任意时间可能存在的空闲连接数。
+  - poolMaximumCheckoutTime - 再被强制返回之前，池中连接被检出时间，默认值2W毫秒  即20s
+  - poolTimeToWait - 这是一个底层设置，如果获取连接花费的相当长的时间，它会给连接池打印状态日志并重新尝试获取一个连接（避免在误配置的情况下一直安静的失败），默认值：2W毫秒即 20 s
+  - PoolPingQuery - 发送到数据库的侦测查询，用来检验连接是否处在正常工作秩序中并准备接受请求。默认是“NO PING QUERY SET”，这会导致多数数据库驱动失败时带有一个恰当的错误消息
+  - PoolPingConnectionsNotUsedFor -配置 poolPingQuery 的使用频度。这可以被设置成匹配具体的数据库连接超时时间，来避免不必要的侦测，默认值：0（即所有连接每一时刻都被侦测 — 当然仅当 poolPingEnabled 为 true 时适用）。
