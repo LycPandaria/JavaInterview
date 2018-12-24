@@ -93,3 +93,70 @@ public boolean Find(int target, int [][] array) {
     return false;
 }
 ```
+
+## 4.替换空格
+[NowCode](https://www.nowcoder.com/practice/4060ac7e3e404ad1a894ef3e17650423?tpId=13&tqId=11155&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+### 问题描述
+请实现一个函数，将一个字符串中的每个空格替换成“%20”。例如，当字符串为We Are Happy.则经过替换之后的字符串为We%20Are%20Happy。
+
+### 解题思路
+最直观的做法是从头到尾扫描字符串，每次碰到空格字符的时候进行替换，但是这样，我们必须把后面的所有字符往后移两个字节。这样的方法时间复杂度为O(n^2)
+
+更好的解法是：我们先遍历一次字符串，统计出空格的个数，然后计算出替换后的长度。准备两个指针 P1 和 P2，P1 指向原始字符串的末尾，P2 指向替换后的字符串末尾。接下来我们向前移动 P1， 逐个把它复制到 P2 所在位置，然后再遇到空格的时候 P1 向前移动一格，P2 前移3格并插入 "%20" 。**当 P1 和 P2 指向同一个位置，表明所以的空格已经替换完毕**
+
+```java
+public String replaceSpace(StringBuffer str) {
+  int P1 = str.length() - 1;
+    // 计算空格数量，遇到一个空格就在字符串后加"  "2个空格
+    // 因为要替换掉 空格 -> %20 所以遇到一个空格，让字符串长度加2即可
+    for(int i= 0; i <= P1; i++)
+        if(str.charAt(i) == ' ')
+            str.append("  ");   //  两个空格
+    int P2 = str.length() - 1;
+    while(P1 >=0 && P1 < P2){
+        char c = str.charAt(P1--);
+        if(c == ' '){
+            str.setCharAt(P2--,'0');
+            str.setCharAt(P2--,'2');
+            str.setCharAt(P2--,'%');
+        }else
+            str.setCharAt(P2--,c);
+    }
+    return str.toString();
+}
+```
+# 链表
+## 5.从尾到头打印链表
+[NowCode](https://www.nowcoder.com/practice/d0267f7f55b3412ba93bd35cfa8e8035?tpId=13&tqId=11156&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 问题描述
+输入一个链表，按链表值从尾到头的顺序返回一个ArrayList。
+
+### 解题思路
+1. 栈结构
+  每经过一个节点，把该节点放到一个栈中，遍历完整个链表。
+  ```java
+  public ArrayList<Integer> printListFromTailToHead(ListNode listNode) {
+        Stack<Integer> stack = new Stack<>();
+        while(listNode != null){
+            stack.add(listNode.val);
+            listNode = listNode.next;
+        }
+        ArrayList<Integer> result = new ArrayList<>();
+        while(!stack.isEmpty())
+            result.add(stack.pop());
+        return result;
+  }
+  ```
+2. 递归
+  递归在本质上也是一个栈。我们每访问一个节点，先递归到它后面的节点，最后再输出节点的值。
+  ```java
+  public ArrayList<Integer> result = new ArrayList<>();
+    public ArrayList<Integer> printListFromTailToHead(ListNode listNode) {
+        if(listNode != null){
+            printListFromTailToHead(listNode.next);
+            result.add(listNode.val);
+        }
+        return result;
+  }
+  ```

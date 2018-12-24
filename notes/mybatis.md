@@ -18,6 +18,12 @@
     - [Mapper 映射器](#mapper-映射器)
   - [深入 Mapper XML 映射文件](#深入-mapper-xml-映射文件)
     - [select](#select)
+    - [insert, update 和 delete](#insert-update-和-delete)
+    - [sql](#sql)
+    - [ResultMap](#resultmap)
+- [MyBatis 的关系映射和动态 SQL](#mybatis-的关系映射和动态-sql)
+  - [MyBatis 的关系映射](#mybatis-的关系映射)
+    - [一对一](#一对一)
 
 <!-- TOC END -->
 
@@ -310,3 +316,274 @@ SQL 映射文件常用的元素如下：
 - resultMap 描述如何从数据库结果集中加载对象
 
 ### select
+select 元素有很多属性可以配置，例如：
+```xml
+<select
+　　<!--
+　　　　1. id（必须配置）
+　　　　id是命名空间中的唯一标识符，可被用来代表这条语句
+　　　　一个命名空间（namespace）对应一个dao接口
+　　　　这个id也应该对应dao里面的某个方法（sql相当于方法的实现），因此id应该与方法名一致
+　　 -->
+　　id="selectUser"
+
+　　<!--
+　　　　2. parapeterType（可选配置，默认由mybatis自动选择处理）
+　　　　将要传入语句的参数的完全限定名或别名，如果不配置，mybatis会通过ParamterHandler根据参数类型默认选择合适的typeHandler进行处理
+　　　　paramterType 主要指定参数类型，可以是int, short, long, string等类型，也可以是复杂类型（如对象）
+　　 -->
+　　parapeterType="int"
+
+　　<!--
+　　　　3. resultType（resultType 与 resultMap 二选一配置）
+　　　　用来指定返回类型，指定的类型可以是基本类型，也可以是java容器，也可以是javabean
+　　 -->
+　　resultType="hashmap"
+　　
+　　<!--
+　　　　4. resultMap（resultType 与 resultMap 二选一配置）
+　　　　用于引用我们通过 resultMap 标签定义的映射类型，这也是mybatis组件高级复杂映射的关键
+　　 -->
+　　resultMap="USER_RESULT_MAP"
+　　
+　　<!--
+　　　　5. flushCache（可选配置）
+　　　　将其设置为true，任何时候语句被调用，都会导致本地缓存和二级缓存被清空，默认值：false
+　　 -->
+　　flushCache="false"
+
+　　<!--
+　　　　6. useCache（可选配置）
+　　　　将其设置为true，会导致本条语句的结果被二级缓存，默认值：对select元素为true
+　　 -->
+　　useCache="true"
+
+　　<!--
+　　　　7. timeout（可选配置）
+　　　　这个设置是在抛出异常之前，驱动程序等待数据库返回请求结果的秒数，默认值为：unset（依赖驱动）
+　　 -->
+　　timeout="10000"
+
+　　<!--
+　　　　8. fetchSize（可选配置）
+　　　　这是尝试影响驱动程序每次批量返回的结果行数和这个设置值相等。默认值为：unset（依赖驱动）
+　　 -->
+　　fetchSize="256"
+
+　　<!--
+　　　　9. statementType（可选配置）
+　　　　STATEMENT, PREPARED或CALLABLE的一种，这会让MyBatis使用选择Statement, PrearedStatement或CallableStatement，默认值：PREPARED
+　　 -->
+　　statementType="PREPARED"
+
+　　<!--
+　　　　10. resultSetType（可选配置）
+　　　　FORWARD_ONLY，SCROLL_SENSITIVE 或 SCROLL_INSENSITIVE 中的一个，默认值为：unset（依赖驱动）
+　　 -->
+　　resultSetType="FORWORD_ONLY"
+></select>
+```
+
+### insert, update 和 delete
+他们的属性大多和 select 差不多，特有的属性描述如下：
+```xml
+<insert
+　　<!--
+　　　　同 select 标签
+　　 -->
+　　id="insertProject"
+
+　　<!--
+　　　　同 select 标签
+　　 -->
+　　paramterType="projectInfo"
+　　
+　　<!--
+　　　　1. useGeneratedKeys（可选配置，与 keyProperty 相配合）
+　　　　设置为true，并将 keyProperty 属性设为数据库主键对应的实体对象的属性名称
+　　 -->
+　　useGeneratedKeys="true"
+
+　　<!--
+　　　　2. keyProperty（可选配置，与 useGeneratedKeys 相配合）
+　　　　用于获取数据库自动生成的主键
+　　 -->
+　　keyProperty="projectId"
+>
+```
+
+### sql
+sql 元素可以被用来定义可重用的 SQL 代码段，可以包含其他语句中，他可以静态地参数化。例如：
+```xml
+<!-- 我们在其中定义类似于表的结构 -->
+<sql id="trunkItemColumns">
+		a.id AS "id",
+		a.trunk_type AS "trunkType",
+		a.item_code AS "itemCode",
+		a.item_name AS "itemName",
+		a.display_name AS "displayName",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_date AS "updateDate"
+	</sql>
+```
+这个 SQL 片段就可以被包含咋其他语句中，例如：
+```xml
+<select id="get" resultType="TrunkItem">
+		SELECT
+			<include refid="trunkItemColumns"/>
+		FROM trunk_item a
+		WHERE a.id = #{id}
+	</select>
+```
+
+### ResultMap
+ResultMap 告诉 Mybatis 将结果集中取出 大数据转换成开发者若需要的对象。
+```xml
+<select id="selectUser" resultType="map">
+  select * from sys_user
+</select>
+```
+<select../>元素执行一条查询语句，查询 sys_user 表所有数据，resultType="map" 说明返回的数据是一个 Map 集合，列名为 key，列值是 value.
+
+我们用一个 List<Map<String, Object>> 接受返回的结果，在 console 中显示为：
+```text
+{sex=男, name=jack, id=1, age=22}
+{sex=男, name=jack1, id=2, age=18}
+```
+如果要对应到一个 POJO 类，可以使用 <resultMap> 元素来定义一个 resultMap 完成映射。例如：
+```xml
+<resultMap id="userResultMap" type="User">
+  <id property="id" column="user_id"/>
+  <result property="name" column="user_name"/>
+  ···
+</resultMap>
+<select id="selectUser" resultType="userResultMap">
+  select * from sys_user
+</select>
+```
+配置文件的详细解释如下：
+```xml
+<!--
+　　1. type 对应的返回类型，可以是javabean, 也可以是其它
+　　2. id 必须唯一， 用于标示这个resultMap的唯一性，在使用resultMap的时候，就是通过id引用
+　　3. extends 继承其他resultMap标签
+ -->
+<resultMap type="" id="" extends="">　　
+　　<!--
+　　　　1. id 唯一性，注意啦，这个id用于标示这个javabean对象的唯一性， 不一定会是数据库的主键（不要把它理解为数据库对应表的主键）
+　　　　2. property 属性对应javabean的属性名
+　　　　3. column 对应数据库表的列名
+       （这样，当javabean的属性与数据库对应表的列名不一致的时候，就能通过指定这个保持正常映射了）
+　　 -->
+　　<id property="" column=""/>
+
+　　<!--
+　　　　result 与id相比，对应普通属性
+　　 -->    
+　　<result property="" column=""/>
+
+　　<!--
+　　　　constructor 对应javabean中的构造方法
+　　 -->
+　　<constructor>
+　　　　<!-- idArg 对应构造方法中的id参数 -->
+       <idArg column=""/>
+       <!-- arg 对应构造方法中的普通参数 -->
+       <arg column=""/>
+   </constructor>
+
+   <!--
+　　　　collection 为关联关系，是实现一对多的关键
+　　　　1. property 为javabean中容器对应字段名
+　　　　2. ofType 指定集合中元素的对象类型
+　　　　3. select 使用另一个查询封装的结果
+　　　　4. column 为数据库中的列名，与select配合使用
+    -->
+　　<collection property="" column="" ofType="" select="">
+　　　　<!--
+　　　　　　当使用select属性时，无需下面的配置
+　　　　 -->
+　　　　<id property="" column=""/>
+　　　　<result property="" column=""/>
+　　</collection>
+
+　　<!--
+　　　　association 为关联关系，是实现一对一的关键
+　　　　1. property 为javabean中容器对应字段名
+　　　　2. javaType 指定关联的类型，当使用select属性时，无需指定关联的类型
+　　　　3. select 使用另一个select查询封装的结果
+　　　　4. column 为数据库中的列名，与select配合使用
+　　 -->
+　　<association property="" column="" javaType="" select="">
+　　　　<!--
+　　　　　　使用select属性时，无需下面的配置
+　　　　 -->
+　　　　<id property="" column=""/>
+　　　　<result property="" column=""/>
+　　</association>
+</resultMap>
+```
+
+# MyBatis 的关系映射和动态 SQL
+## MyBatis 的关系映射
+### 一对一
+我们先假设有这样一个关系，每个人都有一张对应的身份证，对应的 Java 类可以这样定义：
+```sql
+create table tb_person(
+  id INT PRIMARY KEY,
+  NAME VARCHAR(60),
+  card_id INT UNIQUE
+)
+create table tb_card(
+  id INT PRIMARY KEY,
+  code CHAR(18)
+)
+```
+```java
+public class Card{
+  private Integer id;
+  private String code;
+  // 省略 getter 和 setter
+}
+```
+```java
+public class Persone{
+  private Integer id;
+  private String name;
+  private Card card;
+  // 忽略 getter 和 setter
+}
+```
+在 XML 中：
+```xml
+<mapper namespace="org.fkit.mapper.CardMapper">
+	<!-- 根据id查询Card，返回Card对象 -->
+  <select id="selectCardById" parameterType="int" resultType="org.fkit.domain.Card">
+  	SELECT * from tb_card where id = #{id}
+  </select>
+</mapper>
+```
+```xml
+<mapper namespace="org.fkit.mapper.PersonMapper">
+
+	<!-- 根据id查询Person，返回resultMap -->
+  <select id="selectPersonById" parameterType="int"
+  	resultMap="personMapper">
+  	SELECT * from tb_person where id = #{id}
+  </select>
+
+  <!-- 映射Peson对象的resultMap -->
+	<resultMap type="org.fkit.domain.Person" id="personMapper">
+		<id property="id" column="id"/>
+		<result property="name" column="name"/>
+		<result property="sex" column="sex"/>
+		<result property="age" column="age"/>
+		<!-- 一对一关联映射:association   -->
+	  <association property="card" column="card_id"
+      select="org.mapper.CardMapper.selectCardById"
+      javaType="org.domain.Card"/>
+	</resultMap>
+</mapper>
+```
+**PersonMapper 中定义的 mapper.xml 中，使用了 <association> 元素映射一对一的关系，select 属性表示会使用 tb_person 中的 card_id 的值作为参数执行 CardMapper 中定义的 selectCardById 查询对应的 Card，并封装到 property 表示的 card 对象中。**
