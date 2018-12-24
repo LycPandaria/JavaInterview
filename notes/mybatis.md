@@ -15,6 +15,9 @@
     - [typeHandlers 类型处理器](#typehandlers-类型处理器)
     - [objectFactory 对象工厂](#objectfactory-对象工厂)
     - [environments 环境配置](#environments-环境配置)
+    - [Mapper 映射器](#mapper-映射器)
+  - [深入 Mapper XML 映射文件](#深入-mapper-xml-映射文件)
+    - [select](#select)
 
 <!-- TOC END -->
 
@@ -267,10 +270,43 @@ dataSource元素使用标准的JDBC数据源接口来配置JDBC连接对象的�
 作为可选项，你也可以传递属性给数据库驱动，要这样做，属性的前缀为“driver.”,例如：driver.encoding=UTF8.这将通过DriverManager.getConnection(url,driverProperties) 方法传递值为UTF8的encoding 属性给数据库驱动。
 
 - POOLED - 这种数据源的实现利用“池”的概念将JDBC连接对象组织起来，避免了创建先的连接实例时所必须的初始化和认证时间。这是一种使得并发WEb应用快速响应请求的流行的处理方式。除了上述提到UNPOOLED下的属性外，还有以下属性来配置POOLED的数据源：
-
   - poolMaximumActiveConnections-在任意时间可以存在的活动（也就是正在使用）连接数量，默认值：10
   - poolMaximumIdleConnections - 任意时间可能存在的空闲连接数。
   - poolMaximumCheckoutTime - 再被强制返回之前，池中连接被检出时间，默认值2W毫秒  即20s
   - poolTimeToWait - 这是一个底层设置，如果获取连接花费的相当长的时间，它会给连接池打印状态日志并重新尝试获取一个连接（避免在误配置的情况下一直安静的失败），默认值：2W毫秒即 20 s
   - PoolPingQuery - 发送到数据库的侦测查询，用来检验连接是否处在正常工作秩序中并准备接受请求。默认是“NO PING QUERY SET”，这会导致多数数据库驱动失败时带有一个恰当的错误消息
   - PoolPingConnectionsNotUsedFor -配置 poolPingQuery 的使用频度。这可以被设置成匹配具体的数据库连接超时时间，来避免不必要的侦测，默认值：0（即所有连接每一时刻都被侦测 — 当然仅当 poolPingEnabled 为 true 时适用）。
+
+### Mapper 映射器
+Mapper 映射器告诉 Mybatis 去哪里找映射文件
+```xml
+<!-- 使用类路径查找资源 -->
+<mappers>
+  <mapper resource="org/.../UserMapper.xml"/>
+</mappers>
+<!-- 使用本地文件 -->
+<mappers>
+  <mapper url="file:///D:/UserMapper.xml"/>
+</mappers>
+<!-- 使用接口类 -->
+<mappers>
+  <mapper class="org.UserMapper"/>
+</mappers>
+<!-- 使用包名 -->
+<mappers>
+  <package name="org.mapper"/>
+</mappers>
+```
+
+## 深入 Mapper XML 映射文件
+SQL 映射文件常用的元素如下：
+- select 映射查询语句
+- insert 插入语句
+- update 更新
+- delete 删除
+- sql 可被引用的可重复语句块
+- cache 给定命名空间的缓存配置
+- cache-ref 其他命名空间缓存配置的引用
+- resultMap 描述如何从数据库结果集中加载对象
+
+### select
