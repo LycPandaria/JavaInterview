@@ -24,6 +24,7 @@
 - [MyBatis 的关系映射和动态 SQL](#mybatis-的关系映射和动态-sql)
   - [MyBatis 的关系映射](#mybatis-的关系映射)
     - [一对一](#一对一)
+    - [一对多](#一对多)
 
 <!-- TOC END -->
 
@@ -587,3 +588,98 @@ public class Persone{
 </mapper>
 ```
 **PersonMapper 中定义的 mapper.xml 中，使用了 <association> 元素映射一对一的关系，select 属性表示会使用 tb_person 中的 card_id 的值作为参数执行 CardMapper 中定义的 selectCardById 查询对应的 Card，并封装到 property 表示的 card 对象中。**
+
+### 一对多
+我们先假设一个关系：班级和学生，很明显的存在一对多的关系。对应的 POJO 类如下：
+```java
+public class Clazz implements Serializable {
+
+	private Integer id; // 班级id，主键
+	private String code; // 班级编号
+	private String name; // 班级名称
+
+	// 班级和学生是一对多的关系，即一个班级可以有多个学生
+	private List<Student> students;
+}
+
+public class Student implements Serializable {
+
+	private Integer id; // 学生id，主键
+	private String name; // 姓名
+	private String sex;  // 性别
+	private Integer age; // 年龄
+
+	// 学生和班级是多对一的关系，即一个学生只属于一个班级
+	private Clazz clazz;
+}
+```
+
+Clazz XML 映射文件:
+```xml
+<mapper namespace="org.fkit.mapper.ClazzMapper">
+	<!-- 根据id查询班级信息，返回resultMap -->
+	  <select id="selectClazzById" parameterType="int" resultMap="clazzResultMap">
+	  	SELECT * FROM tb_clazz  WHERE id = #{id}
+	  </select>
+
+	   <!-- 映射Clazz对象的resultMap -->
+	<resultMap type="org.fkit.domain.Clazz" id="clazzResultMap">
+		<id property="id" column="id"/>
+		<result property="code" column="code"/>
+		<result property="name" column="name"/>
+		<!-- 一对多关联映射:collection fetchType="lazy"表示懒加载  -->
+		<collection property="students" javaType="ArrayList"
+	  column="id" ofType="org.fkit.domain.Student"
+	  select="org.fkit.mapper.StudentMapper.selectStudentByClazzId"
+	  fetchType="lazy">
+	  	<id property="id" column="id"/>
+	  	<result property="name" column="name"/>
+	  	<result property="sex" column="sex"/>
+	  	<result property="age" column="age"/>
+	  </collection>
+	</resultMap>
+</mapper>
+```
+XML 中定义了一个 clazzResultMap 来告诉数据库如何返回结果。里面除了简单的属性如 id,code,name 之外，还有一个关联对象 students。由于 students 是一个 List 集合，所以 clazzResultMap 中使用了 <collects/> 元素映射一对多关系，select 会使用 column 属性的 id值作为参数执行 selectStudentByClazzId 查询该班级对应的所有学生数据，查询到的数据将会被封装到 property 表示的 students 对象中。
+
+fetchType="lazy"：表示使用延迟加载； lazy：延迟 eager：立即。
+
+使用懒加载还需要在配置文件中加入配置：
+```xml
+<!-- 要使延迟加载生效必须配置下面两个属性 -->
+<setting name="lazyLoadingEnabled" value="true"/>
+<setting name="aggressiveLazyLoading" value="false"/>
+```
+
+学生类的 mapper 配置文件：
+```xml
+<mapper namespace="org.fkit.mapper.StudentMapper">
+	<!-- 根据id查询学生信息，多表连接，返回resultMap -->
+  <select id="selectStudentById" parameterType="int" resultMap="studentResultMap">
+  	SELECT * FROM tb_clazz c,tb_student s
+  	WHERE c.id = s.clazz_id
+  	 AND s.id = #{id}
+  </select>
+
+  <!-- 根据班级id查询学生信息，返回resultMap -->
+  <select id="selectStudentByClazzId" parameterType="int"
+  resultMap="studentResultMap">
+  	SELECT * FROM tb_student WHERE clazz_id = #{id}
+  </select>
+
+   <!-- 映射Student对象的resultMap -->
+	<resultMap type="org.fkit.domain.Student" id="studentResultMap">
+		<id property="id" column="id"/>
+	  	<result property="name" column="name"/>
+	  	<result property="sex" column="sex"/>
+	  	<result property="age" column="age"/>
+		<!-- 多对一关联映射:association   -->
+		<association property="clazz" javaType="org.fkit.domain.Clazz">
+			<id property="id" column="id"/>
+			<result property="code" column="code"/>
+			<result property="name" column="name"/>
+		</association>
+	</resultMap>
+</mapper>
+```
+需要注意的是：因为 selectStudentById 方法使用了多表连结，所以 clazz 的信息已经被加载出来了，所以 <association/> 只是简单的封装了信息成为一个 Clazz 类。就不像之前的 一对一 中还配备了一个 select 元素在 <association/> 中。
