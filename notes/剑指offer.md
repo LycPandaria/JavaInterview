@@ -160,3 +160,68 @@ public String replaceSpace(StringBuffer str) {
         return result;
   }
   ```
+
+# 树
+## 6.重建二叉树
+[NowCode](https://www.nowcoder.com/practice/8a19cbe657394eeaac2f6ea9b0f6fcf6?tpId=13&tqId=11157&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+### 问题描述
+根据二叉树的前序遍历和中序遍历的结果，重建出该二叉树。假设输入的前序遍历和中序遍历的结果中都不含重复的数字。
+```text
+preorder = [3,9,20,15,7]
+inorder =  [9,3,15,20,7]
+```
+![重建二叉树](../pic/重建二叉树.png)
+### 解题思路
+前序遍历的第一个数字就是根节点的值，然后在中序遍历中，在根节点的值的位置之前的就是左子树，在根节点的值的位置之后的就是右子树。这样就可以确定出左右子树对应的序列。
+
+```text
+根据描述，3是根节点，那么我们可以确认：
+左子树为 [9], 右子树为[15,20,7]，根节点为 3.
+同样的道理我们把这个方法递归到左右子树，我们也知道左右子树对应的前序和中序，这样便可以重建二叉树
+```
+
+```java
+/**
+ * Definition for binary tree
+ * public class TreeNode {
+ *     int val;
+ *     TreeNode left;
+ *     TreeNode right;
+ *     TreeNode(int x) { val = x; }
+ * }
+ */
+import java.util.Map;
+import java.util.HashMap;
+public class Solution {
+    // 缓存中序遍历，值及其对应的位置
+    private Map<Integer,Integer> inLocMap = new HashMap<Integer,Integer>();
+
+    public TreeNode reConstructBinaryTree(int [] pre,int [] in) {
+        for(int i = 0; i < in.length; i++)
+            inLocMap.put(in[i], i);
+        return reConstructBinaryTree(pre, 0, pre.length-1, 0);
+    }
+    /*
+    preL - 表示当前子树前序遍历的开始位置
+    preR - 表示当前子树前序遍历的开始位置
+    inL  - 表示当前子树的中序遍历的开始位置
+    */
+    private TreeNode reConstructBinaryTree(int[] pre, int preL, int preR, int inL){
+        if(preL > preR)
+            return null;
+        // 前序遍历的第一个元素是根元素
+        TreeNode root = new TreeNode(pre[preL]);
+        // 找出根元素在中序遍历的位置
+        int rootLoc = inLocMap.get(root.val);
+        // 根据根元素在中序遍历的位置，计算左子树大小，进而我们知道左子树序列在前序中对应的位置
+        int leftSize = rootLoc - inL;
+        // 遍历构建子树
+        // preL+1到preL+leftSize 这个区间就是对应的左子树序列
+        root.left = reConstructBinaryTree(pre, preL+1, preL+leftSize, inL);
+        // preL+preL+leftSize 到 preR 就是对应右子树的序列，
+        // 同时右子树序列对应的中序遍历的开始位置就是 根元素在中序遍历的位置+1
+        root.right = reConstructBinaryTree(pre, preL+leftSize+1, preR, rootLoc + 1);
+        return root;
+    }
+}
+```
