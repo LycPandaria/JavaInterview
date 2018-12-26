@@ -25,6 +25,7 @@
   - [MyBatis 的关系映射](#mybatis-的关系映射)
     - [一对一](#一对一)
     - [一对多](#一对多)
+    - [多对多](#多对多)
 
 <!-- TOC END -->
 
@@ -683,3 +684,146 @@ fetchType="lazy"：表示使用延迟加载； lazy：延迟 eager：立即。
 </mapper>
 ```
 需要注意的是：因为 selectStudentById 方法使用了多表连结，所以 clazz 的信息已经被加载出来了，所以 <association/> 只是简单的封装了信息成为一个 Clazz 类。就不像之前的 一对一 中还配备了一个 select 元素在 <association/> 中。
+
+
+### 多对多
+我们先定义一个多对多关系：一个用户有多个订单，而且一个订单中可能有多种物品。所以订单和物品属于一种多对多的关系。**对于数据库中多对多关系建议使用一个中间表来维护关系。**
+
+先看我们定义的 POJO 类：
+```java
+public class User implements Serializable{
+
+	private Integer id;  // 用户id，主键
+	private String username;  // 用户名
+	private String loginname; // 登录名
+	private String password;  // 密码
+	private String phone;    // 联系电话
+	private String address;  // 收货地址
+
+	// 用户和订单是一对多的关系，即一个用户可以有多个订单
+	private List<Order> orders;
+}
+
+public class Order implements Serializable {
+
+	private Integer id;  // 订单id，主键
+	private String code;  // 订单编号
+	private Double total; // 订单总金额
+
+	// 订单和用户是多对一的关系，即一个订单只属于一个用户
+	private User user;
+
+	// 订单和商品是多对多的关系，即一个订单可以包含多种商品
+	private List<Article> articles;
+}
+
+public class Article implements Serializable {
+
+	private Integer id;		// 商品id，主键
+	private String name;	// 商品名称
+	private Double price;	// 商品价格
+	private String remark;	// 商品描述
+
+	// 商品和订单是多对多的关系，即一种商品可以包含在多个订单中
+	private List<Order> orders;
+}
+```
+
+同时为了处理多对多的关系，我们有一个中间表 tb_item:
+```sql
+create table(
+  order_id INT,
+  article_id INT,
+  amount INT,
+  PRIMARY KEY (order_id, article_id)
+)
+```
+
+接下来是 Mapper.xml文件
+```xml
+<mapper namespace="org.fkit.mapper.UserMapper">
+
+	<resultMap type="org.fkit.domain.User" id="userResultMap">
+		<id property="id" column="id"/>
+		<result property="username" column="username"/>
+		<result property="loginname" column="loginname"/>
+		<result property="password" column="password"/>
+		<result property="phone" column="phone"/>
+		<result property="address" column="address"/>
+		<!-- 一对多关联映射:collection   -->
+		<collection property="orders" javaType="ArrayList"
+	  column="id" ofType="org.fkit.domain.User"
+	  select="org.fkit.mapper.OrderMapper.selectOrderByUserId"
+	  fetchType="lazy">
+	  	<id property="id" column="id"/>
+	  	<result property="code" column="code"/>
+	  	<result property="total" column="total"/>
+	  </collection>
+	</resultMap>
+
+  <select id="selectUserById" parameterType="int" resultMap="userResultMap">
+  	SELECT * FROM tb_user  WHERE id = #{id}
+  </select>
+</mapper>
+```
+resultMap 中定义了如何返回一个 userResultMap，由于 orders 是一个 List 集合对象，所以用 collection 元素对应一对多的关系，select 属性表示会使用 column 属性的 id 值（在这里既是 user 表的 id 值）传入 selectOrderByUserId 进行执行，查询出的数据封装到 property 表示的 orders 对象中。并使用懒加载。
+
+下面是 OrderMapper.xml
+```xml
+<mapper namespace="org.fkit.mapper.OrderMapper">
+	<resultMap type="org.fkit.domain.Order" id="orderResultMap">
+		<id property="id" column="oid"/>
+	  	<result property="code" column="code"/>
+	  	<result property="total" column="total"/>
+		<!-- 多对一关联映射:association   -->
+		<association property="user" javaType="org.fkit.domain.User">
+			<id property="id" column="id"/>
+			<result property="username" column="username"/>
+			<result property="loginname" column="loginname"/>
+			<result property="password" column="password"/>
+			<result property="phone" column="phone"/>
+			<result property="address" column="address"/>
+		</association>
+		<!-- 多对多映射的关键:collection   -->
+		<collection property="articles" javaType="ArrayList"
+	  column="oid" ofType="org.fkit.domain.Article"
+	  select="org.fkit.mapper.ArticleMapper.selectArticleByOrderId"
+	  fetchType="lazy">
+	  	<id property="id" column="id"/>
+	  	<result property="name" column="name"/>
+	  	<result property="price" column="price"/>
+	  	<result property="remark" column="remark"/>
+	  </collection>
+	</resultMap>
+
+	<!-- 注意，如果查询出来的列同名，例如tb_user表的id和tb_order表的id都是id，同名，需要使用别名区分 -->
+  <select id="selectOrderById" parameterType="int" resultMap="orderResultMap">
+  	SELECT u.*,o.id AS oid,CODE,total,user_id
+  	 FROM tb_user u,tb_order o
+  	WHERE u.id = o.user_id
+  	 AND o.id = #{id}
+  </select>
+
+  <!-- 根据userid查询订单 -->
+  <select id="selectOrderByUserId" parameterType="int" resultType="org.fkit.domain.Order">
+  	SELECT * FROM tb_order WHERE user_id = #{id}
+  </select>
+
+</mapper>
+```
+在这其中：
+1. 定义了一个 <select id="selectOrderByUserId".../> 已供 Usermapper.xml 中的查询使用
+2. 定义了一个 <select id="selectOrderById".../> 返回一个 Order 对象，参考 Order 类的定义，这个查找中除了简单的 id，code，total 属性外，需要关联对应的 user 属性，**因为订单和用户是多对一的关系，多对一的关系一般都是及时加载的，所以我们可以在语句中发现它用了关联语句直接查找除了 user 的信息，resultMap 中的 <association../> 只是简单的封装 user 信息成 User 类。** 因为一个订单可能有多个物品，所以 collection 元素便来完成对于物品信息的管理查询，select 属性 表示会使用 column 属性的 oid （order表的 id）值作为参数执行 selectArticleByOrderId 方法来查找对应的物品信息，查询到的信息再封装到 property 代表的 articles 对象中。
+
+最后看 ArticleMapper.xml
+```xml
+<mapper namespace="org.fkit.mapper.ArticleMapper">
+  <select id="selectArticleByOrderId" parameterType="int"
+  resultType="org.fkit.domain.Article">
+  	SELECT * FROM tb_article WHERE id IN (
+		SELECT article_id FROM tb_item WHERE order_id = #{id}
+	)
+  </select>
+</mapper>
+```
+里面就根据传入的order id 进行物品查询，而且是从中间表差的，所以 SQL 语句中有一个 IN 子查询。
