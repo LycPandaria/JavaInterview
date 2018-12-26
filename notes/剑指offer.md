@@ -225,3 +225,52 @@ public class Solution {
     }
 }
 ```
+
+## 7.二叉树的下一个节点
+[NowCode](https://www.nowcoder.com/practice/9023a0c988684a53960365b889ceaf5e?tpId=13&tqId=11210&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+### 问题描述
+给定一个二叉树和其中的一个结点，请找出中序遍历顺序的下一个结点并且返回。注意，树中的结点不仅包含左右子结点，同时包含指向父结点的指针。
+```java
+public class TreeLinkNode {
+    int val;
+    TreeLinkNode left = null;
+    TreeLinkNode right = null;
+    TreeLinkNode next = null; // 指向parent
+
+    TreeLinkNode(int val) {
+        this.val = val;
+    }
+}
+```
+
+### 解题思路
+这题应该按情况来分析：
+1. 如果一个节点有右子树，那么它的下一个节点就是它的右子树的最左子树。从右子节点出发一直沿着左子节点走，遇到 node.left == null 即可返回，这个就是下一个节点。
+  ![二叉树下一个节点](../pic/二叉树下一个节点1.png)
+2. 接着分析一个节点没有右子节点的情况，如果节点是它父亲的左子节点，那么父亲节点就是下一个节点
+3. 如果一个节点既没有右子节点，而且节点是它父亲的右子节点，我们可以一直沿着父亲节点往上走，知道找到一个是它父节点的左子节点的节点。
+  ![二叉树下一个节点](../pic/二叉树下一个节点2.png)
+
+```java
+public TreeLinkNode GetNext(TreeLinkNode pNode){
+    if(pNode==null)
+        return null;
+    if(pNode.right != null){    // 如果有右子节点
+        TreeLinkNode node = pNode.right;    // 从右子节点出发
+        while(node.left != null){
+            node = node.left;
+        }
+        return node;
+    }else{    // 没有右子节点
+        while(pNode.next != null){
+            TreeLinkNode parent = pNode.next;
+            // 节点是它父亲的左子节点
+            if(pNode == parent.left)
+                return parent;
+            // 沿着父亲节点往上走
+            pNode = pNode.next;
+        }
+        return null;
+    }
+}
+```
