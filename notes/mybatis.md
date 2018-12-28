@@ -26,6 +26,15 @@
     - [一对一](#一对一)
     - [一对多](#一对多)
     - [多对多](#多对多)
+  - [动态 SQL](#动态-sql)
+    - [if](#if)
+    - [choose(when,otherwise)](#choosewhenotherwise)
+    - [where](#where)
+    - [set](#set)
+    - [foreach](#foreach)
+    - [bind](#bind)
+- [Mybatis 的事务管理和缓存机制](#mybatis-的事务管理和缓存机制)
+  - [MyBatis 的事务管理](#mybatis-的事务管理)
 
 <!-- TOC END -->
 
@@ -33,20 +42,20 @@
 ## 初看
 ```xml
 <!-- namespace指用户自定义的命名空间。 -->
-<mapper namespace="org.fkit.mapper.UserMapper">
+<mapper namespace="org.mapper.UserMapper">
 <!--
 	id="save"是唯一的标示符
 	parameterType属性指明插入时使用的参数类型
 	useGeneratedKeys="true"表示使用数据库的自动增长策略
  -->
-  <insert id="save" parameterType="org.fkit.domain.User" useGeneratedKeys="true">
+  <insert id="save" parameterType="org.domain.User" useGeneratedKeys="true">
   	INSERT INTO TB_USER(name,sex,age)
   	VALUES(#{name},#{sex},#{age})
   </insert>
 </mapper>
 ```
 上面的xml定义了一条insert语句：
-1. <mapper namespace="org.fkit.mapper.UserMapper"> 为这个 mapper 指定了一个唯一的 namespace，namespace 的值习惯上设置成包名+sql 映射文件名来保证唯一性。
+1. <mapper namespace="org.mapper.UserMapper"> 为这个 mapper 指定了一个唯一的 namespace，namespace 的值习惯上设置成包名+sql 映射文件名来保证唯一性。
 2. 在 insert 标签中编写了插入 sql 预计，设置 insert 标签的 id 属性为 save，这个 id 属性必须是唯一的。
 3. 使用 parameterType 属性指明插入时候使用的参数类型
 4. 使用 useGeneratedKeys="true" 表示使用数据库自动增长策略，需要底层数据库支持。
@@ -101,7 +110,7 @@ public class MyBatisTest {
 		// 创建User对象
 		User user = new User("admin", "男", 26);
 		// 插入数据
-		session.insert("org.fkit.mapper.UserMapper.save", user);
+		session.insert("org.mapper.UserMapper.save", user);
 		// 提交事务
 		session.commit();
 		// 关闭Session
@@ -109,7 +118,7 @@ public class MyBatisTest {
 	}
 }
 ```
-正如上面的代码所示，在执行 session.insert("org.fkit.mapper.UserMapper.save", user); 之前，需要获取 SqlSession 对象，PO 只有在 SqlSession 的管理下才能够完成数据库的访问。使用 Mybatis 持久化操作通常如下：
+正如上面的代码所示，在执行 session.insert("org.mapper.UserMapper.save", user); 之前，需要获取 SqlSession 对象，PO 只有在 SqlSession 的管理下才能够完成数据库的访问。使用 Mybatis 持久化操作通常如下：
 1. 开发持久化类 PO 和编写持久化 Mapper.xml文件
 2. 获取 SqlSessionFactory
 3. 获得 SqlSession
@@ -559,15 +568,15 @@ public class Persone{
 ```
 在 XML 中：
 ```xml
-<mapper namespace="org.fkit.mapper.CardMapper">
+<mapper namespace="org.mapper.CardMapper">
 	<!-- 根据id查询Card，返回Card对象 -->
-  <select id="selectCardById" parameterType="int" resultType="org.fkit.domain.Card">
+  <select id="selectCardById" parameterType="int" resultType="org.domain.Card">
   	SELECT * from tb_card where id = #{id}
   </select>
 </mapper>
 ```
 ```xml
-<mapper namespace="org.fkit.mapper.PersonMapper">
+<mapper namespace="org.mapper.PersonMapper">
 
 	<!-- 根据id查询Person，返回resultMap -->
   <select id="selectPersonById" parameterType="int"
@@ -576,7 +585,7 @@ public class Persone{
   </select>
 
   <!-- 映射Peson对象的resultMap -->
-	<resultMap type="org.fkit.domain.Person" id="personMapper">
+	<resultMap type="org.domain.Person" id="personMapper">
 		<id property="id" column="id"/>
 		<result property="name" column="name"/>
 		<result property="sex" column="sex"/>
@@ -617,21 +626,21 @@ public class Student implements Serializable {
 
 Clazz XML 映射文件:
 ```xml
-<mapper namespace="org.fkit.mapper.ClazzMapper">
+<mapper namespace="org.mapper.ClazzMapper">
 	<!-- 根据id查询班级信息，返回resultMap -->
 	  <select id="selectClazzById" parameterType="int" resultMap="clazzResultMap">
 	  	SELECT * FROM tb_clazz  WHERE id = #{id}
 	  </select>
 
 	   <!-- 映射Clazz对象的resultMap -->
-	<resultMap type="org.fkit.domain.Clazz" id="clazzResultMap">
+	<resultMap type="org.domain.Clazz" id="clazzResultMap">
 		<id property="id" column="id"/>
 		<result property="code" column="code"/>
 		<result property="name" column="name"/>
 		<!-- 一对多关联映射:collection fetchType="lazy"表示懒加载  -->
 		<collection property="students" javaType="ArrayList"
-	  column="id" ofType="org.fkit.domain.Student"
-	  select="org.fkit.mapper.StudentMapper.selectStudentByClazzId"
+	  column="id" ofType="org.domain.Student"
+	  select="org.mapper.StudentMapper.selectStudentByClazzId"
 	  fetchType="lazy">
 	  	<id property="id" column="id"/>
 	  	<result property="name" column="name"/>
@@ -654,7 +663,7 @@ fetchType="lazy"：表示使用延迟加载； lazy：延迟 eager：立即。
 
 学生类的 mapper 配置文件：
 ```xml
-<mapper namespace="org.fkit.mapper.StudentMapper">
+<mapper namespace="org.mapper.StudentMapper">
 	<!-- 根据id查询学生信息，多表连接，返回resultMap -->
   <select id="selectStudentById" parameterType="int" resultMap="studentResultMap">
   	SELECT * FROM tb_clazz c,tb_student s
@@ -669,13 +678,13 @@ fetchType="lazy"：表示使用延迟加载； lazy：延迟 eager：立即。
   </select>
 
    <!-- 映射Student对象的resultMap -->
-	<resultMap type="org.fkit.domain.Student" id="studentResultMap">
+	<resultMap type="org.domain.Student" id="studentResultMap">
 		<id property="id" column="id"/>
 	  	<result property="name" column="name"/>
 	  	<result property="sex" column="sex"/>
 	  	<result property="age" column="age"/>
 		<!-- 多对一关联映射:association   -->
-		<association property="clazz" javaType="org.fkit.domain.Clazz">
+		<association property="clazz" javaType="org.domain.Clazz">
 			<id property="id" column="id"/>
 			<result property="code" column="code"/>
 			<result property="name" column="name"/>
@@ -741,9 +750,9 @@ create table(
 
 接下来是 Mapper.xml文件
 ```xml
-<mapper namespace="org.fkit.mapper.UserMapper">
+<mapper namespace="org.mapper.UserMapper">
 
-	<resultMap type="org.fkit.domain.User" id="userResultMap">
+	<resultMap type="org.domain.User" id="userResultMap">
 		<id property="id" column="id"/>
 		<result property="username" column="username"/>
 		<result property="loginname" column="loginname"/>
@@ -752,8 +761,8 @@ create table(
 		<result property="address" column="address"/>
 		<!-- 一对多关联映射:collection   -->
 		<collection property="orders" javaType="ArrayList"
-	  column="id" ofType="org.fkit.domain.User"
-	  select="org.fkit.mapper.OrderMapper.selectOrderByUserId"
+	  column="id" ofType="org.domain.User"
+	  select="org.mapper.OrderMapper.selectOrderByUserId"
 	  fetchType="lazy">
 	  	<id property="id" column="id"/>
 	  	<result property="code" column="code"/>
@@ -770,13 +779,13 @@ resultMap 中定义了如何返回一个 userResultMap，由于 orders 是一个
 
 下面是 OrderMapper.xml
 ```xml
-<mapper namespace="org.fkit.mapper.OrderMapper">
-	<resultMap type="org.fkit.domain.Order" id="orderResultMap">
+<mapper namespace="org.mapper.OrderMapper">
+	<resultMap type="org.domain.Order" id="orderResultMap">
 		<id property="id" column="oid"/>
 	  	<result property="code" column="code"/>
 	  	<result property="total" column="total"/>
 		<!-- 多对一关联映射:association   -->
-		<association property="user" javaType="org.fkit.domain.User">
+		<association property="user" javaType="org.domain.User">
 			<id property="id" column="id"/>
 			<result property="username" column="username"/>
 			<result property="loginname" column="loginname"/>
@@ -786,8 +795,8 @@ resultMap 中定义了如何返回一个 userResultMap，由于 orders 是一个
 		</association>
 		<!-- 多对多映射的关键:collection   -->
 		<collection property="articles" javaType="ArrayList"
-	  column="oid" ofType="org.fkit.domain.Article"
-	  select="org.fkit.mapper.ArticleMapper.selectArticleByOrderId"
+	  column="oid" ofType="org.domain.Article"
+	  select="org.mapper.ArticleMapper.selectArticleByOrderId"
 	  fetchType="lazy">
 	  	<id property="id" column="id"/>
 	  	<result property="name" column="name"/>
@@ -805,7 +814,7 @@ resultMap 中定义了如何返回一个 userResultMap，由于 orders 是一个
   </select>
 
   <!-- 根据userid查询订单 -->
-  <select id="selectOrderByUserId" parameterType="int" resultType="org.fkit.domain.Order">
+  <select id="selectOrderByUserId" parameterType="int" resultType="org.domain.Order">
   	SELECT * FROM tb_order WHERE user_id = #{id}
   </select>
 
@@ -817,9 +826,9 @@ resultMap 中定义了如何返回一个 userResultMap，由于 orders 是一个
 
 最后看 ArticleMapper.xml
 ```xml
-<mapper namespace="org.fkit.mapper.ArticleMapper">
+<mapper namespace="org.mapper.ArticleMapper">
   <select id="selectArticleByOrderId" parameterType="int"
-  resultType="org.fkit.domain.Article">
+  resultType="org.domain.Article">
   	SELECT * FROM tb_article WHERE id IN (
 		SELECT article_id FROM tb_item WHERE order_id = #{id}
 	)
@@ -827,3 +836,184 @@ resultMap 中定义了如何返回一个 userResultMap，由于 orders 是一个
 </mapper>
 ```
 里面就根据传入的order id 进行物品查询，而且是从中间表差的，所以 SQL 语句中有一个 IN 子查询。
+
+## 动态 SQL
+常用的动态 SQL 元素包括：
+- if
+- choose(when, otherwise)
+- where
+- set
+- foreach
+- bind
+
+示例 POJO 类：
+```java
+public class Employee implements Serializable {
+
+	private Integer id;			 // 主键id
+	private String loginname;	 // 登录名
+	private String password;	 // 密码
+	private String name;		 // 真实姓名
+	private String sex;			 // 性别
+	private Integer age;		 // 年龄
+	private String phone;		 // 电话
+	private Double sal;		     // 薪水
+	private String state;	 	 // 状态
+}
+```
+
+### if
+有条件的加入一些 where 语句。例如：
+
+```xml
+<!-- if -->
+  <select id="selectEmployeeByIdLike"
+  	resultType="org.domain.Employee">
+  	SELECT * FROM tb_employee WHERE state = 'ACTIVE'
+  	<!-- 可选条件，如果传进来的参数有id属性，则加上id查询条件 -->
+  	<if test="id != null ">
+  		and id = #{id}
+  	</if>
+  </select>
+```
+
+在调用的时候我们可以有多种方法进行调用，因为这牵扯到 Mybatis 获取参数的方式
+```java
+List<Employee> selectEmployeeByIdLike(HashMap<String, Object> params);
+```
+上面的方式接受一个 HashMap 作为参数。在 Mybatis 中，#{id} 表达式获取参数的两种方式为：
+1. 从 HashMap 集合中获取相应的 property
+2. 从 javabean 中获取 property
+所以当采用上图的方式调用时候，代码需要组建一个 HashMap 进行传参
+```java
+HahsMap<String, Obeject> params = new HashMap<>();
+params.put("id", 1);
+List<Employee> list = selectEmployeeByIdLike(params);
+```
+
+当然对于1个参数而言，也可以直接申明为:
+```java
+List<Employee> selectEmployeeByIdLike(Integer id);
+```
+
+如果参数大于1个，除了上面继续在 HashMap params 中添加参数的办法，我们可以用 @Param 注释：
+```xml
+<!-- if -->
+<select id="selectEmployeeByLoginLike"
+	resultType="org.domain.Employee">
+	SELECT * FROM tb_employee WHERE state = 'ACTIVE'
+	<!-- 两个可选条件，例如登录功能的登录名和密码查询 -->
+	<if test="loginname != null and password != null">
+		and loginname = #{loginname} and password = #{password}
+	</if>
+</select>
+```
+```java
+List<Employee> selectEmployeeByLoginLike(@Param("loginname") String  loginname,
+                                         @Param("password") String password);
+```
+
+### choose(when,otherwise)
+有些时候，我们不想用所有的条件语句，而指向从中择其一二。Mybatis 提供了 choose 元素，就像 Java 中的 Switch 语句。
+```xml
+<!-- choose（when、otherwise） -->
+<select id="selectEmployeeChoose"
+	parameterType="hashmap"
+	resultType="org.domain.Employee">
+	SELECT * FROM tb_employee WHERE state = 'ACTIVE'
+	<!-- 如果传入了id，就根据id查询，没有传入id就根据loginname和password查询，否则查询sex等于男的数据 -->
+	<choose>
+		<when test="id != null">
+			and id = #{id}
+		</when>
+		<when test="loginname != null and password != null">
+			and loginname = #{loginname} and password = #{password}
+		</when>
+		<otherwise>
+			and sex = '男'
+		</otherwise>
+	</choose>
+</select>
+```
+如果参数中 提供了 id 就按 id 查找，如果提供了 loginname 和 password 就按 loginname 和 password 查找。若两者都没有提供，就返回所以 sex='男' 的 Employee(otherwise 中)
+
+### where
+where 元素用于把 if, choose 这些元素包起来，这样可以避免当不传入任何参数时候，SQL 可以正确执行。
+```xml
+<!-- where -->
+<select id="selectEmployeeLike"
+	resultType="org.domain.Employee">
+	SELECT * FROM tb_employee  
+	<where>
+		<if test="state != null ">
+			state = #{state}
+  	</if>
+  	<if test="id != null ">
+  		and id = #{id}
+  	</if>
+  	<if test="loginname != null and password != null">
+  		and loginname = #{loginname} and password = #{password}
+  	</if>
+	</where>
+</select>
+```
+where 元素只有在一个及以上的 if 条件有值的情况下就会插入 WHERE 语句。而且，若最后的内容是 "AND" 或
+"OR" 开头，where 元素也知道是否需要将其去除
+
+### set
+set 元素可以被用于动态包含需要的列，而舍去其他的。
+```xml
+<!-- set -->
+<update id="updateEmployeeIfNecessary"
+  parameterType="org.domain.Employee">
+  update tb_employee
+    <set>
+      <if test="loginname != null">loginname=#{loginname},</if> <!-- 注意每一行后面的逗号 -->
+      <if test="password != null">password=#{password},</if>
+      <if test="name != null">name=#{name},</if>
+      <if test="sex != null">sex=#{sex},</if>
+      <if test="age != null">age=#{age},</if>
+      <if test="phone != null">phone=#{phone},</if>
+      <if test="sal != null">sal=#{sal},</if>
+      <if test="state != null">state=#{state}</if>
+    </set>
+  where id=#{id}
+</update>
+```
+set 元素会动态前置 SET 关键字，同时也会消除无关的逗号，因为使用了条件语句之后很可能会在生产的赋值语句的后面留下这些逗号。
+
+### foreach
+关于动态 SQL 另外一个常用的操作就是需要对一个集合进行遍历，通常发生在构建 IN 条件语句的时候
+```xml
+<!-- foreach -->
+<select id="selectEmployeeIn" resultType="org.domain.Employee">
+  SELECT *
+  FROM tb_employee
+  WHERE ID in
+  <foreach item="item" index="index" collection="list"
+      open="(" separator="," close=")">
+        #{item}
+  </foreach>
+</select>
+```
+foreach 允许指定一个集合，声明可以用在元素体内的集合项和索引变量。它也允许指定开闭匹配的字符串以及
+在迭代中间放置分隔符。而且并不会附加多余的分隔符。
+```java
+// 引用时候传入相应的集合便可以
+List<Employee> selectEmployeeIn(List<Integer> ids)
+```
+
+### bind
+bind元素可以从 OGNL 表达式中创建一个变量并将其绑定到上下文中
+```xml
+<!-- bind -->
+<select id="selectEmployeeLikeName"  resultType="org.domain.Employee">
+  <bind name="pattern" value="'%' + _parameter.getName() + '%'" />
+    SELECT * FROM tb_employee
+    WHERE loginname LIKE #{pattern}
+</select>
+```
+
+# Mybatis 的事务管理和缓存机制
+
+## MyBatis 的事务管理

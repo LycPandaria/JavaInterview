@@ -274,3 +274,35 @@ public TreeLinkNode GetNext(TreeLinkNode pNode){
     }
 }
 ```
+
+## 用两个栈模拟队列
+[NowCode](https://www.nowcoder.com/practice/54275ddae22f475981afa2244dd448c6?tpId=13&tqId=11158&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+### 问题描述
+用两个栈来实现一个队列，完成队列的Push和Pop操作。 队列中的元素为int类型。
+
+### 解题思路
+要入列时，入栈A即可，要出队列则分两种情况：
+1. 若栈B不为空，则直接弹出栈B
+2. 若栈B为空，则需要依次弹出栈A，入到栈B，在弹出栈B
+
+```java
+Stack<Integer> in = new Stack<Integer>();
+Stack<Integer> out = new Stack<Integer>();
+
+public void push(int node) {
+    // 入列时，直接入到 stack in 即可
+    in.push(node);
+}
+
+public int pop() {
+    // 如果 stack out 不为空，则直接 pop 栈 out
+    if(!out.isEmpty())
+        return out.pop();
+    else{
+        // 如果 stack out 为空，则需要先把 stack in 全部 pop 出来，push 到 out 栈
+        while(!in.isEmpty())
+            out.push(in.pop());
+    }
+    return out.pop();
+}
+```
