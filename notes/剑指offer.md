@@ -275,7 +275,7 @@ public TreeLinkNode GetNext(TreeLinkNode pNode){
 }
 ```
 
-## 用两个栈模拟队列
+## 8.用两个栈模拟队列
 [NowCode](https://www.nowcoder.com/practice/54275ddae22f475981afa2244dd448c6?tpId=13&tqId=11158&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
 ### 问题描述
 用两个栈来实现一个队列，完成队列的Push和Pop操作。 队列中的元素为int类型。
@@ -304,5 +304,126 @@ public int pop() {
             out.push(in.pop());
     }
     return out.pop();
+}
+```
+# 算法和数据操作
+## 9.斐波那契数列
+[NowCode](https://www.nowcoder.com/practice/c6c7742f5ba7442aada113136ddea0c3?tpId=13&tqId=11160&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 问题描述
+大家都知道斐波那契数列，现在要求输入一个整数n，请你输出斐波那契数列的第n项（从0开始，第0项为0）。
+n<=39
+
+### 解题思路
+最简单的办法首先是递归，但是递归在 n 值较大的时候会影响效率，而且很多计算会重复计算。
+```java
+// 递归
+public int Fibonacci(int n) {
+    if(n <= 1)
+        return n;
+    return Fibonacci(n-1) + Fibonacci(n-2);
+}
+```
+
+递归是将一个问题划分成多个子问题求解，动态规划也是如此，但是动态规划会把子问题的解缓存起来（用一个数组），从而避免重复求解子问题。
+```java
+// 动态规划
+public int Fibonacci(int n) {
+    if(n <= 1)
+        return n;
+    int[] fib = new int[n+1];
+    fib[0] = 0;
+    fib[1] = 1;    
+    for(int i=2; i <=n; i ++)
+        //缓存结果
+        fib[i] = fib[i-1] + fib[i-2];
+    return fib[n];
+}
+```
+
+但其实可以发现 fib[n] 只跟 fib[n-1] 和 fib[n-2] 有关，所以我们只能保存两个结果，计算出 fib[n] 即可。通过 f(0) 和 f(1) 计算 f(2)，然后根据 f(2) 和 f(1) 计算 f(3)... 以此类推.
+```java
+public int Fibonacci(int n) {
+    if(n <= 1)
+        return n;
+    int fibN1 = 1;    // fib(n-1)
+    int fibN2 = 0;    // fib(n-2)
+    int fibN = 0;
+    for(int i = 2; i <= n; i++){
+        fibN = fibN1 + fibN2;    // 计算 fibN
+        fibN2 = fibN1;            // 进入下一次计算，f(n-2) = f(n-1)
+        fibN1 = fibN;             // f(n-1) = f(n)
+    }
+    return fibN;
+}
+```
+
+## 9.1 跳台阶
+[跳台阶](https://www.nowcoder.com/practice/8c82a5b80378478f9484d87d1c5f12a4?tpId=13&tqId=11161&tPage=1&rp=1&ru=%2Fta%2Fcoding-interviews&qru=%2Fta%2Fcoding-interviews%2Fquestion-ranking)
+
+### 问题描述
+一只青蛙一次可以跳上1级台阶，也可以跳上2级。求该青蛙跳上一个n级的台阶总共有多少种跳法（先后次序不同算不同的结果）。
+
+### 解题思路
+最简单的情况，如果只有 1 级台阶就只有 1 种跳法。有 2 级台阶只有 2 中跳法。
+
+一般情况，我们把 跳 n 级台阶的跳法看成是 n 的函数 f(n)。当 n>2 时，第一次跳的时候就有两种不同的选择，一是第一次只跳 1 级，此时跳法总数等于后面剩下的 n-1 级台阶的跳法总数。第一次只跳 2 级，此时跳法总数等于后面剩下的 n-2 级台阶的跳法总数。这很明显就是一个斐波那契数列。
+
+```java
+public int JumpFloor(int target) {
+    if(target <= 2)
+        return target;
+    int jumpN1 = 2;    // 这里表示 f(n-1)
+    int jumpN2 = 1;    // f(n-2)
+    int jumpN = 1;
+    for(int i=3; i <= target; i++){
+        jumpN = jumpN1 + jumpN2;
+        jumpN2 = jumpN1;
+        jumpN1 = jumpN;
+    }
+    return jumpN;
+}
+```
+
+## 9.2 变态跳台阶
+[变态跳台阶](https://www.nowcoder.com/practice/22243d016f6b47f2a6928b4313c85387?tpId=13&tqId=11162&tPage=1&rp=1&ru=%2Fta%2Fcoding-interviews&qru=%2Fta%2Fcoding-interviews%2Fquestion-ranking)
+
+### 问题描述
+一只青蛙一次可以跳上1级台阶，也可以跳上2级……它也可以跳上n级。求该青蛙跳上一个n级的台阶总共有多少种跳法。
+
+### 解题思路
+**动态规划**
+```java
+public int JumpFloorII(int target) {
+    int[] dp = new int[target]; // 用于缓存结果
+    Arrays.fill(dp, 1);
+    for (int i = 1; i < target; i++)
+        for (int j = 0; j < i; j++)
+            dp[i] += dp[j];
+    return dp[target - 1];
+}
+```
+
+## 9.3 矩形覆盖
+[矩形覆盖](https://www.nowcoder.com/practice/72a5a919508a4251859fb2cfb987a0e6?tpId=13&tqId=11163&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 问题描述
+我们可以用2*1的小矩形横着或者竖着去覆盖更大的矩形。请问用n个2*1的小矩形无重叠地覆盖一个2*n的大矩形，总共有多少种方法？
+
+### 解题思路
+这其实还是一个 斐波那契数列
+```java
+public int RectCover(int target) {
+    if(target <= 2 )
+        return target;
+    int rcN1 = 2;
+    int rcN2 = 1;
+    int rcN = 1;
+    for(int i=3; i <= target; i++){
+        rcN = rcN1 + rcN2;
+        rcN2 = rcN1;
+        rcN1 = rcN;
+    }
+    return rcN;
 }
 ```
