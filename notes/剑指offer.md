@@ -427,3 +427,60 @@ public int RectCover(int target) {
     return rcN;
 }
 ```
+# 查找和排序
+## 10.旋转数组的最小数字
+[旋转数组的最小数字](https://www.nowcoder.com/practice/9f3231a991af4f55b95579b44b7a01ba?tpId=13&tqId=11159&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+###问题描述
+把一个数组最开始的若干个元素搬到数组的末尾，我们称之为数组的旋转。 输入一个非减排序的数组的一个旋转，输出旋转数组的最小元素。 例如数组{3,4,5,1,2}为{1,2,3,4,5}的一个旋转，该数组的最小值为1。 NOTE：给出的所有元素都大于0，若数组大小为0，请返回0。
+
+### 解题思路
+最直观的解法肯定是从头遍历一次数组，然后找出最小的数，但是这种思路的时间复杂度为 O(n)，而且并没有用到数组原来就有序的情况和旋转数组的特性。
+
+我们注意到旋转之后的数组实际上可以划分为两个排序的子数组，而且签名子数组的元素都大于或者等于后面子数组的元素。我们还注意到最小的元素刚好是这两个子数组的分界线。
+
+- 当 nums[m] <= nums[h] 的情况下，说明解在 [l, m] 之间，此时令 h = m；
+- 否则解在 [m + 1, h] 之间，令 l = m + 1。
+
+```java
+public int minNumberInRotateArray(int [] array) {
+    if(array.length == 0)
+        return 0;
+    int left = 0, right = array.length-1;
+    while(left < right){
+        int mid = left + (right - left) / 2;    // 中间元素
+        if(array[mid] <= array[right])
+            // 说明 array[mid...right] 属于右边的排序区间，最小值在 array[left...mid]
+            right = mid;
+        else
+            left = mid + 1;
+    }
+    return array[left];
+}
+```
+
+如果数组元素允许重复的话，那么就会出现一个特殊的情况：nums[l] == nums[m] == nums[h]，那么此时无法确定解在哪个区间，需要切换到顺序查找。例如对于数组 {1,1,1,0,1}，l、m 和 h 指向的数都为 1，此时无法知道最小数字 0 在哪个区间。
+
+```java
+public int minNumberInRotateArray(int[] nums) {
+    if (nums.length == 0)
+        return 0;
+    int l = 0, h = nums.length - 1;
+    while (l < h) {
+        int m = l + (h - l) / 2;
+        if (nums[l] == nums[m] && nums[m] == nums[h])
+            return minNumber(nums, l, h);
+        else if (nums[m] <= nums[h])
+            h = m;
+        else
+            l = m + 1;
+    }
+    return nums[l];
+}
+
+private int minNumber(int[] nums, int l, int h) {
+    for (int i = l; i < h; i++)
+        if (nums[i] > nums[i + 1])
+            return nums[i + 1];
+    return nums[l];
+}
+```
