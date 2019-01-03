@@ -484,3 +484,220 @@ private int minNumber(int[] nums, int l, int h) {
     return nums[l];
 }
 ```
+
+## 11.矩阵中的路径
+(矩阵中的路径)[https://www.nowcoder.com/practice/c61c6999eecb4b8f88a98f66b273a3cc?tpId=13&tqId=11218&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking]
+
+### 问题描述
+请设计一个函数，用来判断在一个矩阵中是否存在一条包含某字符串所有字符的路径。路径可以从矩阵中的任意一个格子开始，每一步可以在矩阵中向左，向右，向上，向下移动一个格子。如果一条路径经过了矩阵中的某一个格子，则之后不能再次进入这个格子。 例如 a b c e s f c s a d e e 这样的3 X 4 矩阵中包含一条字符串"bcced"的路径，但是矩阵中不包含"abcb"路径，因为字符串的第一个字符b占据了矩阵中的第一行第二个格子之后，路径不能再次进入该格子。
+![矩阵中路径](../pic/矩阵中路径.png)
+
+### 解题思路
+这是一个可以用回溯法解决的问题。首先，在矩阵中任选一个格子作为路径的起点。假设矩阵中某个格子的字符为 ch，而且这个格子对应于路径上的第 i 个字符。如果路径上第 i 个字符不是 ch，那么这个格子不可能处在路径在第 i 的位置。如果路径上的第 i 个字符是 ch，那么到相邻的格子上寻找路径上第 i+1 个字符。重复这个过程，知道路径上所有字符都在矩阵内找到相应位置。
+
+由于回溯法的递归特性，路径可以被看做一个栈。当在矩阵中定位了路径中前 n 个字符的位置之后，在与第 n 个字符对应的格子的周围都未找到第 n+1 个字符，便要回到第 n-1 个字符，重新定位第 n 个字符。
+
+而且由于路径不能重复进入矩阵的格子，所以还要定义个布尔矩阵，标记进入过的格子。
+
+```java
+public class Solution {
+    public boolean hasPath(char[] array, int rows, int cols, char[] str)
+    {
+        if(rows < 1 || cols < 1 || str.length < 1 || str == null)
+            return false;
+
+        // 布尔矩阵用于标识走路径格子
+        boolean visited[][] = new boolean[rows][cols];
+        int pathLen = 0; // 用于标记匹配到第几位上了
+        char[][] matrix = buildMatrix(array,rows, cols);
+
+        for(int row = 0; row < rows; row++)
+            for(int col = 0; col < cols; col++)
+                if(hasPathCore(matrix, str, visited, rows, cols, row, col, pathLen))
+                    return true;
+
+        return false;
+    }
+
+    public boolean hasPathCore(char[][] matrix, char[] str, boolean[][] visited, int rows, int cols,
+                               int row, int col,int pathLen){
+        if(pathLen == str.length)
+            return true;
+
+        boolean hasPath = false;
+        if(row >= 0 && col >= 0 && row < rows && col < cols
+          && matrix[row][col] == str[pathLen] && !visited[row][col]){
+            // 这种情况说明字符串的第 i 个字符和 matrix[row][col] 相等
+            pathLen ++ ;    // 第 i 个字符匹配完成
+            visited[row][col] = true;
+            // 当矩阵中坐标为 (row,col) 的格子和路径字符中下标为 pathLen 的字符一样时候，从四个相邻格子去定位
+            // 路径字符串中下标为 pathLe+1 的字符
+            hasPath = hasPathCore(matrix, str, visited, rows, cols, row, col-1, pathLen)    //左边一格
+                || hasPathCore(matrix, str, visited, rows, cols, row, col+1, pathLen)    // 右边一格
+                || hasPathCore(matrix, str, visited, rows, cols, row-1, col, pathLen)    // 上面一格
+                || hasPathCore(matrix, str, visited, rows, cols, row+1, col, pathLen);    // 下面一格
+
+            if(!hasPath){    // 没有路径，说明这个格子走不通，走不下去，需要回退
+                pathLen--;
+                visited[row][col] = false;
+            }
+        }
+        return hasPath;
+    }
+
+    private char[][] buildMatrix(char[] array, int rows, int cols) {
+        char[][] matrix = new char[rows][cols];
+        for (int i = 0, idx = 0; i < rows; i++)
+            for (int j = 0; j < cols; j++)
+                matrix[i][j] = array[idx++];
+        return matrix;
+    }
+
+}
+```
+
+## 12.机器人运动范围
+(机器人运动范围)[https://www.nowcoder.com/practice/6e5207314b5241fb83f2329e89fdecc8?tpId=13&tqId=11219&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking]
+
+### 问题描述
+地上有一个m行和n列的方格。一个机器人从坐标0,0的格子开始移动，每一次只能向左，右，上，下四个方向移动一格，但是不能进入行坐标和列坐标的数位之和大于k的格子。 例如，当k为18时，机器人能够进入方格（35,37），因为3+5+3+7 = 18。但是，它不能进入方格（35,38），因为3+5+3+8 = 19。请问该机器人能够达到多少个格子？
+
+### 思路
+这个方格可以看做一个 m*n 的矩阵。机器人从坐标(0,0)开始，当它进入坐标 (i,j) 的格子，通过检查坐标的数位和判断机器人是否能够进入。如果机器人能进入坐标 (i,j) 的格子，则再判断它是否能进入相邻格子。
+
+```java
+public int movingCount(int threshold, int rows, int cols)
+{
+    if(threshold < 0 || rows  <= 0 || cols <= 0 )
+        return 0;
+
+    boolean visited[][] = new boolean[rows][cols];
+    int count = movingCountCore(threshold, rows, cols, 0, 0, visited);
+
+    return count;
+}
+
+private int movingCountCore(int threshold, int rows, int cols,
+                           int row, int col, boolean[][] visited){
+    int count = 0;
+    if(check(threshold, rows, cols, row, col, visited)){
+        visited[row][col] = true;
+        count = 1 + movingCountCore(threshold, rows, cols, row+1, col, visited)
+            + movingCountCore(threshold, rows, cols, row-1, col, visited)
+            + movingCountCore(threshold, rows, cols, row, col+1, visited)
+            + movingCountCore(threshold, rows, cols, row, col-1, visited);
+    }
+    return count;
+}
+
+private boolean check(int threshold, int rows, int cols,
+                     int row, int col, boolean[][] visited){
+    // 这个函数用于检测机器人能否进入该格子中
+    if(row >= 0 && col >=0 && row < rows && col < cols
+      && !visited[row][col]
+      && getDigiSum(row) + getDigiSum(col) <= threshold)
+        return true;
+    return false;
+}
+
+private int getDigiSum(int number){
+    int sum = 0;
+    while(number > 0){
+        sum+=number%10;
+        number /= 10;
+    }
+    return sum;
+}
+```
+
+# 动态规划和贪婪算法
+动态规划：
+
+如果一个问题是求一个问题的最优解，而且该问题能够分解成若干子问题，并且子问题之间还有重叠的更小的子问题，就可以考虑。
+
+例如在面试题 13 中，我们如何打长度为 n 的绳子剪成若干段，使得各段乘积最大。这个问题是求一个问题的最优解--这是动态规划求解的第一个特点。
+
+我们把长度为 n 的绳子剪成若干段后得到的乘积最大值定义为 f(n)。加入我们把第一刀剪在长度为 i 的位置，我们要得到 f(n), 就要依靠 f(i) 和 f(n-i) 的最优解。也就是说整体问题的最优解是依赖于子问题的最优解-- 这是动态规划求解的第二个特点。
+
+我们把大问题分解成若干个小问题，但是小问题之间还有互相重叠的子问题--这是动态规划求解的第三个特点。例如 f(10) 可以分成 f(6) 和 f(4)，f(6) 可以分成 f(4) 和 f(2)。这就体现了子问题存在重叠的情况
+
+由于子问题在分解过程中重复出现，为了避免重复求解子问题，我们可以从下到上先计算小问题并存储结果，以此为基础求取大问题的最优解。从上往下分析，从下往上求解，这是动态规划的第四个特点。
+
+## 13.剪绳子
+[leetcode](https://leetcode.com/problems/integer-break/description/)
+
+### 问题描述
+把一根绳子剪成多段，并且使得每段的长度乘积最大。
+```text
+n = 2
+return 1 (2 = 1 + 1)
+
+n = 10
+return 36 (10 = 3 + 3 + 4)
+```
+
+### 解题思路
+我们把长度为 n 的绳子剪成若干段后得到的乘积最大值定义为 f(n)，在剪第一刀的时候，有 n-1 种可能，也就是剪出来的第一段绳子的可能长度可能为 1,2,...n-1. 因此 f(n)=max(f(i)\*f(n-i))
+
+自下而上计算，存储结果。
+
+```java
+public int integerBreak(int n) {
+    if(n < 2)
+      return 0;
+    if(n == 2)
+      return 1;
+    if(n == 3)
+      return 2;
+
+    int dp[] = new int [n+1];   // 存储 f(i)
+    dp[0] = 0;
+    dp[1] = 1;
+    dp[2] = 2;
+    dp[3] = 3;
+
+    int max = 0;
+
+    // 代码解释在下面
+    for(int i = 2; i <=n; i++){
+        // 因为对称，只需要循环到 i/2 即可
+        for(int j=4; j <= i/2; j++){
+          int product = dp[j] * dp[i-j];
+          if(max < product)
+            max = product;
+          dp[i] = max;
+        }
+    }
+    max = dp[n];
+    return max;
+}
+```
+
+在上述的代码中，子问题的最优解存在数组 dp 中，dp[i] 即为 把长度为 i 的绳子剪成若干段后的乘积最大值。第一个循环的 i 是递增的，说明计算是自下而上的。因此在求 f(i) 之前，对于每一个 j(0<j<i),f(j) 都是求出来的并保存在 dp[j] 中。 为了求解 f(i)，我们需要求出所有可能的 f(i)\*f(i-j) 并比较得出最大值。这就是代码中第二个 for 的功能。
+
+### 贪婪算法
+尽可能多剪长度为 3 的绳子，并且不允许有长度为 1 的绳子出现。如果出现了，就从已经切好长度为 3 的绳子中拿出一段与长度为 1 的绳子重新组合，把它们切成两段长度为 2 的绳子。
+
+证明：当 n >= 5 时，3(n - 3) - n = 2n - 9 > 0，且 2(n - 2) - n = n - 4 > 0。因此在 n >= 5 的情况下，将绳子剪成一段为 2 或者 3，得到的乘积会更大。又因为 3(n - 3) - 2(n - 2) = n - 5 >= 0，所以剪成一段长度为 3 比长度为 2 得到的乘积更大。
+
+```java
+public int integerBreak(int n) {
+    if(n < 2)
+      return 0;
+    if(n == 2)
+      return 1;
+    if(n == 3)
+      return 2;
+
+    // 尽可能剪去长度为 3 的绳子
+    int timeOf3 = n / 3;
+
+    // 当绳子最后剩下的长度为 4，不能再剪去长度为 3 的短，拿出一个 3 米的组成 2*2 会更好
+    if((n - timeOf3*3) == 1)
+      timeOf3 -= 1;
+
+    int timeOf2 = (n - timeOf3*3) / 2;
+
+    return (int)(Math.powerN(3,timeOf3) * Math.powerN(2, timeOf2));
+}
+```

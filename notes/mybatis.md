@@ -35,6 +35,15 @@
     - [bind](#bind)
 - [Mybatis 的事务管理和缓存机制](#mybatis-的事务管理和缓存机制)
   - [MyBatis 的事务管理](#mybatis-的事务管理)
+    - [事务的概念](#事务的概念)
+    - [Transaction 接口](#transaction-接口)
+    - [事务的配置创建和使用](#事务的配置创建和使用)
+    - [事务工厂的创建](#事务工厂的创建)
+    - [事务工厂 TransactionFactory](#事务工厂-transactionfactory)
+    - [JdbcTransaction](#jdbctransaction)
+  - [Mybatis 缓存机制](#mybatis-缓存机制)
+    - [一级缓存](#一级缓存)
+    - [二级缓存 (Mapper 级别)](#二级缓存-mapper-级别)
 
 <!-- TOC END -->
 
@@ -1017,3 +1026,307 @@ bind元素可以从 OGNL 表达式中创建一个变量并将其绑定到上下�
 # Mybatis 的事务管理和缓存机制
 
 ## MyBatis 的事务管理
+
+### 事务的概念
+1. 原子性（Atomicity）
+原子性是指事务包含的所有操作要么全部成功，要么全部失败回滚，这和前面两篇博客介绍事务的功能是一样的概念，因此事务的操作如果成功就必须要完全应用到数据库，如果操作失败则不能对数据库有任何影响。
+
+2. 一致性（Consistency）
+　　一致性是指事务必须使数据库从一个一致性状态变换到另一个一致性状态，也就是说一个事务执行之前和执行之后都必须处于一致性状态。
+
+　　拿转账来说，假设用户A和用户B两者的钱加起来一共是5000，那么不管A和B之间如何转账，转几次账，事务结束后两个用户的钱相加起来应该还得是5000，这就是事务的一致性。
+
+3. 隔离性（Isolation）
+　　隔离性是当多个用户并发访问数据库时，比如操作同一张表时，数据库为每一个用户开启的事务，不能被其他事务的操作所干扰，多个并发事务之间要相互隔离。
+
+　　即要达到这么一种效果：对于任意两个并发的事务T1和T2，在事务T1看来，T2要么在T1开始之前就已经结束，要么在T1结束之后才开始，这样每个事务都感觉不到有其他事务在并发地执行。
+
+4. 持久性（Durability）
+　　持久性是指一个事务一旦被提交了，那么对数据库中的数据的改变就是永久性的，即便是在数据库系统遇到故障的情况下也不会丢失提交事务的操作。
+
+　　例如我们在使用JDBC操作数据库时，在提交事务方法后，提示用户事务操作完成，当我们程序执行完成直到看到提示后，就可以认定事务以及正确提交，即使这时候数据库出现了问题，也必须要将我们的事务完全执行完成，否则就会造成我们看到提示事务处理完毕，但是数据库因为故障而没有执行事务的重大错误。
+
+### Transaction 接口
+位于org.apache.ibatis.transaction包的Transaction和TransactionFactory都是接口类。
+
+　　Transaction是事务接口，其中定义了四个方法：
+
+　　　　　　commit()-事务提交
+
+　　　　　　rollBack()-事务回滚
+
+　　　　　　close()-关闭数据库连接
+
+　　　　　　getConnection()-获取数据库连接
+
+```java
+package org.apache.ibatis.transaction;
+import java.sql.Connection;
+import java.sql.SQLException;
+/**
+ * 事务，包装了一个Connection, 包含commit,rollback,close方法
+ * 在 MyBatis 中有两种事务管理器类型(也就是 type=”[JDBC|MANAGED]”):  
+ */
+public interface Transaction {
+  Connection getConnection() throws SQLException;
+  void commit() throws SQLException;
+  void rollback() throws SQLException;
+  void close() throws SQLException;
+}
+```
+
+### 事务的配置创建和使用
+在使用 Mybatis  的时候，配置文件中配置事务管理机制：
+```xml
+<!-- type="MANAGED" 指让容器实现对事务的管理 -->
+<transactionManager type="JDBC"/>
+```
+二者的不同之处在于：前者是直接使用JDK提供的JDBC来管理事务的各个环节：提交、回滚、关闭等操作，而后者则什么都不做，那么后者有什么意义呢，当然很重要。
+
+当我们单独使用MyBatis来构建项目时，我们要在Configuration配置文件中进行环境（environment）配置，在其中要设置事务类型为JDBC，意思是说MyBatis被单独使用时就需要使用JDBC类型的事务模型，因为在这个模型中定义了事务的各个方面，使用它可以完成事务的各项操作。而MANAGED类型的事务模型其实是一个托管模型，也就是说它自身并不实现任何事务功能，而是托管出去由其他框架来实现，你可能还不明白，这个事务的具体实现就交由如Spring之类的框架来实现，而且在使用SSM整合框架后已经不再需要单独配置环境信息（包括事务配置与数据源配置），因为在在整合jar包（mybatis-spring.jar）中拥有覆盖mybatis里面的这部分逻辑的代码，实际情况是即使你显式设置了相关配置信息，系统也会视而不见......
+
+### 事务工厂的创建
+MyBatis事务的创建是交给TransactionFactory 事务工厂来创建的，如果我们将<transactionManager>的type 配置为"JDBC",那么，在MyBatis初始化解析<environment>节点时，会根据type="JDBC"创建一个JdbcTransactionFactory工厂，其源码如下：
+```java
+/**
+     * 解析<transactionManager>节点，创建对应的TransactionFactory
+     * @param context
+     * @return
+     * @throws Exception
+     */
+  private TransactionFactory transactionManagerElement(XNode context) throws Exception {
+    if (context != null) {
+      String type = context.getStringAttribute("type");
+      Properties props = context.getChildrenAsProperties();
+      /*
+            在Configuration初始化的时候，会通过以下语句，给JDBC和MANAGED对应的工厂类
+            typeAliasRegistry.registerAlias("JDBC", JdbcTransactionFactory.class);
+            typeAliasRegistry.registerAlias("MANAGED", ManagedTransactionFactory.class);
+            下述的resolveClass(type).newInstance()会创建对应的工厂实例
+       */
+      TransactionFactory factory = (TransactionFactory) resolveClass(type).newInstance();
+      factory.setProperties(props);
+      return factory;
+    }
+    throw new BuilderException("Environment declaration requires a TransactionFactory.");
+  }
+```
+如上述代码所示，如果type = "JDBC",则MyBatis会创建一个JdbcTransactionFactory.class 实例；如果type="MANAGED"，则MyBatis会创建一个MangedTransactionFactory.class实例。
+
+### 事务工厂 TransactionFactory
+通过事务工厂TransactionFactory很容易获取到Transaction对象实例。我们以JdbcTransaction为例，看一下JdbcTransactionFactory是怎样生成JdbcTransaction的，代码如下：
+```java
+public class JdbcTransactionFactory implements TransactionFactory {
+
+  public void setProperties(Properties props) {
+  }
+
+    /**
+     * 根据给定的数据库连接Connection创建Transaction
+     * @param conn Existing database connection
+     * @return
+     */
+  public Transaction newTransaction(Connection conn) {
+    return new JdbcTransaction(conn);
+  }
+
+    /**
+     * 根据DataSource、隔离级别和是否自动提交创建Transacion
+     *
+     * @param ds
+     * @param level Desired isolation level
+     * @param autoCommit Desired autocommit
+     * @return
+     */
+  public Transaction newTransaction(DataSource ds, TransactionIsolationLevel level, boolean autoCommit) {
+    return new JdbcTransaction(ds, level, autoCommit);
+  }
+}
+```
+
+### JdbcTransaction
+JdbcTransaction直接使用JDBC的提交和回滚事务管理机制 。它依赖与从dataSource中取得的连接connection 来管理transaction 的作用域，connection对象的获取被延迟到调用getConnection()方法。如果autocommit设置为on，开启状态的话，它会忽略commit和rollback。
+
+直观地讲，就是JdbcTransaction是使用的java.sql.Connection 上的commit和rollback功能，JdbcTransaction只是相当于对java.sql.Connection事务处理进行了一次包装（wrapper），Transaction的事务管理都是通过java.sql.Connection实现的。JdbcTransaction的代码实现如下：
+
+```java
+/**
+ * @see JdbcTransactionFactory
+ */
+/**
+ * @author Clinton Begin
+ */
+public class JdbcTransaction implements Transaction {
+
+  private static final Log log = LogFactory.getLog(JdbcTransaction.class);
+
+  //数据库连接
+  protected Connection connection;
+  //数据源
+  protected DataSource dataSource;
+  //隔离级别
+  protected TransactionIsolationLevel level;
+  //是否为自动提交
+  protected boolean autoCommmit;
+
+  public JdbcTransaction(DataSource ds, TransactionIsolationLevel desiredLevel, boolean desiredAutoCommit) {
+    dataSource = ds;
+    level = desiredLevel;
+    autoCommmit = desiredAutoCommit;
+  }
+
+  public JdbcTransaction(Connection connection) {
+    this.connection = connection;
+  }
+
+  public Connection getConnection() throws SQLException {
+    if (connection == null) {
+      openConnection();
+    }
+    return connection;
+  }
+
+    /**
+     * commit()功能 使用connection的commit()
+     * @throws SQLException
+     */
+  public void commit() throws SQLException {
+    if (connection != null && !connection.getAutoCommit()) {
+      if (log.isDebugEnabled()) {
+        log.debug("Committing JDBC Connection [" + connection + "]");
+      }
+      connection.commit();
+    }
+  }
+
+    /**
+     * rollback()功能 使用connection的rollback()
+     * @throws SQLException
+     */
+  public void rollback() throws SQLException {
+    if (connection != null && !connection.getAutoCommit()) {
+      if (log.isDebugEnabled()) {
+        log.debug("Rolling back JDBC Connection [" + connection + "]");
+      }
+      connection.rollback();
+    }
+  }
+
+    /**
+     * close()功能 使用connection的close()
+     * @throws SQLException
+     */
+  public void close() throws SQLException {
+    if (connection != null) {
+      resetAutoCommit();
+      if (log.isDebugEnabled()) {
+        log.debug("Closing JDBC Connection [" + connection + "]");
+      }
+      connection.close();
+    }
+  }
+
+  protected void setDesiredAutoCommit(boolean desiredAutoCommit) {
+    try {
+      if (connection.getAutoCommit() != desiredAutoCommit) {
+        if (log.isDebugEnabled()) {
+          log.debug("Setting autocommit to " + desiredAutoCommit + " on JDBC Connection [" + connection + "]");
+        }
+        connection.setAutoCommit(desiredAutoCommit);
+      }
+    } catch (SQLException e) {
+      // Only a very poorly implemented driver would fail here,
+      // and there's not much we can do about that.
+      throw new TransactionException("Error configuring AutoCommit.  "
+          + "Your driver may not support getAutoCommit() or setAutoCommit(). "
+          + "Requested setting: " + desiredAutoCommit + ".  Cause: " + e, e);
+    }
+  }
+
+  protected void resetAutoCommit() {
+    try {
+      if (!connection.getAutoCommit()) {
+        // MyBatis does not call commit/rollback on a connection if just selects were performed.
+        // Some databases start transactions with select statements
+        // and they mandate a commit/rollback before closing the connection.
+        // A workaround is setting the autocommit to true before closing the connection.
+        // Sybase throws an exception here.
+        if (log.isDebugEnabled()) {
+          log.debug("Resetting autocommit to true on JDBC Connection [" + connection + "]");
+        }
+        connection.setAutoCommit(true);
+      }
+    } catch (SQLException e) {
+      log.debug("Error resetting autocommit to true "
+          + "before closing the connection.  Cause: " + e);
+    }
+  }
+
+  protected void openConnection() throws SQLException {
+    if (log.isDebugEnabled()) {
+      log.debug("Opening JDBC Connection");
+    }
+    connection = dataSource.getConnection();
+    if (level != null) {
+      connection.setTransactionIsolation(level.getLevel());
+    }
+    setDesiredAutoCommit(autoCommmit);
+  }
+
+}
+```
+
+## Mybatis 缓存机制
+mybatis提供了缓存机制减轻数据库压力，提高数据库性能。mybatis的缓存分为两级：一级缓存、二级缓存
+
+一级缓存是SqlSession级别的缓存，缓存的数据只在SqlSession内有效。
+
+二级缓存是mapper级别的缓存，同一个namespace公用这一个缓存，所以对SqlSession是共享的
+
+[一级缓存和二级缓存例子](https://blog.csdn.net/zouxucong/article/details/68947052)
+
+### 一级缓存
+SqlSession 级别的缓存。在操作数据库时需要构造 SqlSession 对象，在对象中有一个 HashMap 用于存储缓存数据。不同的 SqlSession 之间的缓存数据区域(HashMap)互相不影响.
+
+当同一个 SqlSession 中执行两次相同的 sql 的时候，第一次执行完毕会将结果写到缓存中，第二次查询时候会从缓存中获取。
+
+需要注意的是，当执行的是 DML 操作(update,insert,delete)时候，并提交到数据库后， MyBatis 会情况 SqlSession 中的一级缓存，避免出现脏读的现象。当一个 SqlSession 结束后一级缓存也不存在了，Mybatis 默认开启一级缓存。
+
+### 二级缓存 (Mapper 级别)
+使用二级缓存的时候，多个 SqlSession 使用同一个 Mapper 的 sql 语句去操作数据库时候，得到的数据会存在二级缓存区域中，它同样是使用 HashMap 进行数据存储，相比一级缓存，二级的缓存的范围更大，多个 SqlSession 可以共用二级缓存。
+
+二级缓存是多个 SqlSession 共享的，其作用域时 Mapper 的同一个 namespace。不同的 SqlSession 两次执行相同的 namespace 下的 sql 语句，且参数一样，则第一次执行后会将结果写到缓存中，第二次从缓存中取数。
+
+Mybatis 默认没有开启二级缓存，需要在 setting 中设置开启
+
+mybatis-config.xml
+```xml
+<settings>
+        <setting name="cacheEnabled" value="true"/>默认是false：关闭二级缓存
+<settings>
+```
+
+在userMapper.xml中配置：
+```xml
+<cache eviction="LRU" flushInterval="60000" size="512" readOnly="true"/>
+```
+
+以上配置创建了一个LRU缓存，并每隔60秒刷新，最大存储512个对象，而且返回的对象被认为是只读。
+cache元素用来开启当前mapper的namespace下的二级缓存，该元素的属性设置如下：
+  - flushInterval：刷新间隔，可以被设置为任意的正整数，而且它们代表一个合理的毫秒形式的时间段，默认情况下是不设置的，也就是没有刷新间隔，缓存仅仅调用语句时刷新。
+  - size：缓存数目，可以被设置为任意正整数，要记住你的缓存对象数目和你运行环境可用内存资源数目，默认值是1024.
+  - readOnly：只读，属性可以被设置为true或false，只读的缓存会给所有调用者返回缓存对象的相同实例，因此这些对象不能被修改。这提供了很重要的性能优势，可读写的缓存会返回缓存对象的拷贝（通过序列化），这会慢一些，但是安全，因此默认是false。
+  - eviction：收回策略，默认为LRU，有如下几种：
+    - LRU：最近最少使用的策略，移除最长时间不被使用的对象。
+    - FIFO：先进先出策略，按对象进入缓存的顺序来移除它们。
+    - SOFT：软引用策略，移除基于垃圾回收器状态和软引用规则的对象。
+    - WEAK：弱引用策略，更积极地移除基于垃圾收集器状态和弱引用规则的对象。
+
+**注意**：使用二级缓存时，与查询结果映射的java对象必须实现java.io.Serializable接口的序列化和反序列化操作，如果存在父类，其成员都需要实现序列化接口，实现序列化接口是为了对缓存数据进行序列化和反序列化操作，因为二级缓存数据存储介质多种多样，不一定在内存，有可能是硬盘或者远程服务器。
+
+若禁用当前 select 语句的二级缓存，需要在 select 设置 "useCache=false"
+
+刷新缓存（就是清空缓存）：二级缓存默认会在insert、update、delete操作后刷新缓存，可以手动配置不更新缓存，如下：
+```xml
+  <update id="updateById" parameterType="User" flushCache="false" />
+```
