@@ -1,7 +1,7 @@
-# 1.单例模式
+## 1.单例模式
 [单例模式](https://github.com/LycPandaria/JavaInterview/blob/master/notes/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F.md#Singleton-%E5%8D%95%E4%BE%8B)
 
-# 数组
+
 ## 2.数组中重复的数字
 [NowCode](https://www.nowcoder.com/practice/623a5ac0ea5b4e5f95552655361ae0a8?tpId=13&tqId=11203&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
 
@@ -125,7 +125,7 @@ public String replaceSpace(StringBuffer str) {
     return str.toString();
 }
 ```
-# 链表
+
 ## 5.从尾到头打印链表
 [NowCode](https://www.nowcoder.com/practice/d0267f7f55b3412ba93bd35cfa8e8035?tpId=13&tqId=11156&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
 
@@ -161,7 +161,7 @@ public String replaceSpace(StringBuffer str) {
   }
   ```
 
-# 树
+
 ## 6.重建二叉树
 [NowCode](https://www.nowcoder.com/practice/8a19cbe657394eeaac2f6ea9b0f6fcf6?tpId=13&tqId=11157&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
 ### 问题描述
@@ -306,7 +306,7 @@ public int pop() {
     return out.pop();
 }
 ```
-# 算法和数据操作
+
 ## 9.斐波那契数列
 [NowCode](https://www.nowcoder.com/practice/c6c7742f5ba7442aada113136ddea0c3?tpId=13&tqId=11160&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
 
@@ -610,7 +610,7 @@ private int getDigiSum(int number){
 }
 ```
 
-# 动态规划和贪婪算法
+## 动态规划和贪婪算法
 动态规划：
 
 如果一个问题是求一个问题的最优解，而且该问题能够分解成若干子问题，并且子问题之间还有重叠的更小的子问题，就可以考虑。
@@ -699,5 +699,438 @@ public int integerBreak(int n) {
     int timeOf2 = (n - timeOf3*3) / 2;
 
     return (int)(Math.powerN(3,timeOf3) * Math.powerN(2, timeOf2));
+}
+```
+## 14.二进制中 1 的个数
+[NowCode](https://www.nowcoder.com/practice/8ee967e43c2c4ec193b040ea7fbb10b8?tpId=13&tqId=11164&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 问题描述
+输入一个整数，输出该数二进制表示中1的个数。其中负数用补码表示。
+
+### 解题思路
+**运用n&n-1**
+
+该位运算去除 n 的位级表示中最低的那一位。
+```text
+n       : 10110100
+n-1     : 10110011
+n&(n-1) : 10110000
+```
+
+```java
+public static int countOne(int n){
+  int count = 0;
+  while(n!=0){
+    n = n&(n-1);
+    count++;
+  }
+  return count;
+}
+```
+
+**Integer.bitCount()**
+```java
+public int NumberOf1(int n) {
+    return Integer.bitCount(n);
+}
+```
+
+
+## 15.数值的整数次方
+[NowCode](https://www.nowcoder.com/practice/1a834e5e3e1a4b7ba251417554e07c00?tpId=13&tqId=11165&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 问题的描述
+给定一个double类型的浮点数base和int类型的整数exponent。求base的exponent次方。
+
+### 解题思路
+这道题的陷阱主要在于特殊情况的处理。比如：
+1. 当 exponent = 0 的时候和 exponent = 1 的时候
+2. 当 exponent < 0 的时候，要先求 base 的 abs(exponent) 次方，然后求倒数
+3. 层层递进的算法，比如要求 2^16, 可以从 2^2 -> 2^4 -> 2^8 -> 2^16 这样进行加速
+
+```java
+public double Power(double base, int exponent) {
+  if(exponent == 1)
+      return base;
+  if(exponent == 0)
+      return 1;
+  // 处理负数指数
+  boolean isNagetive = false;
+  if(exponent < 0){
+      exponent = -exponent;
+      isNagetive = true;
+  }
+  double result = Power(base * base, exponent / 2);
+  if(exponent % 2 != 0)    // 指数为基数时候， 需要再乘一次
+      result *= base;
+  return isNagetive? 1/result: result;
+}
+```
+
+## 16.打印从 1 到最大的 n 位数
+### 问题描述
+输入数字 n，按顺序打印出从 1 到最大的 n 位十进制数。比如输入 3，则打印出 1、2、3 一直到最大的 3 位数即 999。
+
+### 解题思路
+由于 n 可能会非常大，因此不能直接用 int 表示数字，而是用 char 数组进行存储。
+
+使用回溯法得到所有的数。
+```java
+public void print1ToMaxOfNDigits(int n) {
+    if (n <= 0)
+        return;
+    char[] number = new char[n];
+    print1ToMaxOfNDigits(number, 0);
+}
+
+private void print1ToMaxOfNDigits(char[] number, int digit) {
+    if (digit == number.length) {
+        printNumber(number);
+        return;
+    }
+    for (int i = 0; i < 10; i++) {
+        number[digit] = (char) (i + '0');
+        print1ToMaxOfNDigits(number, digit + 1);
+    }
+}
+
+private void printNumber(char[] number) {
+    int index = 0;
+    while (index < number.length && number[index] == '0')
+        index++;
+    while (index < number.length)
+        System.out.print(number[index++]);
+    System.out.println();
+}
+```
+
+## 17.1在 O(1) 时间内删除链表节点
+### 问题描述
+给定单向链表的头指针和一个节点指针，定义一个函数在 O(1) 时间内删除该节点。
+
+### 解题思路
+分两种情况：
+1. 若待删除的节点是链表的尾节点，因为删除之后无法给前置节点的next设置为null，所以必须要从头开始遍历到最后再执行删除。
+2. 若待删除的节点不是尾节点，则可以通过交换这个节点与其后记节点的值，然后删除后继节点。
+
+```java
+public boolean deleteNode(Node n, Node head){
+  if(n == null || head == null )
+    return false;
+  if(n.next != null){   // 该节点不是尾节点
+    //交换n节点与后继节点的值
+    int tmp = n.data;
+    n.data = n.next.data;
+    n.next.data = tmp;
+    //删除后继节点
+    n.next = n.next.next;
+  }else {   // n 是尾节点
+    Node cur = head;
+    while(cur.next != n){
+      // 遍历到最后
+      cur = cur.next;
+    }
+    cur.next = null;
+  }
+  return true;
+}
+```
+
+## 17.2删除链表中重复的结点
+[NowCode](https://www.nowcoder.com/practice/fc533c45b73a41b0b44ccba763f866ef?tpId=13&tqId=11209&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 问题描述
+在一个排序的链表中，存在重复的结点，请删除该链表中重复的结点，重复的结点不保留，返回链表头指针。 例如，链表1->2->3->3->4->4->5 处理后为 1->2->5
+
+### 解题思路
+用递归的方式看起来更简洁
+
+```java
+public ListNode deleteDuplication(ListNode pHead){
+    if(pHead == null || pHead.next ==null)
+        return pHead;
+
+    ListNode pNext = pHead.next;
+    if(pNext.val == pHead.val){
+        // 处理相等的情况
+        while(pNext != null && pNext.val == pHead.val)
+            pNext = pNext.next;
+        return deleteDuplication(pNext);
+    }else{
+        pHead.next = deleteDuplication(pHead.next);
+        return pHead;
+    }
+}
+```
+
+## 18.正则表达式匹配
+[NowCode](https://www.nowcoder.com/practice/45327ae22b7b413ea21df13ee7d6429c?tpId=13&tqId=11205&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 问题描述
+请实现一个函数用来匹配包括'.'和'\*'的正则表达式。模式中的字符'.'表示任意一个字符，而'\*'表示它前面的字符可以出现任意次（包含0次）。 在本题中，匹配是指字符串的所有字符匹配整个模式。例如，字符串"aaa"与模式"a.a"和"ab*ac*a"匹配，但是与"aa.a"和"ab*a"均不匹配
+
+### 解题思路
+
+```java
+// 没搞懂
+public boolean match(char[] str, char[] pattern) {
+
+    int m = str.length, n = pattern.length;
+    boolean[][] dp = new boolean[m + 1][n + 1];
+
+    dp[0][0] = true;
+    for (int i = 1; i <= n; i++)
+        if (pattern[i - 1] == '*')
+            dp[0][i] = dp[0][i - 2];
+
+    for (int i = 1; i <= m; i++)
+        for (int j = 1; j <= n; j++)
+            if (str[i - 1] == pattern[j - 1] || pattern[j - 1] == '.')
+                dp[i][j] = dp[i - 1][j - 1];
+            else if (pattern[j - 1] == '*')
+                if (pattern[j - 2] == str[i - 1] || pattern[j - 2] == '.') {
+                    dp[i][j] |= dp[i][j - 1]; // a* counts as single a
+                    dp[i][j] |= dp[i - 1][j]; // a* counts as multiple a
+                    dp[i][j] |= dp[i][j - 2]; // a* counts as empty
+                } else
+                    dp[i][j] = dp[i][j - 2];   // a* only counts as empty
+
+    return dp[m][n];
+}
+```
+
+## 19.表示数值的字符串
+[NowCode](https://www.nowcoder.com/practice/6f8c901d091949a5837e24bb82a731f2?tpId=13&tqId=11206&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 问题描述
+请实现一个函数用来判断字符串是否表示数值（包括整数和小数）。例如，字符串"+100","5e2","-123","3.1416"和"-1E-16"都表示数值。 但是"12e","1a3.14","1.2.3","+-5"和"12e+4.3"都不是。
+
+### 解题思路
+使用正则表达式进行匹配。
+```text
+[]  ： 字符集合
+()  ： 分组
+?   ： 重复 0 ~ 1
++   ： 重复 1 ~ n
+*   ： 重复 0 ~ n
+.   ： 任意字符
+\\. ： 转义后的 .
+\\d ： 数字
+```
+
+```java
+public boolean isNumeric(char[] str) {
+    if (str == null || str.length == 0)
+        return false;
+    return new String(str).matches("[+-]?\\d*(\\.\\d+)?([eE][+-]?\\d+)?");
+}
+```
+
+## 20.调整数组顺序使奇数位于偶数前面
+[NowCode](https://www.nowcoder.com/practice/beb5aa231adc45b2a5dcc5b62c93f593?tpId=13&tqId=11166&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 问题描述
+输入一个整数数组，实现一个函数来调整该数组中数字的顺序，使得所有的奇数位于数组的前半部分，所有的偶数位于数组的后半部分，并保证奇数和奇数，偶数和偶数之间的相对位置不变。
+
+### 解题思路
+先遍历数组，然后得到奇数的个数 n，新建一个数组，遍历之前的数组，奇数从 0 位置开始插入，偶数从 n位置插入
+
+```java
+public void reOrderArray(int [] array) {
+    int oddCount = 0; // 奇数个数
+    for(int i=0; i < array.length; i++){
+        if(array[i] % 2 == 1)
+            oddCount++;
+    }
+    int[] arrCp = array.clone();
+    int k = 0;
+    int j = oddCount;
+    for(int num : arrCp){
+        if(num % 2 == 0)
+            array[j++] = num;
+        else
+            array[k++] = num;
+    }
+}
+```
+
+## 21.链表中倒数第 K 个结点
+[NowCode](https://www.nowcoder.com/practice/529d3ae5a407492994ad2a246518148a?tpId=13&tqId=11167&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 问题描述
+输入一个链表，输出该链表中倒数第k个结点。
+
+### 解题思路
+1. 比较容易想到的是先遍历一遍算出链表的节点个数n，然后再遍历到第n-k个元素。但是这种方式需要遍历两次列表。
+2. 还有一种做法是对于每个节点，遍历k个元素，如果刚好到结尾，那么那个节点就是倒数第k个节点。这种办法的问题在于
+对同一批元素进行反复多次的遍历，时间复杂度为O(kn)，效率太低。
+3. 更高效的方法是：设置两个指针，让其中一个比另一个先行**k-1**步，这样，当先行的指针到链表尾部时候，后行指针所指位置就是所要找的位置。
+
+**注意程序的鲁棒性**
+1. 链表是否为空
+2. 输入的 k 大于链表的长度
+3. 输入 k=0 的情况
+
+```java
+public ListNode FindKthToTail(ListNode head,int k) {
+    if(k < 1)
+        return null;
+    if(head == null)
+        return null;
+    ListNode p1 = head;
+    ListNode p2 = head;
+    // p1 先走 k-1 步
+    for(int i=0; i < k-1 && p1 != null; i++)
+        p1 = p1.next;
+    if(p1 == null)
+        return null;    // k 值大于链表长度
+    while(p1.next != null){
+        p1 = p1.next;
+        p2 = p2.next;
+    }
+    return p2;
+}
+```
+
+## 22.链表中环的入口结点
+[NowCode](https://www.nowcoder.com/practice/253d2c59ec3e4bc68da16833f79a38e4?tpId=13&tqId=11208&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 问题描述
+给一个链表，若其中包含环，请找出该链表的环的入口结点，否则，输出null。
+
+### 解题思路
+![链表中环的入口结点](../pic/链表中环的入口结点.png)
+使用双指针，一个指针 fast 每次移动两个节点，一个指针 slow 每次移动一个节点。因为存在环，所以两个指针必定相遇在环中的某个节点上。假设相遇点在下图的 y6 位置，此时 fast 移动的节点数为 x+2y+z，slow 为 x+y，由于 fast 速度比 slow 快一倍，因此 x+2y+z=2(x+y)，得到 x=z。
+
+在相遇点，slow 要到环的入口点还需要移动 z 个节点，如果让 fast 重新从头开始移动，并且速度变为每次移动一个节点，那么它到环入口点还需要移动 x 个节点。在上面已经推导出 x=z，因此 fast 和 slow 将在环入口点相遇。
+
+```java
+public ListNode EntryNodeOfLoop(ListNode pHead){
+    ListNode slow = pHead;
+    ListNode fast = pHead;
+    if(pHead == null)
+        return null;
+    // 先找相遇点，一个走一次一步，一个一次两步
+    while(fast != null && fast.next != null){
+        fast = fast.next.next;
+        slow = slow.next;
+        if(fast == slow)
+            break;
+    }
+    if(fast == null || fast.next ==null)
+        return null;    // 这种情况是没有环的
+    // 开始找环入口点
+    // 在链表头和相遇点各设一个指针，每次走一步，两个指针必定相遇且相遇第一点即为环入口点。
+    slow = pHead;
+    while(slow != fast){
+        slow = slow.next;
+        fast = fast.next;
+    }
+    return slow;
+}
+```
+
+
+## 23.反转链表
+[nowcoder](https://www.nowcoder.com/practice/75e878df47f24fdc9dc3e400ec6058ca?tpId=13&tqId=11168&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 问题描述
+输入一个链表，反转链表后，输出新链表的表头。
+
+### 解题思路
+链表的反转需要注意的是，比如i,m,n 3个相连节点，i节点已经完成反转，在处理m节点的时候，不能直接将
+m.next=i；因为这样的话就没有办法能够找到n，因为链接断裂，所以在处理m.next之前需要将n保存下来。
+
+```java
+public ListNode ReverseList(ListNode head) {
+    if(head == null)
+        return null;
+    if(head.next == null)
+        return head;
+    ListNode rHead = null;
+    ListNode nodePre = null;
+    ListNode nodeCur = head;
+    ListNode nodeNext = null; // 存储 next 节点
+    while(nodeCur!= null){
+        nodeNext = nodeCur.next;
+        if(nodeNext == null){
+            // 尾节点
+            rHead = nodeCur;
+        }
+        nodeCur.next = nodePre;    // 反转
+        nodePre = nodeCur;
+        nodeCur = nodeNext;
+    }
+    return rHead;
+}
+```
+
+```java
+public ListNode ReverseList(ListNode head) {
+  if(head == null || head.next == null)
+    return null;
+  ListNode pNext = head.next; // 存储该节点的下个节点，方便下一步断开关系
+  head.next = null; // 断开该节点与下个节点的关系，等待重建
+  ListNode newHead = ReverseList(pNext);  // 递归进行关系重建
+  pNext.next = head;  // 倒序，这个时候 pNext 之后的关系都已经重建完成了
+  return newHead;
+}
+```
+
+## 24.合并两个排序的链表
+[NowCode](https://www.nowcoder.com/practice/d8b6b4358f774294a89de2a6ac4d9337?tpId=13&tqId=11169&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 问题描述
+输入两个单调递增的链表，输出两个链表合成后的链表，当然我们需要合成后的链表满足单调不减规则。
+![合并两个排序的链表](../pic/合并两个排序的链表.png)
+
+### 解题思路
+从两个节点的头节点开始，因为链表 1 的头结点小，所以链表 1 的头结点是合并后的头结点。
+
+这时候我们把链表 1 的下一个节点作为头结点，又回到了比较两个链表的头结点，然后找出更小的头结点作为 '1' 的 next 即可。这是典型的递归过程。
+
+```java
+public ListNode Merge(ListNode list1,ListNode list2) {
+        // 鲁棒性检查
+        if(list1 == null)
+            return list2;
+        if(list2 == null)
+            return list1;
+        ListNode mergeHead = null;
+        if(list1.val < list2.val){
+            mergeHead = list1;
+            mergeHead.next = Merge(list1.next, list2);
+        }else{
+            mergeHead = list2;
+            mergeHead.next = Merge(list1, list2.next);
+        }
+        return mergeHead;
+    }
+```
+
+```java
+public ListNode Merge(ListNode list1,ListNode list2) {
+    // 鲁棒性检查
+    if(list1 == null)
+        return list2;
+    if(list2 == null)
+        return list1;
+    ListNode mergeHead = new ListNode(-1);
+    ListNode node = mergeHead;
+    while(list1 != null && list2 != null){
+        if(list1.val < list2.val){
+            node.next = list1;
+            list1 = list1.next;
+        }else{
+            node.next = list2;
+            list2 = list2.next;
+        }
+        node = node.next;
+    }
+    if(list1 == null)
+        node.next = list2;
+    if(list2 == null)
+        node.next = list1;
+    return mergeHead.next;
 }
 ```
