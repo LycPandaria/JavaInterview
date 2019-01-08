@@ -1134,3 +1134,109 @@ public ListNode Merge(ListNode list1,ListNode list2) {
     return mergeHead.next;
 }
 ```
+
+## 25.数的子结构
+[NowCode](https://www.nowcoder.com/practice/6e196c44c7004d15b1610b9afca8bd88?tpId=13&tqId=11170&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 问题描述
+![树的子结构](../pic/树的子结构.png)
+
+### 解题
+```java
+public static boolean HasSubtree(TreeNode root1, TreeNode root2) {
+    boolean result = false;
+    //当Tree1和Tree2都不为零的时候，才进行比较。否则直接返回false
+    if (root2 != null && root1 != null) {
+        //如果找到了对应Tree2的根节点的点
+        if(root1.val == root2.val){
+            //以这个根节点为为起点判断是否包含Tree2
+            result = doesTree1HaveTree2(root1,root2);
+        }
+        //如果找不到，那么就再去root的左儿子当作起点，去判断时候包含Tree2
+        if (!result) {
+            result = HasSubtree(root1.left,root2);
+        }
+
+        //如果还找不到，那么就再去root的右儿子当作起点，去判断时候包含Tree2
+        if (!result) {
+            result = HasSubtree(root1.right,root2);
+           }
+        }
+        //返回结果
+    return result;
+}
+public static boolean doesTree1HaveTree2(TreeNode node1, TreeNode node2) {
+    //如果Tree2已经遍历完了都能对应的上，返回true
+    if (node2 == null) {
+        return true;
+    }
+    //如果Tree2还没有遍历完，Tree1却遍历完了。返回false
+    if (node1 == null) {
+        return false;
+    }
+    //如果其中有一个点没有对应上，返回false
+    if (node1.val != node2.val) {  
+            return false;
+    }
+
+    //如果根节点对应的上，那么就分别去子节点里面匹配
+    return doesTree1HaveTree2(node1.left,node2.left) && doesTree1HaveTree2(node1.right,node2.right);
+}
+```
+
+## 26.二叉树的镜像
+[NowCode](https://www.nowcoder.com/practice/564f4c26aa584921bc75623e48ca3011?tpId=13&tqId=11171&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 问题描述
+操作给定的二叉树，将其变换为源二叉树的镜像。
+![二叉树的镜像](../pic/二叉树的镜像.png)
+
+### 解题思路
+先前序遍历这棵树的每个结点，如果遍历到的结点有子结点，就交换它的两个子节点，
+当交换完所有的非叶子结点的左右子结点之后，就得到了树的镜像
+```java
+public void Mirror(TreeNode root) {
+    if(root == null)
+        return;
+    swap(root);
+    Mirror(root.left);
+    Mirror(root.right);
+}
+
+private void swap(TreeNode root){
+    if(root == null)
+        return;
+    TreeNode tmp = root.left;
+    root.left = root.right;
+    root.right = tmp;
+}
+```
+
+## 27.对称的二叉树
+[NowCode](https://www.nowcoder.com/practice/ff05d44dfdb04e1d83bdbdab320efbcb?tpId=13&tqId=11211&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 问题描述
+请实现一个函数，用来判断一颗二叉树是不是对称的。注意，如果一个二叉树同此二叉树的镜像是同样的，定义其为对称的。
+![对称的二叉树](../pic/对称的二叉树/png)
+
+### 解题
+1.只要pRoot.left和pRoot.right是否对称即可
+2.左右节点的值相等且对称子树left.left--right.right ;left.rigth--right.left也对称
+```java
+boolean isSymmetrical(TreeNode pRoot)
+{
+    if(pRoot == null)
+        return true;
+    return isSymmetrical(pRoot.left, pRoot.right);
+}
+
+private boolean isSymmetrical(TreeNode p1, TreeNode p2){
+    if(p1 == null && p2 == null)
+        return true;
+    if(p1 == null || p2 == null)     // 两个节点有一个为 null，不对称
+        return false;
+    if(p1.val != p2.val)
+        return false;
+    return isSymmetrical(p1.left,p2.right) && isSymmetrical(p1.right, p2.left);
+}
+```
