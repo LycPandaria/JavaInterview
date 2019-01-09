@@ -1240,3 +1240,127 @@ private boolean isSymmetrical(TreeNode p1, TreeNode p2){
     return isSymmetrical(p1.left,p2.right) && isSymmetrical(p1.right, p2.left);
 }
 ```
+
+## 28.顺时针打印矩阵
+[NowCode](https://www.nowcoder.com/practice/9b4c81a02cd34f76be2659fa0d54342a?tpId=13&tqId=11172&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 问题描述
+输入一个矩阵，按照从外向里以顺时针的顺序依次打印出每一个数字，例如，如果输入如下4 X 4矩阵： 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 则依次打印出数字1,2,3,4,8,12,16,15,14,13,9,5,6,7,11,10.
+![顺时针打印矩阵](../pic/顺时针打印矩阵.png)
+
+### 解题思路
+可以把矩阵想象成若干个圆，然后每次打印矩阵的一个圈。
+
+让循环结束的条件是 columns > startX * 2 && rows > startY * 2.
+
+但在打印一圈的时候，我们可以把打印分为：
+1. 从左到右打印一行
+2. 从上到下打印一行
+3. 从右到左打印一行
+4. 从下到上打印一行
+
+但是并不是每一次都需要进行这 4 步，但是第一步是必须的，但是剩下的情况要具体情况具体分析判断。
+```java
+public ArrayList<Integer> out = new ArrayList<Integer>();
+public ArrayList<Integer> printMatrix(int [][] matrix) {
+   if(matrix == null)
+       return null;
+    int rows = matrix.length;
+    int cols = matrix[0].length;
+    int start = 0;    // 打印第 n 圈
+    // 循环结束的条件是 columns > startX * 2 && rows > startY * 2
+    while(rows > start * 2 && cols > start * 2){
+        printMatrixByCycle(matrix, rows, cols, start);
+        start++;    // 打印下一圈
+    }
+    return out;
+}
+
+private void printMatrixByCycle(int[][] matrix, int rows, int cols, int start){
+    int endX = cols - start - 1;
+    int endY = rows - start - 1;
+
+    // 从左打印到右，这一步是必须的
+    for(int i = start; i <= endX; i++)
+        out.add(matrix[start][i]);
+
+    // 从上打印到下，条件是：终止行号要大于起始行号
+    if(start < endY){
+        for(int i=start+1; i <= endY; i++)
+            out.add(matrix[i][endX]);
+    }
+
+    // 从右往左打印，条件是：圈里至少有两行两列，所以除了需要终止行号要大于起始行号，
+    // 还需要终止列号大于起始列号
+    if(start < endY && start < endX)
+        for(int i = endX-1; i >= start; i--)
+            out.add(matrix[endY][i]);
+
+    // 从下往上打印，条件是：终止列号大于起始列号，终止行号比起始行号至少大2
+    if(start < endY-1 && start < endX)
+        for(int i=endY-1; i >= start+1; i--)
+            out.add(matrix[i][start]);
+}
+```
+
+## 29.包含min函数的栈
+[NowCode](https://www.nowcoder.com/practice/4c776177d2c04c2494f2555c9fcc1e49?tpId=13&tqId=11173&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 问题描述
+定义栈的数据结构，请在该类型中实现一个能够得到栈中所含最小元素的min函数（时间复杂度应为O（1））。
+
+### 解题思路
+用两个栈，一个是正常的数据栈，一个栈用于保存最小元素(之前的最小元素和新压入栈的元素的较小值)
+```java
+private Stack<Integer> dataStack = new Stack<>();
+private Stack<Integer> minStack = new Stack<>();
+public void push(int node) {
+    dataStack.push(node);
+    if(minStack.isEmpty() || node < minStack.peek())
+        minStack.push(node);
+    else
+        minStack.push(minStack.peek());
+}
+
+public void pop() {
+    if(!dataStack.isEmpty()){
+        dataStack.pop();
+        minStack.pop();
+    }
+}
+
+public int top() {
+    return dataStack.peek();
+}
+
+public int min() {
+    return minStack.peek();
+}
+```
+
+## 30.栈的压入、弹出序列
+[NowCode](https://www.nowcoder.com/practice/d77d11405cc7470d82554cb392585106?tpId=13&tqId=11174&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 问题描述
+输入两个整数序列，第一个序列表示栈的压入顺序，请判断第二个序列是否可能为该栈的弹出顺序。假设压入栈的所有数字均不相等。例如序列1,2,3,4,5是某栈的压入顺序，序列4,5,3,2,1是该压栈序列对应的一个弹出序列，但4,3,5,1,2就不可能是该压栈序列的弹出序列。（注意：这两个序列的长度是相等的）
+
+### 解题思路
+使用一个栈来模拟压入弹出操作。
+```java
+public boolean IsPopOrder(int [] pushA,int [] popA) {
+  int n = pushA.length;
+  Stack<Integer> stack = new Stack<Integer>();
+  for(int pushIndex=0, popIndex=0; pushIndex < n; pushIndex++){
+      // 先压入一个元素，模拟压入顺序
+      stack.push(pushA[pushIndex]);
+      while(popIndex < n && !stack.isEmpty() && stack.peek() == popA[popIndex]){
+          // 这里主要是比较栈顶的元素和弹出序列 popA[popIndex] 是否相等
+          // 是就说明现阶段压入顺序和弹出序列是能对上的，弹出栈顶元素，并且 popIndex + 1
+          stack.pop();
+          popIndex++;
+      }
+  }
+  // 最后如果 stack 为空说明压入顺序和弹出顺序能对上
+  return stack.isEmpty();
+}
+```
