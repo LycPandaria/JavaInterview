@@ -1364,3 +1364,111 @@ public boolean IsPopOrder(int [] pushA,int [] popA) {
   return stack.isEmpty();
 }
 ```
+
+## 31.1从上往下打印二叉树
+
+[NowCoder](https://www.nowcoder.com/practice/7fe2212963db4790b57431d9ed259701?tpId=13&tqId=11175&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 题目描述
+
+从上往下打印出二叉树的每个节点，同层节点从左至右打印。
+
+例如，以下二叉树层次遍历的结果为：1,2,3,4,5,6,7
+
+<div align="center"> <img src="pic/从上往下打印二叉树.png" width="250"/> </div><br>
+
+### 解题思路
+
+使用队列来进行层次遍历。
+
+不需要使用两个队列分别存储当前层的节点和下一层的节点，因为在开始遍历一层的节点时，当前队列中的节点数就是当前层的节点数，只要控制遍历这么多节点数，就能保证这次遍历的都是当前层的节点。
+
+```java
+public ArrayList<Integer> PrintFromTopToBottom(TreeNode root) {
+    Queue<TreeNode> queue = new LinkedList<>();
+    ArrayList<Integer> ret = new ArrayList<>();
+    queue.add(root);
+    while (!queue.isEmpty()) {
+        int cnt = queue.size();
+        while (cnt-- > 0) {
+            TreeNode t = queue.poll();
+            if (t == null)
+                continue;
+            ret.add(t.val);
+            queue.add(t.left);
+            queue.add(t.right);
+        }
+    }
+    return ret;
+}
+```
+
+## 31.2 把二叉树打印成多行
+
+[NowCoder](https://www.nowcoder.com/practice/445c44d982d04483b04a54f298796288?tpId=13&tqId=11213&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 题目描述
+
+和上题几乎一样。
+
+### 解题思路
+
+```java
+ArrayList<ArrayList<Integer>> Print(TreeNode pRoot) {
+    ArrayList<ArrayList<Integer>> ret = new ArrayList<>();
+    Queue<TreeNode> queue = new LinkedList<>();
+    queue.add(pRoot);
+    while (!queue.isEmpty()) {
+        ArrayList<Integer> list = new ArrayList<>();
+        int cnt = queue.size();
+        while (cnt-- > 0) {
+            TreeNode node = queue.poll();
+            if (node == null)
+                continue;
+            list.add(node.val);
+            queue.add(node.left);
+            queue.add(node.right);
+        }
+        if (list.size() != 0)
+            ret.add(list);
+    }
+    return ret;
+}
+```
+
+## 32.3 按之字形顺序打印二叉树
+
+[NowCoder](https://www.nowcoder.com/practice/91b69814117f4e8097390d107d2efbe0?tpId=13&tqId=11212&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 题目描述
+
+请实现一个函数按照之字形打印二叉树，即第一行按照从左到右的顺序打印，第二层按照从右至左的顺序打印，第三行按照从左到右的顺序打印，其他行以此类推。
+
+### 解题思路
+
+```java
+public ArrayList<ArrayList<Integer>> Print(TreeNode pRoot) {
+    ArrayList<ArrayList<Integer>> ret = new ArrayList<>();
+    Queue<TreeNode> queue = new LinkedList<>();
+    queue.add(pRoot);
+    boolean reverse = false;
+    while (!queue.isEmpty()) {
+        ArrayList<Integer> list = new ArrayList<>();
+        int cnt = queue.size();
+        while (cnt-- > 0) {
+            TreeNode node = queue.poll();
+            if (node == null)
+                continue;
+            list.add(node.val);
+            queue.add(node.left);
+            queue.add(node.right);
+        }
+        if (reverse)
+            Collections.reverse(list);
+        reverse = !reverse;
+        if (list.size() != 0)
+            ret.add(list);
+    }
+    return ret;
+}
+```
