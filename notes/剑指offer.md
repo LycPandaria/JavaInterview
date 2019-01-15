@@ -1507,7 +1507,7 @@ private boolean verify(int[] sequence, int first, int last) {
 }
 ```
 
-## 32.二叉树中和为某一值的路径
+## 34.二叉树中和为某一值的路径
 
 [NowCoder](https://www.nowcoder.com/practice/b736e784e3e34731af99065031301bca?tpId=13&tqId=11177&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
 
@@ -1739,7 +1739,7 @@ private void swap(char[] chars, int i, int j){
 }
 ```
 
-## 38.数组中出现次数超过一半的数字
+## 39.数组中出现次数超过一半的数字
 [NowCode](https://www.nowcoder.com/practice/e8a1b01a2df14cb2b228b30ee6a92163?tpId=13&tqId=11181&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
 
 ### 问题描述
