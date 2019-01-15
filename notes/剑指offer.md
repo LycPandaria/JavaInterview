@@ -1472,3 +1472,308 @@ public ArrayList<ArrayList<Integer>> Print(TreeNode pRoot) {
     return ret;
 }
 ```
+## 33. 二叉搜索树的后序遍历序列
+
+[NowCoder](https://www.nowcoder.com/practice/a861533d45854474ac791d90e447bafd?tpId=13&tqId=11176&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 题目描述
+
+输入一个整数数组，判断该数组是不是某二叉搜索树的后序遍历的结果。假设输入的数组的任意两个数字都互不相同。
+
+例如，下图是后序遍历序列 1,3,2 所对应的二叉搜索树。
+
+<div align="center"> <img src="pic/二叉搜索树的后序遍历序列.png" width="150"/> </div><br>
+
+### 解题思路
+
+```java
+public boolean VerifySquenceOfBST(int[] sequence) {
+    if (sequence == null || sequence.length == 0)
+        return false;
+    return verify(sequence, 0, sequence.length - 1);
+}
+
+private boolean verify(int[] sequence, int first, int last) {
+    if (last - first <= 1)
+        return true;
+    int rootVal = sequence[last];
+    int cutIndex = first;
+    while (cutIndex < last && sequence[cutIndex] <= rootVal)
+        cutIndex++;
+    for (int i = cutIndex; i < last; i++)
+        if (sequence[i] < rootVal)
+            return false;
+    return verify(sequence, first, cutIndex - 1) && verify(sequence, cutIndex, last - 1);
+}
+```
+
+## 32.二叉树中和为某一值的路径
+
+[NowCoder](https://www.nowcoder.com/practice/b736e784e3e34731af99065031301bca?tpId=13&tqId=11177&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 题目描述
+
+输入一颗二叉树和一个整数，打印出二叉树中结点值的和为输入整数的所有路径。路径定义为从树的根结点开始往下一直到叶结点所经过的结点形成一条路径。
+
+下图的二叉树有两条和为 22 的路径：10, 5, 7 和 10, 12
+
+<div align="center"> <img src="pic/f5477abd-c246-4851-89ab-6b1cde2549b1.png" width="200"/> </div><br>
+
+### 解题思路
+
+```java
+private ArrayList<ArrayList<Integer>> ret = new ArrayList<>();
+
+public ArrayList<ArrayList<Integer>> FindPath(TreeNode root, int target) {
+    backtracking(root, target, new ArrayList<>());
+    return ret;
+}
+
+private void backtracking(TreeNode node, int target, ArrayList<Integer> path) {
+    if (node == null)
+        return;
+    path.add(node.val);
+    target -= node.val;
+    if (target == 0 && node.left == null && node.right == null) {
+        ret.add(new ArrayList<>(path));
+    } else {
+        backtracking(node.left, target, path);
+        backtracking(node.right, target, path);
+    }
+    path.remove(path.size() - 1);
+}
+```
+
+## 35. 复杂链表的复制
+
+[NowCoder](https://www.nowcoder.com/practice/f836b2c43afc4b35ad6adc41ec941dba?tpId=13&tqId=11178&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 题目描述
+
+输入一个复杂链表（每个节点中有节点值，以及两个指针，一个指向下一个节点，另一个特殊指针指向任意一个节点），返回结果为复制后复杂链表的 head。
+
+```java
+public class RandomListNode {
+    int label;
+    RandomListNode next = null;
+    RandomListNode random = null;
+
+    RandomListNode(int label) {
+        this.label = label;
+    }
+}
+```
+
+<div align="center"> <img src="pic/a01d1516-8168-461a-a24b-620b9cfc40f4.png" width="300"/> </div><br>
+
+### 解题思路
+
+第一步，在每个节点的后面插入复制的节点。
+
+<div align="center"> <img src="pic/2e6c72f5-3b8e-4e32-b87b-9491322628fe.png" width="600"/> </div><br>
+
+第二步，对复制节点的 random 链接进行赋值。
+
+<div align="center"> <img src="pic/323ffd6c-8b54-4f3e-b361-555a6c8bf218.png" width="600"/> </div><br>
+
+第三步，拆分。
+
+<div align="center"> <img src="pic/8f3b9519-d705-48fe-87ad-2e4052fc81d2.png" width="600"/> </div><br>
+
+```java
+public RandomListNode Clone(RandomListNode pHead) {
+    if (pHead == null)
+        return null;
+    // 插入新节点
+    RandomListNode cur = pHead;
+    while (cur != null) {
+        RandomListNode clone = new RandomListNode(cur.label);
+        clone.next = cur.next;
+        cur.next = clone;
+        cur = clone.next;
+    }
+    // 建立 random 链接
+    cur = pHead;
+    while (cur != null) {
+        RandomListNode clone = cur.next;
+        if (cur.random != null)
+            clone.random = cur.random.next;
+        cur = clone.next;
+    }
+    // 拆分
+    cur = pHead;
+    RandomListNode pCloneHead = pHead.next;
+    while (cur.next != null) {
+        RandomListNode next = cur.next;
+        cur.next = next.next;
+        cur = next;
+    }
+    return pCloneHead;
+}
+```
+
+## 36.二叉搜索树和双向链表
+[NowCode](https://www.nowcoder.com/practice/947f6eb80d944a84850b0538bf0ec3a5?tpId=13&tqId=11179&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 问题描述
+输入一棵二叉搜索树，将该二叉搜索树转换成一个排序的双向链表。要求不能创建任何新的结点，只能调整树中结点指针的指向。
+![二叉搜索树和双向链表](../pic/二叉搜索树和双向链表.png)
+
+### 解题思路
+由于要求转换之后链表是排好序的，我们可以中序遍历每个节点，这是因为中序遍历算法的特点是按照从小到大顺序遍历二叉树的每个节点。
+```java
+private TreeNode head = null;
+private TreeNode pre = null;
+public TreeNode Convert(TreeNode pRootOfTree) {
+    inOrder(pRootOfTree);
+    return head;
+}
+
+public void inOrder(TreeNode node){
+    // 中序遍历构建链表
+    if(node == null)
+        return;
+    inOrder(node.left);    // 构建左子树的链表
+    node.left = pre;    // 左子树是已经排列好的链表
+    if(pre != null)
+        pre.right = node;
+    pre = node;        // 根节点已经加入到链表中，pre 节点变为当前节点
+    if(head == null)
+        head = node;
+    inOrder(node.right);
+}
+```
+
+## 37.序列化二叉树
+[NowCode](https://www.nowcoder.com/practice/cf7e25aa97c04cc1a68c8f040e71fb84?tpId=13&tqId=11214&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 问题描述
+请实现两个函数，分别用来序列化和反序列化二叉树
+
+### 解题思路
+![序列化二叉树](../pic/序列化二叉树.png)
+使用先序遍历的方法序列化该树为(节点为 null 则标记为 '$'):1,2,4,$,$,5,$,$,3,$,$
+
+在重建树的时候，便可以根据 1,2,4,$,$,5,$,$,3,$,$ 来，第一个读出的数是 1，说明根节点是 1，然后 2 是 1 的左节点。然后 4 是 2 的左节点，后面的两个 $$ 说明 4 是个叶子节点。回到 2 节点，由于下一个是 5，说明 2 的右节点是 5. 同理可以重建这个树
+
+```java
+private String deserializeStr;    // 用于保存需要处理的字符串
+
+String Serialize(TreeNode root) {
+    if(root == null)
+        return "$";
+    return root.val + "," + Serialize(root.left) + "," + Serialize(root.right);
+}
+TreeNode Deserialize(String str) {
+    deserializeStr = str;
+    return Deserialize();
+}
+
+TreeNode Deserialize(){
+    if(deserializeStr.length() == 0)
+       return null;
+    int index = deserializeStr.indexOf(",");
+    // 处理 index == -1 的情况
+    String nodeStr = index == -1 ? deserializeStr : deserializeStr.substring(0, index);
+    deserializeStr = index == -1 ? "" : deserializeStr.substring(index + 1);
+    if(nodeStr.equals("$"))
+        return null;
+    Integer val = Integer.valueOf(nodeStr);
+    TreeNode node = new TreeNode(val);
+    node.left = Deserialize();
+    node.right = Deserialize();
+    return node;
+}
+```
+
+## 38.字符串的排列
+[NowCode](https://www.nowcoder.com/practice/fe6b651b66ae47d7acce78ffdd9a96c7?tpId=13&tqId=11180&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 问题描述
+输入一个字符串，按字典序打印出该字符串中字符的所有排列。例如输入字符串 abc，则打印出由字符 a, b, c 所能排列出来的所有字符串 abc, acb, bac, bca, cab 和 cba。
+
+### 解题思路
+我们求整个字符串的排列，可以看成两步。
+
+1. 求所有可能出现在第一个位置的字符，即把第一个字符和后面所有的字符交换。
+2. 第二步固定第一个字符，任把后面的所有字符分成两个部分：后面字符的第一个字符，以及这个字符之后的所有字符。然后把第一个字符逐一和它后面的字符交换
+
+这样就是一个明显的递归过程。
+![字符串的排列](../pic/字符串的排列.png)
+```java
+public ArrayList<String> Permutation(String str) {
+    ArrayList<String> ret = new ArrayList<>();
+    if(str.length() == 0 || str == null)
+        return ret;
+    PermutationHeler(str.toCharArray(), 0, ret);
+    Collections.sort(ret);
+    return ret;
+}
+
+private void PermutationHeler(char[] chars, int i, ArrayList<String> list){
+    // 递归结束的标志就是循环到需要固定的字符已经是字符串的最后一个字符
+    if(i == chars.length - 1){
+        String val = String.valueOf(chars);
+        if(!list.contains(val))
+            list.add(val);    // 避免重复
+    } else {
+        // 第一步：求所有可能出现在第一个位置的字符，即把第一个字符和后面所有的字符交换
+        for(int j=i; j < chars.length; j++){
+            swap(chars, i, j);
+            /*
+            第二步固定第一个字符，任把后面的所有字符分成两个部分：
+            后面字符的第一个字符，以及这个字符之后的所有字符。
+            然后把第一个字符逐一和它后面的字符交换
+            */
+            PermutationHeler(chars, i+1, list);
+            // 然后恢复，进入下一个循环
+            swap(chars, i, j);
+        }
+    }
+}
+
+private void swap(char[] chars, int i, int j){
+    char temp = chars[i];
+    chars[i] = chars[j];
+    chars[j] = temp;
+}
+```
+
+## 38.数组中出现次数超过一半的数字
+[NowCode](https://www.nowcoder.com/practice/e8a1b01a2df14cb2b228b30ee6a92163?tpId=13&tqId=11181&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 问题描述
+数组中有一个数字出现的次数超过数组长度的一半，请找出这个数字。例如输入一个长度为9的数组{1,2,3,2,2,2,5,4,2}。由于数字2在数组中出现了5次，超过数组长度的一半，因此输出2。如果不存在则输出0。
+
+### 解题思路
+多数投票问题，可以利用 Boyer-Moore Majority Vote Algorithm 来解决这个问题，使得时间复杂度为 O(N)。
+
+使用 cnt 来统计一个元素出现的次数，当遍历到的元素和统计元素相等时，令 cnt++，否则令 cnt--。如果前面查找了 i 个元素，且 cnt == 0，说明前 i 个元素没有 majority，或者有 majority，但是出现的次数少于 i / 2 ，因为如果多于 i / 2 的话 cnt 就一定不会为 0 。此时剩下的 n - i 个元素中，majority 的数目依然多于 (n - i) / 2，因此继续查找就能找出 majority。
+
+```java
+public int MoreThanHalfNum_Solution(int [] array) {
+    if(array == null || array.length == 0)
+        return 0;
+    int majority = array[0];
+    // 遍历
+    for(int i=1, cnt=1; i < array.length; i++){
+        // 如果下一个数 == majority, cnt++ else cnt--
+        if(array[i] == majority)
+            cnt++;
+        else
+            cnt--;
+        // if cnt ==0 , reset majorty, cnt
+        if(cnt == 0){
+            majority = array[i];
+            cnt = 1;
+        }
+    }
+
+    // check once again
+    int cnt = 0;
+    for(int val:array)
+        if(val == majority)
+            cnt++;
+    return cnt > array.length/2? majority:0;
+}
+```
