@@ -1777,3 +1777,172 @@ public int MoreThanHalfNum_Solution(int [] array) {
     return cnt > array.length/2? majority:0;
 }
 ```
+
+## 40.最小的 K 个数
+[NowCode](https://www.nowcoder.com/practice/6a296eb82cf844ca8539b57c23e6e9bf?tpId=13&tqId=11182&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 问题描述
+输入n个整数，找出其中最小的K个数。例如输入4,5,1,6,2,7,3,8这8个数字，则最小的4个数字是1,2,3,4,。
+
+### 解题思路
+1. 快速选择
+  - 复杂度：O(N) + O(1)
+  - 只有当允许修改数组元素时才可以使用
+  快速排序的 partition() 方法，会返回一个整数 j 使得 a[l..j-1] 小于等于 a[j]，且 a[j+1..h] 大于等于 a[j]，此时 a[j] 就是数组的第 j 大元素。可以利用这个特性找出数组的第 K 个元素，这种找第 K 个元素的算法称为快速选择算法。
+  ```java
+  public ArrayList<Integer> GetLeastNumbers_Solution(int [] nums, int k) {
+      ArrayList<Integer> ret = new ArrayList<>();
+      if(k > nums.length || k <= 0)
+          return ret;
+      /* findKthSmallest 会改变数组，使得前 k 个数都是最小的 k 个数 */
+      findKthSmallest(nums, k-1);
+      for(int i=0; i < k; i++)
+          ret.add(nums[i]);
+      return ret;
+  }
+
+  public void findKthSmallest(int[] nums, int k){
+      int low = 0;
+      int high = nums.length-1;    // 记录处理的数据位置
+      while(low < high){
+          int j = partition(nums, low, high);    // 类似快排，得到基准元素在low..high中的位置
+          // 根据 j 和 k 的位置关系缩小范围
+          if(j == k)
+              break;    // 分类完成而且基准位置正好是第 k 小的位置
+          if(j > k)    // k 在 low...j 之间，需要调整high的位置重新分类
+              high = j - 1;
+          else
+              low = j + 1;
+      }
+  }
+
+  private int partition(int[] nums, int low, int high){
+      int p = nums[low];     // 左边第一个元素作为基准
+      int i = low, j = high + 1;
+      while(true){
+          while(i != high && nums[++i] < p); // 从左侧扫描，寻找比基准元素大的元素
+          while(j != low && nums[--j] > p);    // 从左侧扫描，寻找比基准元素小的元素
+          if(i >= j)
+              break;    // 扫描结束
+          swap(nums, i, j);    // 交换两个位置，相当于就把比基准元素大的放右边，小的放左边
+      }
+      swap(nums, low, j);    // 基准元素归位
+      return j;
+  }
+
+  private void swap(int[] nums, int i, int j){
+      int t = nums[i];
+      nums[i] = nums[j];
+      nums[j] = t;
+  }
+  ```
+
+2. 大小为 K 的最小堆
+  - 复杂度：O(NlogK) + O(K)
+  - 特别适合处理海量数据
+  应该使用大顶堆来维护最小堆，而不能直接创建一个小顶堆并设置一个大小，企图让小顶堆中的元素都是最小元素。
+
+  维护一个大小为 K 的最小堆过程如下：在添加一个元素之后，如果大顶堆的大小大于 K，那么需要将大顶堆的堆顶元素去除。
+  ```java
+  public ArrayList<Integer> GetLeastNumbers_Solution(int[] nums, int k) {
+      if (k > nums.length || k <= 0)
+          return new ArrayList<>();
+      PriorityQueue<Integer> maxHeap = new PriorityQueue<>((o1, o2) -> o2 - o1);
+      for (int num : nums) {
+          maxHeap.add(num);
+          if (maxHeap.size() > k)
+              maxHeap.poll();
+      }
+      return new ArrayList<>(maxHeap);
+  }
+  ```
+
+## 41.1数据流中的中位数
+[NowCode](https://www.nowcoder.com/practice/9be0172896bd43948f8a32fb954e1be1?tpId=13&tqId=11216&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 题目描述
+如何得到一个数据流中的中位数？如果从数据流中读出奇数个数值，那么中位数就是所有数值排序之后位于中间的数值。如果从数据流中读出偶数个数值，那么中位数就是所有数值排序之后中间两个数的平均值。我们使用Insert()方法读取数据流，使用GetMedian()方法获取当前读取数据的中位数。
+
+### 解题思路
+```java
+/* 大顶堆，存储左半边元素 */
+private PriorityQueue<Integer> left = new PriorityQueue<>((o1, o2) -> o2 - o1);
+/* 小顶堆，存储右半边元素，并且右半边元素都大于左半边 */
+private PriorityQueue<Integer> right = new PriorityQueue<>();
+/* 当前数据流读入的元素个数 */
+private int N = 0;
+
+public void Insert(Integer val) {
+    /* 插入要保证两个堆存于平衡状态 */
+    if (N % 2 == 0) {
+        /* N 为偶数的情况下插入到右半边。
+         * 因为右半边元素都要大于左半边，但是新插入的元素不一定比左半边元素来的大，
+         * 因此需要先将元素插入左半边，然后利用左半边为大顶堆的特点，取出堆顶元素即为最大元素，此时插入右半边 */
+        left.add(val);
+        right.add(left.poll());
+    } else {
+        right.add(val);
+        left.add(right.poll());
+    }
+    N++;
+}
+
+public Double GetMedian() {
+    if (N % 2 == 0)
+        return (left.peek() + right.peek()) / 2.0;
+    else
+        return (double) right.peek();
+}
+```
+
+## 41.2字符流中第一个不重复的字符
+[NowCode](https://www.nowcoder.com/practice/00de97733b8e4f97a3fb5c680ee10720?tpId=13&tqId=11207&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 问题描述
+请实现一个函数用来找出字符流中第一个只出现一次的字符。例如，当从字符流中只读出前两个字符"go"时，第一个只出现一次的字符是"g"。当从该字符流中读出前六个字符“google"时，第一个只出现一次的字符是"l"。
+
+### 解题思路
+```java
+private int[] cnts = new int[256];
+private Queue<Character> queue = new LinkedList<>();
+
+public void Insert(char ch) {
+    cnts[ch]++;
+    queue.add(ch);
+    while (!queue.isEmpty() && cnts[queue.peek()] > 1)
+        queue.poll();
+}
+
+public char FirstAppearingOnce() {
+    return queue.isEmpty() ? '#' : queue.peek();
+}
+```
+
+## 42.连续子数组的最大和
+[NowCode](https://www.nowcoder.com/practice/459bd355da1549fa8a49e350bf3df484?tpId=13&tqId=11183&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 问题描述
+{6, -3, -2, 7, -15, 1, 2, 2}，连续子数组的最大和为 8（从第 0 个开始，到第 3 个为止）。
+
+### 解题思路
+动态规划法：
+
+数组为arr[]，设sum[i-1] 是以arr[i-1]结尾的子数组的最大和，对于元素arr[i], 它有两种选择：
+   1. arr[i]接着前面的子数组构成最大和
+   2. arr[i]自己单独构成子数组。
+
+则sum[i] = max{sum[i-1]+arr[i],  arr[i]}
+```java
+public staic int maxSubArray(int arr[]{
+  if (nums == null || nums.length == 0)
+        return Integer.MIN_VALUE;
+  int maxSum = Integer.MIN_VALUE;
+  int sum = 0;
+
+  for(int i= 0; i <arr.length; i++){
+    sum = max(sum + arr[i], arr[i]);
+    maxSum = max(maxSum, sum);
+  }
+  return maxSum;
+})
+```
