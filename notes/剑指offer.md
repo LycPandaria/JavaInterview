@@ -1840,6 +1840,7 @@ public int MoreThanHalfNum_Solution(int [] array) {
 2. 大小为 K 的最小堆
   - 复杂度：O(NlogK) + O(K)
   - 特别适合处理海量数据
+  **大顶堆：根结点（亦称为堆顶）的关键字是堆里所有结点关键字中最大者，称为大根堆，又称最大堆（大顶堆）**
   应该使用大顶堆来维护最小堆，而不能直接创建一个小顶堆并设置一个大小，企图让小顶堆中的元素都是最小元素。
 
   维护一个大小为 K 的最小堆过程如下：在添加一个元素之后，如果大顶堆的大小大于 K，那么需要将大顶堆的堆顶元素去除。
@@ -1909,6 +1910,7 @@ private Queue<Character> queue = new LinkedList<>();
 public void Insert(char ch) {
     cnts[ch]++;
     queue.add(ch);
+    // 检查队列首字符的出现次数是否大于1，如果大于1，就需要出列首字符，直到列首字符只出现过1次为止
     while (!queue.isEmpty() && cnts[queue.peek()] > 1)
         queue.poll();
 }
