@@ -1948,3 +1948,159 @@ public staic int maxSubArray(int arr[]{
   return maxSum;
 })
 ```
+
+
+## 43.从 1 到 n 整数中 1 出现的次数
+[NowCode](https://www.nowcoder.com/practice/bd7f978302044eee894445e244c7eee6?tpId=13&tqId=11184&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 问题描述
+求出1~13的整数中1出现的次数,并算出100~1300的整数中1出现的次数？为此他特别数了一下1~13中包含1的数字有1、10、11、12、13因此共出现6次,但是对于后面问题他就没辙了。ACMer希望你们帮帮他,并把问题更加普遍化,可以很快的求出任意非负整数区间中1出现的次数（从1 到 n 中1出现的次数）。
+
+### 解题思路
+考虑将n的十进制的每一位单独拿出讨论，每一位的值记为weight。
+
+1) 个位
+从1到n，每增加1，weight就会加1，当weight加到9时，再加1又会回到0重新开始。那么weight从0-9的这种周期会出现多少次呢？这取决于n的高位是多少，看图：
+![count1-1](../pic/count1-1.png)
+以534为例，在从1增长到n的过程中，534的个位从0-9变化了53次，记为round。每一轮变化中，1在个位出现一次，所以一共出现了53次。 再来看weight的值。weight为4，大于0，说明第54轮变化是从0-4，1又出现了1次。我们记1出现的次数为count，所以：
+
+  **count = round+1 = 53 + 1 = 54**
+
+如果此时weight为0（n=530），说明第54轮到0就停止了，那么：
+
+**count = round = 53**
+
+2) 十位
+对于10位来说，其0-9周期的出现次数与个位的统计方式是相同的，见图：
+![count1-1](../pic/count1-2.png)
+不同点在于：从1到n，每增加10，十位的weight才会增加1，所以，一轮0-9周期内，1会出现10次。即rount*10。
+再来看weight的值。当此时weight为3，大于1，说明第6轮出现了10次1，则：
+
+**count = round*10+10 = 5*10+10 = 60**
+
+如果此时weight的值等于0（n=504），说明第6轮到0就停止了，所以：
+
+**count = round*10+10 = 5*10 = 50**
+
+如果此时weight的值等于1（n=514），那么第6轮中1出现了多少次呢？很明显，这与个位数的值有关，个位数为k，第6轮中1就出现了k+1次(0-k)。我们记个位数为former，则：
+
+**count = round*10+former +1= 5*10+4 = 55**
+
+3) 更高位
+更高位的计算方式其实与十位是一致的，不再阐述。
+
+4) 总结
+将n的各个位分为两类：个位与其它位。
+对个位来说：
+
+若个位大于0，1出现的次数为 **round*1+1**
+若个位等于0，1出现的次数为 **round*1**
+对其它位来说，记每一位的权值为base，位值为weight，该位之前的数是former，举例如图：
+![count1-1](../pic/count1-3.png)
+
+则：
+若weight为0，则1出现次数为 **round*base**
+若weight为1，则1出现次数为 **round*base+former+1**
+若weight大于1，则1出现次数为 **rount*base+base**
+
+比如：
+  - 534 = （个位1出现次数）+（十位1出现次数）+（百位1出现次数）=（53*1+1）+（5*10+10）+（0*100+100）= 214
+  - 530 = （53*1）+（5*10+10）+（0*100+100） = 213
+  - 504 = （50*1+1）+（5*10）+（0*100+100） = 201
+  - 514 = （51*1+1）+（5*10+4+1）+（0*100+100） = 207
+  - 10 = (1*1)+(0*10+0+1) = 2
+
+```java
+public int count(int n){
+  if(n < 1)
+    return 0;
+  int count = 0, base = 1, round = n;
+  while(round > 0){
+    int weight = round % 10;
+    round /= 10;    // 从个位开始计算上去
+    count += round*base;
+    if(weight == 1) // 特殊情况：若weight为1，则1出现次数为 round*base+former+1
+      count += round % base +1;
+    else if(weight > 1) // 若weight大于1，则1出现次数为 rount*base+base
+      count += base;
+    base*=10;     // 开始计算下一位
+  }
+  return count;
+}
+```
+
+## 44.数字序列中的某一位数字
+
+### 题目描述
+数字以 0123456789101112131415... 的格式序列化到一个字符串中，求这个字符串的第 index 位。
+
+### 解题思路
+假设我们找第 1001 位，序列的前 10 位是 10 个 1 位数字，所以我们找后面第 991 位（1001-10）
+
+接下来 180 位数字是 90 个 100-999 的三位数。由于 991 > 180，所以我们继续从后面找 811(991-180) 位
+
+接下来是 2700 个三位数。由于 811 < 2700 所以第 811 为是某个三位数，又因为 811 = 270*3+1,所以我们知道 811 位是从 100 开始的 270 个数字 370 的中间一位 -> '7'
+
+```java
+public int getDigitAtIndex(int index){
+  if(index < 0)
+    return -1;
+  int place = 1;  // 这个表示位数 1-1位数 2-两位数 3-三位数。。。
+  while(true){
+    int amount = getAmountOfPlace(place); // 得到 n 位数的个数，1位数10个，2位数90个，3位数900个
+    int totalAmount = amount * place; // 在序列中占的总位数 1位数占10个，2位数占90*2个，3位数占900*3个
+    if(index < totalAmount) // 如果 index 在总位数之外，说明 index 所属的数字不在 n 位数范围内，
+      return getDigitAtIndex(index, place);
+    index -= totalAmount;
+    place++;  
+  }
+}
+
+public int getAmountOfPlace(int place){
+  // 得到 n 位数的个数，1位数10个，2位数90个，3位数900个
+  if(place == 1)
+    return 10;
+  return (int)Math.pow(10, place-1)*9
+}
+
+private int getDigitAtIndex(int index, int place){
+  // n 位数的第一个数字 0,10,100...
+  int beginNumber = getBeginNumcerOfPlace(place);
+  int shift = index / place;  // 表示 index 所属的数位于 beginNumer 的第几个数字之后
+  String num = (beginNumer + shift) + "";
+  return number.chatAt(index % place) - '0';
+}
+
+public int getBeginNumcerOfPlace(place){
+  // n 位数的第一个数字 0,10,100...
+  if(place == 1)
+    return 0;
+  return (int)Math.pow(10, place-1);
+}
+```
+
+## 45.把数组排成最小的数
+[NowCode](https://www.nowcoder.com/practice/8fecd3f8ba334add803bf2a06af1b993?tpId=13&tqId=11185&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 问题描述
+输入一个正整数数组，把数组里所有数字拼接起来排成一个数，打印能拼接出的所有数字中最小的一个。例如输入数组{3，32，321}，则打印出这三个数字能排成的最小数字为321323。
+
+### 解题思路
+输入一个正整数数组，把数组里所有数字拼接起来排成一个数，打印能拼接出的所有数字中最小的一个。例如输入数组 {3，32，321}，则打印出这三个数字能排成的最小数字为 321323。
+
+```java
+public String PrintMinNumber(int [] numbers) {
+    if(numbers.length == 0 || numbers == null)
+        return "";
+    int n = numbers.length;
+    String[] numStr = new String[n];
+    for(int i = 0; i < n; i++)
+        numStr[i] = numbers[i] + "";
+    // 学习一下下面这句
+    Arrays.sort(numStr, (s1,s2) -> (s1+s2).compareTo(s2+s1));
+    StringBuilder sb = new StringBuilder();
+    for(String str:numStr)
+        sb.append(str);
+    return sb.toString();
+}
+```
