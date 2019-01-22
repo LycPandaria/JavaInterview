@@ -2226,3 +2226,206 @@ public class Bonus {
 输入一个字符串（只包含 a~z 的字符），求其最长不含重复字符的子字符串的长度。例如对于 arabcacfr，最长不含重复字符的子字符串为 acfr，长度为 4。
 
 ### 解题思路
+```java
+/**
+ * 我们设 f(i) 表示以第 i 个字符为结尾并且不包含重复字符的字符串
+ * 如果第 i 个字符之前没有出现过，则很明显 f(i) = f(i-1)+1
+ * 如果出现过，我们首先计算该字符上次出现的位置到现在的位置的距离 d。然后我们要分两种情况：
+ * 1. d <= f(i-1): 说明第 i 个字符上次出现的位置是被包含在 f(i-1)中，则 f(i)=d
+ * 2. d > f(i-1)： 说明第 i 个字符上次出现的位置是在 f(i-1) 之外的，此时 f(i)=f(i-1)+1 任然是成立的
+ * 注意每一次操作后，都要比较 f(i) 的长度和 maxLen
+ */
+public int longestSubStringWithoutDuplication(String str) {
+  int curLen = 0;   // f(i)
+  int maxLen = 0;   // 记录最大长度
+  // 这个数组用于方便我们计算当我们碰到一个重复的字符之后，它的上一次出现的位置
+  int[] preIndexs = new int[26];  
+  Arrays.fill(preIndexs, -1);   // 如果该字符没有出现记录，则上次出现的位置为 -1
+  for(int curI = 0; curI < str.length(); curI++){
+    int c = str.charAt(curI) - 'a';
+    int preI = preIndexs[curI];   //上次出现的位置
+    if(preI == -1 || curI-preI > curLen)  // 该字符还没出现过 || d > f(i-1)
+      curLen++;
+    else{ // d <= f(i-1)
+      maxLen = Math.max(maxLen, curLen);
+      curLen = curI-preI; // f(i) = d, 所以在更新 curLen 之前要比较它和 maxLen 的大小
+    }
+    preIndexs[c] = curI;    // 更新该字符出现的位置
+  }
+  maxLen = Math.max(maxLen, curLen);
+  return maxLen;
+}
+```
+
+## 49.丑数
+[NowCode](https://www.nowcoder.com/practice/6aa9e04fc3794f68acf8778237ba065b?tpId=13&tqId=11186&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 问题描述
+把只包含质因子2、3和5的数称作丑数（Ugly Number）。例如6、8都是丑数，但14不是，因为它包含质因子7。 习惯上我们把1当做是第一个丑数。求按从小到大的顺序的第N个丑数。
+
+### 解题思路
+最容易想到的办法是逐个判断整数是不是丑数。判断这个数是不是丑数：如果它能被 2 整除，就连续除以2，能被 3 整除，就连续除以3，能被 5 整除，就连续除以5. 如果最后为 1，则说明是丑数。
+
+这种方法虽然直观但是不够高效。
+```java
+boolean isUgly(int n){
+  while(n % 2 == 0)
+    n/=2;
+  while(n % 3 == 0)
+    n/=3;
+  while(n % 5 == 0)
+    n/=5;
+
+  return n==1?true:false;
+}
+```
+
+更好的解法是我们可以创建一个数组，里面的数字时排序好的丑数，每个丑数都是前面的数乘以 2,3或者5得到的
+```java
+/**
+ * 问题的关键是如何我们知道现在数组里最大的丑数是 M 时候，怎么求下一个丑数，这个数肯定是前面某个丑数
+ * 乘以 2,3 或者 5 得到的。
+ * 解决的办法是我们要记录上 i2, i3, i5，表示 num[i2] 这个丑数 *2 是一定大于或等于 M 的，然后我们再取 num[i2]*2, num[i3]*3, num[i5]*5 的最小值作为下一个丑数
+ */
+ import java.util.Math;
+ public class Solution {
+     public int GetUglyNumber_Solution(int index) {
+         if(index <= 6)
+             return index;
+         int i2 = 0, i3 = 0, i5 = 0;
+         int num[] = new int[index];    // 丑数数组
+         num[0] = 1;    // 第一个丑数
+         for(int i = 1; i < index; i++){
+             // 这三个数字都是大于 M 的，M为当前丑数数组的最大值
+             int next2 = num[i2] * 2;
+             int next3 = num[i3] * 3;
+             int next5 = num[i5] * 5;
+             // 将最小值放入丑数数组中
+             num[i] = Math.min(next2, Math.min(next3,next5));
+             // 更新 i2,i3,i5,确保num[i2]*2, num[i3]*3, num[i5]*5 是下一个丑数的候选
+             if(num[i] == next2) i2++;
+             if(num[i] == next3) i3++;
+             if(num[i] == next5) i5++;
+         }
+         return num[index-1];
+     }
+ }
+```
+
+## 50.第一个只出现一次的字符位置
+[NowCode](https://www.nowcoder.com/practice/1c82e8cf713b4bbeb2a5b31cf5b0417c?tpId=13&tqId=11187&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 问题描述
+在一个字符串(0<=字符串长度<=10000，全部由字母组成)中找到第一个只出现一次的字符,并返回它的位置, 如果没有则返回 -1（需要区分大小写）.
+
+### 解题思路
+可以使用 HashMap 或者 BitSet
+```java
+public int FirstNotRepeatingChar(String str) {
+  int[] cnts = new int[256];  // 每一位都可以对应到一个字符,空间换时间
+  for(int i = 0; i < str.length(); i++)
+    cnts[str.charAt(i)] ++;   // 出现过一次，相应的位置 +1
+  for(int i = 0; i < str.length(); i++)
+    if(cnts[str.charAt(i)] == 1)
+      return i;
+  return -1;
+}
+```
+
+```java
+public int FirstNotRepeatingChar2(String str) {
+    BitSet bs1 = new BitSet(256);
+    BitSet bs2 = new BitSet(256);
+    for (char c : str.toCharArray()) {
+        if (!bs1.get(c) && !bs2.get(c))
+            bs1.set(c);     // 如果该字符没有出现过，0 0 -> 0 1
+        else if (bs1.get(c) && !bs2.get(c))
+            bs2.set(c);     // 如果该数字又出现了一遍，0 1 -> 1 1
+    }
+    for (int i = 0; i < str.length(); i++) {
+        char c = str.charAt(i);
+        if (bs1.get(c) && !bs2.get(c))  // 0 1 -- 只出现过一次
+            return i;
+    }
+    return -1;
+}
+```
+
+## 51.数组中的逆序对
+[NowCode](https://www.nowcoder.com/practice/96bd6684e04a44eb80e6a68efc0ec6c5?tpId=13&tqId=11188&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 问题描述
+在数组中的两个数字，如果前面一个数字大于后面的数字，则这两个数字组成一个逆序对。输入一个数组,求出这个数组中的逆序对的总数P。并将P对1000000007取模的结果输出。 即输出P%1000000007
+
+### 解题思路
+**蛮力法：** 对数组中每一个数字，遍历它后面的所有数组，如果后面的数字比它小，那么就是一对反序对
+```java
+public static int reverseCount(int arr[]){
+  int count = 0;
+  int len = arr.length;
+  for(int i=0; i < len; i++){
+    for(int j = i+1; j < len; j++)
+      if(arr[i] > arr[j])
+        count++;
+  }
+  return count;
+}
+```
+
+**分治归并:**
+
+我们以数组{7,5,6,4}为例来分析统计逆序对的过程。每次扫描到一个数字的时候，我们不拿ta和后面的每一个数字作比较，否则时间复杂度就是O(n^2)，因此我们可以考虑先比较两个相邻的数字。
+![51-1](../pic/51-1.jpg)
+(a) 把长度为4的数组分解成两个长度为2的子数组；
+
+(b) 把长度为2的数组分解成两个成都为1的子数组；
+
+(c) 把长度为1的子数组 合并、排序并统计逆序对 ；
+
+(d) 把长度为2的子数组合并、排序，并统计逆序对；
+
+在上图（a）和（b）中，我们先把数组分解成两个长度为2的子数组，再把这两个子数组分别拆成两个长度为1的子数组。接下来一边合并相邻的子数组，一边统计逆序对的数目。在第一对长度为1的子数组{7}、{5}中7大于5，因此（7,5）组成一个逆序对。同样在第二对长度为1的子数组{6}、{4}中也有逆序对（6,4）。由于我们已经统计了这两对子数组内部的逆序对，因此需要把这两对子数组 排序 如上图（c）所示， 以免在以后的统计过程中再重复统计。
+
+接下来我们统计两个长度为2的子数组子数组之间的逆序对。合并子数组并统计逆序对的过程如下图如下图所示。
+![51-2](../pic/51-2.jpg)
+我们先用两个指针分别指向两个子数组的末尾，并每次比较两个指针指向的数字。如果第一个子数组中的数字大于第二个数组中的数字，则构成逆序对，并且逆序对的数目等于第二个子数组中剩余数字的个数，如下图（a）和（c）所示。如果第一个数组的数字小于或等于第二个数组中的数字，则不构成逆序对，如图b所示。每一次比较的时候，我们都把较大的数字从后面往前复制到一个辅助数组中，确保 辅助数组（记为copy） 中的数字是递增排序的。在把较大的数字复制到辅助数组之后，把对应的指针向前移动一位，接下来进行下一轮比较。
+```java
+private long cnt = 0;
+private int[] tmp;
+
+public int InverseParis(int[] nums){
+  tmp = new int[nums.length];
+  mergeSort(nums, 0, nums.length-1);
+  return (int)(cnt % 1000000007);
+}
+
+private void mergeSort(int[] nums, int l, int h){
+  if(l < h){
+    int m = (l + h) / 2;
+    mergeSort(nums, l, m);
+    mergeSort(nums, m+1, h);
+    merge(nums, l, m, h);
+  }
+}
+
+private void merge(int[] nums, int low, int mid, int high){
+  int i = low;  // 左边下标
+  int j = mid+1;  // 右边下标
+  int k = low;    // tmp 数组下标
+  while(i <= mid || j <= high){
+    if(i > mid)
+      tmp[k] = nums[j++]; // 这一步代表 左边的数已经全部放入tmp中，把右边的部分依次顺序放入tmp中
+    else if(j > high)
+      tmp[k] = nums[i++]; // 这一步代表 右边的数已经全部放入tmp中，把zuob的部分依次顺序放入tmp中
+    else if(nums[i] < nums[j])
+      tmp[k] = nums[i++]; // 左边下标的数小于右边下标的数，把左边下标的数移到tmp中，然后移动左边下标
+    else {
+      tmp[k] = nums[j++]; // 左边下标的数大于右边下标的数，把右边下标的数移到tmp中，然后移动右边下标
+      this.cnt += mid - i + 1;  // 统计反序对数量：nums[i] >= nums[j]，说明 nums[i...mid] 都大于 nums[j]
+    }
+    k++;  // 移动 tmp 下标
+  }
+  for(k = low; k <= high; k++)
+    nums[k] = tmp[k];   // tmp中是排序好的，复制到nums中
+}
+```
