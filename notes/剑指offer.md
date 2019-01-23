@@ -2429,3 +2429,122 @@ private void merge(int[] nums, int low, int mid, int high){
     nums[k] = tmp[k];   // tmp中是排序好的，复制到nums中
 }
 ```
+
+## 52.两个链表的第一个公共节点
+[NowCode](https://www.nowcoder.com/practice/6ab1d9a29e88450685099d45c9e31e46?tpId=13&tqId=11189&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 问题描述
+输入两个链表，找出它们的第一个公共结点。
+
+### 解题思路
+这题的第一个解法可以参考 数据结构与算法中的--9-判断两个链表是否相交。思想是先算出两个链表的长度差 d，然后让长的链表先走 d 步，然后短的链表从头出发，两个指针所指相等的点即为交点。
+
+第二种解法：
+
+设 A 的长度为 a + c，B 的长度为 b + c，其中 c 为尾部公共部分长度，可知 a + c + b = b + c + a。
+
+当访问链表 A 的指针访问到链表尾部时，令它从链表 B 的头部重新开始访问链表 B；同样地，当访问链表 B 的指针访问到链表尾部时，令它从链表 A 的头部重新开始访问链表 A。这样就能控制访问 A 和 B 两个链表的指针能同时访问到交点。
+
+当然，当两个链表没有交点的时候，两个指针在遍历完两个链表后会同时得到 null 而退出循环
+```java
+public ListNode FindFirstCommonNode(ListNode pHead1, ListNode pHead2) {
+    ListNode p1 = pHead1, p2 = pHead2;
+    while(p1 != p2){
+        p1 = (p1 == null ? pHead2: p1.next);
+        p2 = (p2 == null ? pHead1: p2.next);
+    }
+    return p1;
+}
+```
+
+## 53.数字在排序数组中出现的次数
+[NowCode](https://www.nowcoder.com/practice/70610bf967994b22bb1c26f9ae901fa2?tpId=13&tqId=11190&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 问题描述
+```text
+Input:
+nums = 1, 2, 3, 3, 3, 3, 4, 6
+K = 3
+
+Output:
+4
+```
+### 解题思路
+由于数组是排序好的，很容易想到用二分查找来寻找数字 3.但是问题就在于如何找到第一个 3 和 最后一个 3.
+
+所以这个的二分查找唯一的不同就是，当 num[mid] 中间的数等于 3 的时候不能停止查找，我们要判断这个是不是第一个 3，即比较 mid-1 位置的数是不是3，如果是，则说明我们还需要在前半部分继续找，如果不是，则 mid 就是第一个 3
+```java
+public int GetNumberOfK(int [] array , int k) {
+   if(array == null || array.length == 0)
+       return 0;
+    int len = array.length;
+    int first = getFirstK(array, len, k, 0, len-1);
+    int last = getLastK(array, len, k, 0, len-1);
+
+    if(first > -1 && last > -1)
+        return last - first + 1;
+    else
+        return 0;
+}
+
+public int getFirstK(int[] arr, int len, int k, int start, int end){
+    if(start > end)
+        return -1;    // 找不到 K
+    int mid = (start + end) / 2;
+    if(arr[mid] == k){
+        // 这里判读 mid 是不是第一个 K 的位置(跟前一个元素比较)
+        if((mid > 0 && arr[mid-1]!=k) || mid == 0)
+            return mid;
+        else    // 如果不是第一个 K，继续在前半部分找
+            end = mid-1;
+    }else if(arr[mid] > k)    // 在前半部分找
+        end = mid - 1;
+    else
+        start = mid + 1;
+    return getFirstK(arr, len, k, start, end);
+}
+
+public int getLastK(int[] arr, int len, int k, int start, int end){
+    if(start > end)
+        return -1;    // 找不到 K
+    int mid = (start + end) / 2;
+    if(arr[mid] == k){
+        // 这里判断 mid 是不是最后一个 K 的位置(跟后一个元素比较)
+        if((mid < len-1 && arr[mid+1]!=k) || mid == len-1)
+            return mid;
+        else    // 如果不是最后 K，继续在后半部分找
+            start = mid + 1;
+    }else if(arr[mid] > k)    // 在后半部分找
+        end = mid - 1;
+    else
+        start = mid + 1;
+    return getLastK(arr, len, k, start, end);
+}
+```
+
+## 54.二叉查找树的第 K 个结点
+[NowCode](https://www.nowcoder.com/practice/ef068f602dde4d28aab2b210e859150a?tpId=13&tqId=11215&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 问题描述
+给定一棵二叉搜索树，请找出其中的第k小的结点。例如， （5，3，7，2，4，6，8）    中，按结点数值大小顺序第三小结点的值为4。
+
+### 解题思路
+利用二叉查找树中序遍历有序的特点。
+```java
+TreeNode ret;
+int cnt = 0;
+TreeNode KthNode(TreeNode pRoot, int k)
+{
+    inOrder(pRoot, k);
+    return ret;
+}
+void inOrder(TreeNode node, int k){
+    if(node == null || cnt >= k)
+        return;
+    inOrder(node.left, k);
+    cnt++;
+    if(cnt==k)
+        ret = node;
+    inOrder(node.right, k);
+}
+```
