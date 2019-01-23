@@ -2522,6 +2522,72 @@ public int getLastK(int[] arr, int len, int k, int start, int end){
 }
 ```
 
+## 53.1 0~n-1中缺失的数字
+### 问题描述
+一个长度为 n-1 的递增排序数组中的所有数字都是唯一的，并且每个数字都在 0~n-1 范围之内，在范围 0~n-1 内的 n 个数字有且只有一个不再数组中。
+
+### 解题思路
+二分查找：
+1. 如果中间元素的值和下标相等，则下一轮只需要从右半边开始查
+2. 如果不等，并且前一个数的值和下标相等，说明中间元素下标就是确实的数字
+3. 如果不等，并且前一个数也不等，下一轮从左半边开始查即可
+
+```java
+int GetMissingNum(int[] arr, int len){
+  if(arr == null || arr.length == 0)
+    return -1;
+
+  int left = 0;
+  int right = len-1;
+  while(left <= right){
+    int mid = (left + right) >> 1;
+    if(arr[mid] != mid){
+      if(mid == 0 || arr[mid-1] == mid-1)
+        return mid; // 第二种情况：不等，并且前一个数的值和下标相等，说明中间元素下标就是确实的数字
+      right = mid - 1;  //  第三种情况: 不等，并且前一个数也不等，下一轮从左半边开始查即可
+    }else
+      left = mid + 1; // 中间元素的值和下标相等，则下一轮只需要从右半边开始查
+  }
+
+  if(left == length);
+    return left;  // 没有缺失数字的情况
+
+  // 无效的输入，比如数组不是按要求排列，或者有数字不在 0~n-1 内
+  return -1；
+}
+```
+
+## 53.2 数组中数值和下标相等的元素
+### 问题描述
+假设一个单调递增数组每个元素都是整数而且唯一。请找出任意一个数值等于其下标的元素。例如{-3,-1,1,3,5}，数组 3 和它的下标相等
+
+### 解题思路
+二分查找：
+1. 如果中间元素下标等于数值，返回
+2. 如果中间元素下标大于数值，在右半边找，因为左半边已经不可能存在符合条件的数
+3. 如果中间元素下标小于数值，在左半边找
+
+```java
+int getIndexSameAsValue(int[] arr, int len){
+  if(arr == null || arr.length == 0)
+    return -1;
+
+  int left = 0;
+  int right = len-1;
+  while(left <= right){
+    int mid = (left + right) >> 1;
+    if(arr[mid] == mid)
+      return mid;
+    else if(arr[mid] < mid)   // 中间元素下标大于数值，在右半边找
+      left = mid + 1;
+    else
+      right = mid - 1;
+  }
+
+  return -1;
+}
+```
+
 ## 54.二叉查找树的第 K 个结点
 [NowCode](https://www.nowcoder.com/practice/ef068f602dde4d28aab2b210e859150a?tpId=13&tqId=11215&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
 
