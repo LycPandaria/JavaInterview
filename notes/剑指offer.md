@@ -2614,3 +2614,110 @@ void inOrder(TreeNode node, int k){
     inOrder(node.right, k);
 }
 ```
+
+## 55.1二叉树的深度
+[NowCode](https://www.nowcoder.com/practice/435fb86331474282a3499955f0a41e8b?tpId=13&tqId=11191&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 问题描述
+输入一棵二叉树，求该树的深度。从根结点到叶结点依次经过的结点（含根、叶结点）形成树的一条路径，最长路径的长度为树的深度。
+
+### 解题思路
+```java
+// 树的问题尝试用递归解决
+public int TreeDepth(TreeNode root) {
+    return root == null ? 0 : 1 + Math.max(TreeDepth(root.left), TreeDepth(root.right));
+}
+```
+
+## 55.2平衡二叉树
+[NowCode](https://www.nowcoder.com/practice/8b3b95850edb4115918ecebdf1b4d222?tpId=13&tqId=11192&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 问题描述
+输入一棵二叉树，判断该二叉树是否是平衡二叉树。
+
+平衡二叉树左右子树高度差不超过 1。
+
+![52](../pic/52.png)
+
+### 解题思路
+如果我们用后续遍历的方式遍历二叉树的每个节点，那么在遍历到一个节点之前我们就已经遍历了它的左右子树。只要在遍历每个节点的时候记录深度，就可以一边遍历一边判断
+```java
+private boolean isBalanced = true;
+public boolean IsBalanced_Solution(TreeNode root) {
+    height(root);
+    return isBalanced;
+}
+private int heigth(TreeNode root){
+    // 后序遍历
+    if(root == null || !isBalanced)
+        return 0;
+    int left = height(root.left);    // 得到左右子树的高度
+    int right = height(root.right);
+    if(Math.abs(left-right) > 1)
+        isBalanced = false;
+    return 1 + Math.max(left, right);
+}
+```
+
+## 56.数组中只出现一次的数字
+[NowCode](https://www.nowcoder.com/practice/e02fdb54d7524710a7d664d082bb7811?tpId=13&tqId=11193&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 问题描述
+一个整型数组里除了两个数字之外，其他的数字都出现了两次，找出这两个数。
+
+### 解题思路
+两个不相等的元素在位级表示上必定会有一位存在不同，将数组的所有元素异或得到的结果为不存在重复的两个元素异或的结果。
+
+diff &= -diff 得到出 diff 最右侧不为 0 的位，也就是不存在重复的两个元素在位级表示上最右侧不同的那一位，利用这一位就可以将两个元素区分开来。
+
+```java
+public void FindNumsAppearOnce(int[] nums, int num1[], int num2[]) {
+    int diff = 0;
+    for (int num : nums)
+        diff ^= num;  // 得到两个不同的元素的异或
+    diff &= -diff;      // 找到最右为 1 的那一位，记为 n
+    for (int num : nums) {
+      // 这里是对数进行分类，通过 第 n 位是不是 0 来分类，第一个数组中每个数字的第 n 位都是 1
+      // 第 n 为是 0 的在第二个数组(相同的数会被分到一个组中)，然后在两个数组中再做一次异或，就能分别得到那两个不相同的数
+        if ((num & diff) == 0)    
+            num1[0] ^= num;
+        else
+            num2[0] ^= num;
+    }
+}
+```
+
+## 57.1和为 S 的两个数字
+[NowCode](https://www.nowcoder.com/practice/390da4f7a00f44bea7c2f3d19491311b?tpId=13&tqId=11195&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 问题描述
+输入一个递增排序的数组和一个数字 S，在数组中查找两个数，使得他们的和正好是 S。如果有多对数字的和等于 S，输出两个数的乘积最小的。
+
+### 解题思路
+分别从前和后对数组进行遍历，如果arr[begin] +arr[end] < S.如果存在两个数合为 S，那么这两个数一定在arr[begin+1]到arr[end]之间。
+如果arr[begin] +arr[end] > S.如果存在两个数合为 S，那么这两个数一定在arr[begin]到arr[end-1]之间。
+
+```java
+public ArrayList<Integer> FindNumbersWithSum(int [] array,int sum) {
+    ArrayList<Integer> ret = new ArrayList<>();
+    if(array == null || array.length==0)
+        return ret;
+    int begin = 0;
+    int end = array.length - 1;
+    while(begin < end){
+        int cur = array[begin] + array[end];
+        if(cur > sum)
+            end--;
+        else if(cur < sum)
+            begin++;
+        else{
+            ret.add(array[begin]);
+            ret.add(array[end]);
+            return ret;
+        }
+    }
+    return ret;
+}
+```
+
+## 57.2
