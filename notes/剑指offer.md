@@ -2720,4 +2720,151 @@ public ArrayList<Integer> FindNumbersWithSum(int [] array,int sum) {
 }
 ```
 
-## 57.2
+## 57.2和为 S 的连续正数序列
+[NowCode](https://www.nowcoder.com/practice/c451a3fd84b64cb19485dad758a55ebe?tpId=13&tqId=11194&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 问题描述
+输出所有和为 S 的连续正数序列。
+
+例如和为 100 的连续序列有：
+```text
+[9, 10, 11, 12, 13, 14, 15, 16]
+[18, 19, 20, 21, 22]
+```
+
+### 解题思路
+用两个数 small 和 big 分别表示序列的最小值和最大值，首先初始化 small = 1，big = 2，如果从 small 到 big 的序列和大于 s，则可以去掉较小的值，也就是 small ++ ，如果从 small 到 big 的序列和小于 s，则可以增大 big，让这个序列包含更多的数字。因为这个序列至少要两个数字，所以我们一直增加 small 到 (1+s)/2
+
+```java
+public ArrayList<ArrayList<Integer> > FindContinuousSequence(int sum) {
+   // 所以可能的序列
+    ArrayList<ArrayList<Integer>> ret = new ArrayList<>();
+    int small = 1, big = 2;
+    int curSum = small + big;
+    int end = (1+sum)/2;    // small 从1增到end
+    while(small < end){
+        if(curSum > sum){
+            // 和大于sum，需要去掉序列中最小的值，即small++
+            curSum -= small;
+            small++;
+        } else if(curSum < sum){
+            // 和小于sum,需要加入更大的数，big++
+            big++;
+            curSum += big;
+        }else{
+            // 符合要求的序列
+            ArrayList<Integer> list = new ArrayList<>();
+            for(int i=small; i<=big; i++)
+                list.add(i);
+            ret.add(list);
+            // 继续寻找符合的序列
+            curSum -= small;
+            small++;
+            big++;
+            curSum += big;
+        }
+    }
+    return ret;
+}
+```
+
+## 58.1翻转单词顺序列
+[NowCode](https://www.nowcoder.com/practice/3194a4f4cf814f63919d0790578d51f3?tpId=13&tqId=11197&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 问题描述
+把一个句子中的单词进行反转，列如："how are you" -> "you are how".
+
+### 解题思路
+对字符进行两次反转，第一次对整个字符串中的字符反转 -> "uoy era woh"， 然后对给个单词进行反转。
+```java
+public String ReverseSentence(String str) {
+    char[] carr = str.toCharArray();
+    // 对整个反转
+    swap(carr, 0, carr.length-1);
+    // 对单词反转
+    int begin = 0;
+    for(int i=1; i <= carr.length; i++){
+        // 注意这个条件 i==carr.length，最后达到字符串
+        // 末尾的时候，也要记得进行一个反转，比如 字符串只有一个单词
+        if(i==carr.length || carr[i] == ' '){
+            // 遇到空格，则进行一个反转
+            swap(carr, begin, i-1);
+            begin = i+1;
+        }
+    }
+    return new String(carr);
+}
+
+private void swap(char[] carr, int front, int end){
+    while(front < end){
+        char tmp = carr[front];
+        carr[front] = carr[end];
+        carr[end] = tmp;
+        front++;
+        end--;
+    }
+}
+```
+
+## 58.2 左旋转字符串
+[NowCode](https://www.nowcoder.com/practice/12d959b108cb42b1ab72cef4d36af5ec?tpId=13&tqId=11196&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 问题描述
+汇编语言中有一种移位指令叫做循环左移（ROL），现在有个简单的任务，就是用字符串模拟这个指令的运算结果。对于一个给定的字符序列S，请你把其循环左移K位后的序列输出。例如，字符序列S=”abcXYZdef”,要求输出循环左移3位后的结果，即“XYZdefabc”。是不是很简单？OK，搞定它！
+
+### 解题思路
+先将 "abc" 和 "XYZdef" 分别翻转，得到 "cbafedZYX"，然后再把整个字符串翻转得到 "XYZdefabc"。
+```java
+public String LeftRotateString(String str,int n) {
+    if(str.length()==0 || str==null)
+        return "";
+    char[] carr = str.toCharArray();
+    int len = str.length();
+    n = n % len;
+    // 反转 abc
+    swap(carr, 0, n-1);
+    // 反转 XYZdef
+    swap(carr, n, len-1);
+    // 最后整体反转一遍
+    swap(carr, 0, len-1);
+    return new String(carr);
+}
+
+private void swap(char[] carr, int begin, int end){
+    while(begin < end){
+        char tmp = carr[begin];
+        carr[begin] = carr[end];
+        carr[end] = tmp;
+        begin++;
+        end--;
+    }
+}
+```
+
+## 59.滑动窗口的最大值
+[NowCode](https://www.nowcoder.com/practice/1624bc35a45c42c0bc17d17fa0cba788?tpId=13&tqId=11217&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+
+### 问题描述
+给定一个数组和滑动窗口的大小，找出所有滑动窗口里数值的最大值。例如，如果输入数组{2,3,4,2,6,2,5,1}及滑动窗口的大小3，那么一共存在6个滑动窗口，他们的最大值分别为{4,4,6,6,6,5}； 针对数组{2,3,4,2,6,2,5,1}的滑动窗口有以下6个： {[2,3,4],2,6,2,5,1}， {2,[3,4,2],6,2,5,1}， {2,3,[4,2,6],2,5,1}， {2,3,4,[2,6,2],5,1}， {2,3,4,2,[6,2,5],1}， {2,3,4,2,6,[2,5,1]}。
+
+### 解题思路
+维护一个大小为 size 的大顶堆(根节点是最大的)
+```java
+public ArrayList<Integer> maxInWindows(int [] num, int size)
+{
+    ArrayList<Integer> ret = new ArrayList<>();
+    if(num == null || num .length==0 || size < 1 || size > num.length)
+        return ret;
+    // 大顶堆
+    PriorityQueue<Integer> heap = new PriorityQueue<>((o1,o2) -> (o2 - o1));
+    for(int i=0; i < size; i++)
+        heap.add(num[i]);
+    ret.add(heap.peek());
+    for(int i = 0, j = i + size; j < num.length; i++, j++){
+        heap.remove(num[i]);
+        heap.add(num[j]);
+        ret.add(heap.peek());
+    }
+    return ret;
+}
+```
