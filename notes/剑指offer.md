@@ -2929,3 +2929,33 @@ public class Solution {
     }
 }
 ```
+
+## 62.股票的最大利润
+[Leetcode](https://leetcode.com/problems/best-time-to-buy-and-sell-stock/description/)
+
+### 问题描述
+可以有一次买入和一次卖出，那么买入必须在前。求最大收益。
+
+### 解题思路
+使用贪心策略，假设第 i 轮进行卖出操作，买入操作价格应该在 i 之前并且价格最低。
+
+定义 diff(i) 为卖出价位数组中第 i 个数字时候能获得最大利润。也就是说，如果在扫描到数组中的第 i 个数字时，只要我们能记住之前的 i-1 个数字中的最小值，就能算出在当前价位卖出得到的最大利润。
+
+```java
+public int maxProfit(int[] prices) {
+    if(prices == null && prices.length < 2)
+      return 0;
+
+    int min = prices[0];  // 记录最小值
+    int maxDiff = prices[1] - min;
+
+    for(int i=2; i < prices.length; i++){
+      if(prices[i] < min)
+        min = prices[i];  // 更新最小值
+      int curDiff = prices[i] - min;
+      if(curDiff > maxDiff)
+        maxDiff = curDiff;
+    }
+    return maxDiff;
+}
+```
