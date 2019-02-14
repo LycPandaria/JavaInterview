@@ -5,7 +5,7 @@
 
 ### :pencil2: 算法
 
-- [剑指 Offer 题解](https://github.com/CyC2018/CS-Notes/blob/master/docs/notes/%E5%89%91%E6%8C%87%20offer%20%E9%A2%98%E8%A7%A3.md)
+- [剑指 Offer 题解](./notes/剑指offer.md)
 
   目录根据原书第二版进行编排，代码和原书有所不同，尽量比原书更简洁。
 
@@ -24,7 +24,7 @@
 
   主要是一些原理以及关键特性。
 
-- [Java 容器](https://github.com/CyC2018/InnterviewNotes/blob/master/notes/Java%20容器.md)
+- [Java 容器](./notes/Java容器.md)
 
   源码分析：ArrayList、Vector、CopyOnWriteArrayList、LinkedList、HashMap、ConcurrentHashMap、LinkedHashMap、WeekHashMap。
 
@@ -40,7 +40,10 @@
 
   NIO 的原理以及实例。
 
-  ### :couple: 面向对象
+### :wrench: 框架
+  - [Mybatis](./notes/mybatis.md)
+
+### :couple: 面向对象
 
   - [设计模式](https://github.com/LycPandaria/JavaInterview/blob/master/notes/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F.md)
 
