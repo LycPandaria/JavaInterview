@@ -109,20 +109,21 @@ position-4 : (0,1,2,3,2,5) // nums[i] == nums[nums[i]], exit
 ```
 ```java
 public boolean duplicate(int numbers[],int length,int [] duplication) {
-    // 检查
+    // 数组检查
     if(numbers==null || length <=0)
         return false;
-    for(int i = 0; i < length; i++)
-        if(numbers[i] < 0 || numbers[i] > length - 1)
+    for(Integer num : numbers)   // 迭代器只能用包装类 Integer,不能用 int
+        if(num < 0 || num > length-1)
             return false;
 
+    // 算法在这一步相当于将数组进行排序，0放到 numbers[0] 处，1 放到 numbers[1] 处
     for(int i = 0; i < length; i++){
         while(numbers[i] != i){
             if(numbers[i] == numbers[numbers[i]]){
                 duplication[0]=numbers[i];
                 return true;
             }
-            // 交换
+            // 交换完成排序
             int tmp = numbers[i];
             numbers[i] = numbers[tmp];
             numbers[tmp] = tmp;
