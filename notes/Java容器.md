@@ -647,3 +647,269 @@ void linkLast(E e) {
      }
  }
 ```
+
+# HashMap
+## 存储结构
+HashMap的主干是一个Entry数组。Entry是HashMap的基本组成单元，每一个Entry包含一个key-value键值对。
+```java
+//HashMap的主干数组，可以看到就是一个Entry数组，初始值为空数组{}，主干数组的长度一定是2的次幂
+transient Entry<K,V>[] table = (Entry<K,V>[]) EMPTY_TABLE;
+```
+Entry 是 HashMap 中一个静态内部类
+```java
+static class Entry<K,V> implements Map.Entry<K,V> {
+    final K key;
+    V value;
+    Entry<K,V> next;//存储指向下一个Entry的引用，单链表结构
+    int hash;//对key的hashcode值进行hash运算后得到的值，存储在Entry，避免重复计算
+
+    /**
+    * Creates new entry.
+    */
+    Entry(int h, K k, V v, Entry<K,V> n) {
+        value = v;
+        next = n;
+        key = k;
+        hash = h;
+    }
+    ...
+}
+```
+所以Entry 存储着键值对。它包含了四个字段，从 next 字段我们可以看出 Entry 是一个链表。即数组中的每个位置被当成一个桶，一个桶存放一个链表。HashMap 使用拉链法来解决冲突，同一个链表中存放哈希值相同的 Entry。
+![HashMap](../pic/hashmap.png)
+
+## 其他几个重要字段
+```java
+//实际存储的key-value键值对的个数
+transient int size;
+//阈值，当table == {}时，该值为初始容量（初始容量默认为16）；当table被填充了，也就是为table分配内存空间后，threshold一般为 capacity*loadFactory。HashMap在进行扩容时需要参考threshold，后面会详细谈到
+int threshold;
+//负载因子，代表了table的填充度有多少，默认是0.75
+final float loadFactor;
+//用于快速失败，由于HashMap非线程安全，在对HashMap进行迭代时，如果期间其他线程的参与导致HashMap的结构发生变化了（比如put，remove等操作），需要抛出异常ConcurrentModificationException
+transient int modCount;
+```
+
+## put
+```java
+public V put(K key, V value) {
+  //如果table数组为空数组{}，进行数组填充（为table分配实际内存空间），入参为threshold，
+  // 此时threshold为initialCapacity 默认是1<<4(24=16)
+    if (table == EMPTY_TABLE) {
+        inflateTable(threshold);
+    }
+    // 键为 null 单独处理,存储位置为table[0]或table[0]的冲突链上
+    if (key == null)
+        return putForNullKey(value);
+    int hash = hash(key);
+    // 确定桶下标
+    int i = indexFor(hash, table.length);
+    // 先找出是否已经存在键为 key 的键值对，如果存在的话就更新这个键值对的值为 value
+    for (Entry<K,V> e = table[i]; e != null; e = e.next) {
+        Object k;
+        if (e.hash == hash && ((k = e.key) == key || key.equals(k))) {
+            V oldValue = e.value;
+            e.value = value;
+            e.recordAccess(this);
+            return oldValue;
+        }
+    }
+
+    modCount++;
+    // 插入新键值对
+    addEntry(hash, key, value, i);
+    return null;
+}
+```
+
+### inflateTable
+```java
+private void inflateTable(int toSize) {
+    int capacity = roundUpToPowerOf2(toSize);//capacity一定是2的次幂
+    // 此处为threshold赋值，取capacity*loadFactor和MAXIMUM_CAPACITY+1的最小值，
+    // capaticy一定不会超过MAXIMUM_CAPACITY，除非loadFactor大于1
+    threshold = (int) Math.min(capacity * loadFactor, MAXIMUM_CAPACITY + 1);
+    table = new Entry[capacity];  // 声明 Entry 数组
+    initHashSeedAsNeeded(capacity);
+}
+```
+
+### putForNullKey
+HashMap 允许插入键为 null 的键值对。但是因为无法调用 null 的 hashCode() 方法，
+也就无法确定该键值对的桶下标，只能通过强制指定一个桶下标来存放。HashMap 使用第 0 个桶存放键为 null 的键值对。
+```java
+private V putForNullKey(V value) {
+    for (Entry<K,V> e = table[0]; e != null; e = e.next) {
+        if (e.key == null) {
+            V oldValue = e.value;
+            e.value = value;
+            e.recordAccess(this);
+            return oldValue;
+        }
+    }
+    modCount++;
+    addEntry(0, null, value, 0);
+    return null;
+}
+```
+
+## addEntry
+使用链表的头插法，也就是新的键值对插在链表的头部，而不是链表的尾部。
+```java
+void addEntry(int hash, K key, V value, int bucketIndex) {
+    // 当size超过临界阈值threshold，并且即将发生哈希冲突时进行扩容
+    if ((size >= threshold) && (null != table[bucketIndex])) {
+        resize(2 * table.length);
+        hash = (null != key) ? hash(key) : 0;
+        bucketIndex = indexFor(hash, table.length);
+    }
+
+    createEntry(hash, key, value, bucketIndex);
+}
+
+void createEntry(int hash, K key, V value, int bucketIndex) {
+    // 这是 bucketIndex 对应的桶的首个键值对
+    Entry<K,V> e = table[bucketIndex];
+    // 头插法，链表头部指向新的键值对
+    table[bucketIndex] = new Entry<>(hash, key, value, e);
+    size++;
+}
+```
+
+## indexFor
+这个函数主要是用来确定一个键值对应该所处的桶下标，它是根据键值对的 hash 值和 HashMap 的
+大小来决定
+```java
+hash = (null != key) ? hash(key) : 0;   // key = null -> hash = 0
+bucketIndex = indexFor(hash, table.length);
+```
+
+### hash
+```java
+final int hash(Object k) {
+    int h = hashSeed;
+    if (0 != h && k instanceof String) {
+        return sun.misc.Hashing.stringHash32((String) k);
+    }
+
+    h ^= k.hashCode();
+
+    // This function ensures that hashCodes that differ only by
+    // constant multiples at each bit position have a bounded
+    // number of collisions (approximately 8 at default load factor).
+    h ^= (h >>> 20) ^ (h >>> 12);
+    return h ^ (h >>> 7) ^ (h >>> 4);
+}
+
+public final int hashCode() {
+    return Objects.hashCode(key) ^ Objects.hashCode(value);
+}
+```
+
+### 取模
+确定桶下标的最后一步是将 key 的 hash 值对桶个数取模：hash%capacity，如果能保证 capacity 为 2 的 n 次方，那么就可以将这个操作转换为位运算。
+```java
+static int indexFor(int h, int length) {
+    return h & (length-1);  // 相当于 hash%capacity，得到 hash 对应的桶下标
+}
+```
+
+## resize
+从 addEntry 的以下代码中可以看到 HashMap 的扩容方法
+```java
+// 当size超过临界阈值threshold，并且即将发生哈希冲突时进行扩容
+if ((size >= threshold) && (null != table[bucketIndex])) {
+    resize(2 * table.length);
+    hash = (null != key) ? hash(key) : 0;
+    bucketIndex = indexFor(hash, table.length);
+}
+```
+可以看出，扩容的长度是之前的两倍 *resize(2 * table.length);*
+```java
+void resize(int newCapacity) {
+    Entry[] oldTable = table;
+    int oldCapacity = oldTable.length;
+    if (oldCapacity == MAXIMUM_CAPACITY) {    // 最大容量 1 << 30
+        threshold = Integer.MAX_VALUE;
+        return;
+    }
+
+    Entry[] newTable = new Entry[newCapacity];
+    transfer(newTable, initHashSeedAsNeeded(newCapacity));
+    table = newTable;
+    threshold = (int)Math.min(newCapacity * loadFactor, MAXIMUM_CAPACITY + 1);
+}
+```
+在对数组进行扩容后，键值对就需要重新计算所属的桶下标
+```java
+void transfer(Entry[] newTable, boolean rehash) {
+    int newCapacity = newTable.length;
+　　　　　//for循环中的代码，逐个遍历链表，重新计算索引位置，将老数组数据复制到新数组中去（数组不存储实际数据，所以仅仅是拷贝引用而已）
+    for (Entry<K,V> e : table) {
+        while(null != e) {
+            Entry<K,V> next = e.next;
+            if (rehash) {
+                e.hash = null == e.key ? 0 : hash(e.key);
+            }
+            int i = indexFor(e.hash, newCapacity);
+　　　　　　 //将当前entry的next链指向新的索引位置,newTable[i]有可能为空，有可能也是个entry链，如果是entry链，直接在链表头部插入。
+            e.next = newTable[i];
+            newTable[i] = e;
+            e = next;
+        }
+    }
+}
+```
+在进行扩容时，需要把键值对重新放到对应的桶上。HashMap 使用了一个特殊的机制，可以降低重新计算桶下标的操作。
+
+假设原数组长度 capacity 为 16，扩容之后 new capacity 为 32：
+```text
+capacity     : 00010000
+new capacity : 00100000
+```
+对于一个 Key，
+  - 它的哈希值如果在第 5 位上为 0，那么取模得到的结果和之前一样；
+  - 如果为 1，那么得到的结果为原来的结果 +16。
+**这样做可以尽量减少之前已经散列好的数组，减少数据移动操作。**
+
+## 从 JDK 1.8 开始，一个桶存储的链表长度大于 8 时会将链表转换为红黑树。
+
+## 与 HashTable 的比较
+- HashTable 使用 synchronized 来进行同步。
+- HashMap 可以插入键为 null 的 Entry。
+- HashMap 的迭代器是 fail-fast 迭代器(因为不是线程安全的)。
+- HashMap 不能保证随着时间的推移 Map 中的元素次序是不变的(扩容会重新计算位置并移动)。
+
+# ConcurrentHashMap
+HashMap 不是线程安全的，但是 HashTable 在线程多的情况下效率会下降很快(所以线程争一个锁)
+所以在多线程情况也不是很理想.
+
+ConcurrentHashMap所使用的锁分段技术，首先将数据分成一段一段的存储，然后给每一段数据配一把锁，当一个线程占用锁访问其中一个段数据的时候，其他段的数据也能被其他线程访问。有些方法需要跨段，比如size()和containsValue()，它们可能需要锁定整个表而而不仅仅是某个段，这需要按顺序锁定所有段，操作完毕后，又按顺序释放所有段的锁。
+![ConcurrentHashMap](../pic/conCurrentHashMap.png)
+
+## 数据结构
+ConcurrentHashMap是由Segment数组结构和HashEntry数组结构组成。
+
+Segment是一种可重入锁ReentrantLock，在ConcurrentHashMap里扮演锁的角色，HashEntry则用于存储键值对数据。
+
+一个ConcurrentHashMap里包含一个Segment数组，Segment的结构和HashMap类似，是一种数组和链表结构， 一个Segment里包含一个HashEntry数组，每个HashEntry是一个链表结构的元素， 每个Segment守护者一个HashEntry数组里的元素,当对HashEntry数组的数据进行修改时，必须首先获得它对应的Segment锁。
+```java
+final Segment<K,V>[] segments;
+```
+```java
+static final class Segment<K,V> extends ReentrantLock implements Serializable {
+
+    static final int MAX_SCAN_RETRIES =
+        Runtime.getRuntime().availableProcessors() > 1 ? 64 : 1;
+
+    transient volatile HashEntry<K,V>[] table;
+
+    transient int count;
+
+    transient int modCount;
+
+    transient int threshold;
+
+    final float loadFactor;
+}
+```

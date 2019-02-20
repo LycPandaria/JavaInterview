@@ -167,8 +167,10 @@ public boolean Find(int target, int [][] array) {
     while(col >=0 && row < rows){
         if(array[row][col] == target)
             return true;
+        // 要找的数比 arr[row][col] 小，则在该位置的左侧继续找( col-1 )
         else if(array[row][col] > target){
             col--;
+        // 要找的数比 arr[row][col] 大，则在该位置的下方继续找( row+1 )
         }else
             row++;
     }
@@ -195,8 +197,8 @@ public String replaceSpace(StringBuffer str) {
         if(str.charAt(i) == ' ')
             str.append("  ");   //  两个空格
     int P2 = str.length() - 1;
-    while(P1 >=0 && P1 < P2){
-        char c = str.charAt(P1--);
+    while(P1 >=0 && P1 < P2){   // P1 >= P2 说明已经没空格了
+        char c = str.charAt(P1--);  // c 存储现在要处理的字符，P1 指向前一个字符
         if(c == ' '){
             str.setCharAt(P2--,'0');
             str.setCharAt(P2--,'2');
