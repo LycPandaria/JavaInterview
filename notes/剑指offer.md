@@ -287,7 +287,7 @@ public class Solution {
     }
     /*
     preL - 表示当前子树前序遍历的开始位置
-    preR - 表示当前子树前序遍历的开始位置
+    preR - 表示当前子树前序遍历的结束位置
     inL  - 表示当前子树的中序遍历的开始位置
     */
     private TreeNode reConstructBinaryTree(int[] pre, int preL, int preR, int inL){
@@ -302,7 +302,7 @@ public class Solution {
         // 遍历构建子树
         // preL+1到preL+leftSize 这个区间就是对应的左子树序列
         root.left = reConstructBinaryTree(pre, preL+1, preL+leftSize, inL);
-        // preL+preL+leftSize 到 preR 就是对应右子树的序列，
+        // preL+leftSize 到 preR 就是对应右子树的序列，
         // 同时右子树序列对应的中序遍历的开始位置就是 根元素在中序遍历的位置+1
         root.right = reConstructBinaryTree(pre, preL+leftSize+1, preR, rootLoc + 1);
         return root;
@@ -480,7 +480,7 @@ public int JumpFloor(int target) {
 ```java
 public int JumpFloorII(int target) {
     int[] dp = new int[target]; // 用于缓存结果
-    Arrays.fill(dp, 1);
+    Arrays.fill(dp, 1);   // 预设为 1，因为一次性跳 n 次台阶的方法为1次
     for (int i = 1; i < target; i++)
         for (int j = 0; j < i; j++)
             dp[i] += dp[j];
@@ -492,7 +492,7 @@ public int JumpFloorII(int target) {
 [矩形覆盖](https://www.nowcoder.com/practice/72a5a919508a4251859fb2cfb987a0e6?tpId=13&tqId=11163&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
 
 ### 问题描述
-我们可以用2*1的小矩形横着或者竖着去覆盖更大的矩形。请问用n个2*1的小矩形无重叠地覆盖一个2*n的大矩形，总共有多少种方法？
+我们可以用2\*1的小矩形横着或者竖着去覆盖更大的矩形。请问用n个2\*1的小矩形无重叠地覆盖一个2\*n的大矩形，总共有多少种方法？
 
 ### 解题思路
 这其实还是一个 斐波那契数列
@@ -514,7 +514,8 @@ public int RectCover(int target) {
 # 查找和排序
 ## 10.旋转数组的最小数字
 [旋转数组的最小数字](https://www.nowcoder.com/practice/9f3231a991af4f55b95579b44b7a01ba?tpId=13&tqId=11159&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
-###问题描述
+
+### 问题描述
 把一个数组最开始的若干个元素搬到数组的末尾，我们称之为数组的旋转。 输入一个非减排序的数组的一个旋转，输出旋转数组的最小元素。 例如数组{3,4,5,1,2}为{1,2,3,4,5}的一个旋转，该数组的最小值为1。 NOTE：给出的所有元素都大于0，若数组大小为0，请返回0。
 
 ### 解题思路
@@ -570,7 +571,7 @@ private int minNumber(int[] nums, int l, int h) {
 ```
 
 ## 11.矩阵中的路径
-(矩阵中的路径)[https://www.nowcoder.com/practice/c61c6999eecb4b8f88a98f66b273a3cc?tpId=13&tqId=11218&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking]
+[矩阵中的路径](https://www.nowcoder.com/practice/c61c6999eecb4b8f88a98f66b273a3cc?tpId=13&tqId=11218&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
 
 ### 问题描述
 请设计一个函数，用来判断在一个矩阵中是否存在一条包含某字符串所有字符的路径。路径可以从矩阵中的任意一个格子开始，每一步可以在矩阵中向左，向右，向上，向下移动一个格子。如果一条路径经过了矩阵中的某一个格子，则之后不能再次进入这个格子。 例如 a b c e s f c s a d e e 这样的3 X 4 矩阵中包含一条字符串"bcced"的路径，但是矩阵中不包含"abcb"路径，因为字符串的第一个字符b占据了矩阵中的第一行第二个格子之后，路径不能再次进入该格子。
