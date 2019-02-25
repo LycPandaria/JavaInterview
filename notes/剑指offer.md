@@ -728,12 +728,9 @@ return 36 (10 = 3 + 3 + 4)
 
 ```java
 public int integerBreak(int n) {
-    if(n < 2)
-      return 0;
-    if(n == 2)
-      return 1;
-    if(n == 3)
-      return 2;
+    if(n < 2) return 0;
+    if(n == 2) return 1;
+    if(n == 3) return 2;
 
     int dp[] = new int [n+1];   // 存储 f(i)
     dp[0] = 0;
@@ -744,9 +741,9 @@ public int integerBreak(int n) {
     int max = 0;
 
     // 代码解释在下面
-    for(int i = 2; i <=n; i++){
+    for(int i = 4; i <=n; i++){
         // 因为对称，只需要循环到 i/2 即可
-        for(int j=4; j <= i/2; j++){
+        for(int j=1; j <= i/2; j++){
           int product = dp[j] * dp[i-j];
           if(max < product)
             max = product;
@@ -835,11 +832,9 @@ public int NumberOf1(int n) {
 
 ```java
 public double Power(double base, int exponent) {
-  if(exponent == 1)
-      return base;
-  if(exponent == 0)
-      return 1;
-  // 处理负数指数
+  if(exponent == 1) return base;
+  if(exponent == 0) return 1;
+  // 处理负数指数，注意只有第一次才有机会 isNagetive 设为 false
   boolean isNagetive = false;
   if(exponent < 0){
       exponent = -exponent;
@@ -862,18 +857,21 @@ public double Power(double base, int exponent) {
 使用回溯法得到所有的数。
 ```java
 public void print1ToMaxOfNDigits(int n) {
-    if (n <= 0)
-        return;
-    char[] number = new char[n];
+    if (n <= 0) return;
+    char[] number = new char[n];  // 存储组合结合，供printNumber 函数打印
+    // 从第一个位置开始递归
     print1ToMaxOfNDigits(number, 0);
 }
 
 private void print1ToMaxOfNDigits(char[] number, int digit) {
     if (digit == number.length) {
+      // 组合出一个结果
         printNumber(number);
         return;
     }
     for (int i = 0; i < 10; i++) {
+      // 递增设置 digit 位置的字符，没设置一次，digit 后的位置都要重置位置
+      // 这就是第二行的递归所作的事，直到满足上面 if 的返回条件
         number[digit] = (char) (i + '0');
         print1ToMaxOfNDigits(number, digit + 1);
     }
@@ -881,8 +879,10 @@ private void print1ToMaxOfNDigits(char[] number, int digit) {
 
 private void printNumber(char[] number) {
     int index = 0;
+    // 移动浮标，定位到非 '0' 位置
     while (index < number.length && number[index] == '0')
         index++;
+    // 打印非 '0' 字符
     while (index < number.length)
         System.out.print(number[index++]);
     System.out.println();
@@ -900,8 +900,7 @@ private void printNumber(char[] number) {
 
 ```java
 public boolean deleteNode(Node n, Node head){
-  if(n == null || head == null )
-    return false;
+  if(n == null || head == null ) return false;
   if(n.next != null){   // 该节点不是尾节点
     //交换n节点与后继节点的值
     int tmp = n.data;
@@ -932,15 +931,15 @@ public boolean deleteNode(Node n, Node head){
 
 ```java
 public ListNode deleteDuplication(ListNode pHead){
-    if(pHead == null || pHead.next ==null)
-        return pHead;
+    if(pHead == null || pHead.next ==null) return pHead;
 
     ListNode pNext = pHead.next;
     if(pNext.val == pHead.val){
-        // 处理相等的情况
+        // 处理相等的情况,针对于当前的 pHead.val
         while(pNext != null && pNext.val == pHead.val)
             pNext = pNext.next;
-        return deleteDuplication(pNext);
+        // 当前的 pNext.val ！= pHead.val，就继续往下递归处理 pNext
+        return deleteDuplication(pNext);  
     }else{
         pHead.next = deleteDuplication(pHead.next);
         return pHead;
