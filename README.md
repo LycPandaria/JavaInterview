@@ -38,7 +38,7 @@
 
 - [Java I/O](../notes/JavaIO.md)
 
-  NIO 的原理以及实例。
+  JavaIO知识，字符流，字节流，Socket，NIO。
 
 ###  框架
   - [Mybatis](./notes/mybatis.md)

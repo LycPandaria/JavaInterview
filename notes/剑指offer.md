@@ -1057,10 +1057,8 @@ public void reOrderArray(int [] array) {
 
 ```java
 public ListNode FindKthToTail(ListNode head,int k) {
-    if(k < 1)
-        return null;
-    if(head == null)
-        return null;
+    if(k < 1 || head == null) return null;
+
     ListNode p1 = head;
     ListNode p2 = head;
     // p1 先走 k-1 步
@@ -1083,7 +1081,7 @@ public ListNode FindKthToTail(ListNode head,int k) {
 给一个链表，若其中包含环，请找出该链表的环的入口结点，否则，输出null。
 
 ### 解题思路
-![链表中环的入口结点](../pic/链表中环的入口结点.png)
+![链表中环的入口结点](../pic/链表中环的入口点.png)
 使用双指针，一个指针 fast 每次移动两个节点，一个指针 slow 每次移动一个节点。因为存在环，所以两个指针必定相遇在环中的某个节点上。假设相遇点在下图的 y6 位置，此时 fast 移动的节点数为 x+2y+z，slow 为 x+y，由于 fast 速度比 slow 快一倍，因此 x+2y+z=2(x+y)，得到 x=z。
 
 在相遇点，slow 要到环的入口点还需要移动 z 个节点，如果让 fast 重新从头开始移动，并且速度变为每次移动一个节点，那么它到环入口点还需要移动 x 个节点。在上面已经推导出 x=z，因此 fast 和 slow 将在环入口点相遇。
@@ -1125,12 +1123,11 @@ public ListNode EntryNodeOfLoop(ListNode pHead){
 链表的反转需要注意的是，比如i,m,n 3个相连节点，i节点已经完成反转，在处理m节点的时候，不能直接将
 m.next=i；因为这样的话就没有办法能够找到n，因为链接断裂，所以在处理m.next之前需要将n保存下来。
 
+**迭代**
 ```java
 public ListNode ReverseList(ListNode head) {
-    if(head == null)
-        return null;
-    if(head.next == null)
-        return head;
+    if(head == null || head.next == null) return head;
+
     ListNode rHead = null;
     ListNode nodePre = null;
     ListNode nodeCur = head;
@@ -1148,11 +1145,11 @@ public ListNode ReverseList(ListNode head) {
     return rHead;
 }
 ```
-
+**递归**
 ```java
 public ListNode ReverseList(ListNode head) {
   if(head == null || head.next == null)
-    return null;
+    return head;
   ListNode pNext = head.next; // 存储该节点的下个节点，方便下一步断开关系
   head.next = null; // 断开该节点与下个节点的关系，等待重建
   ListNode newHead = ReverseList(pNext);  // 递归进行关系重建
@@ -1172,7 +1169,7 @@ public ListNode ReverseList(ListNode head) {
 从两个节点的头节点开始，因为链表 1 的头结点小，所以链表 1 的头结点是合并后的头结点。
 
 这时候我们把链表 1 的下一个节点作为头结点，又回到了比较两个链表的头结点，然后找出更小的头结点作为 '1' 的 next 即可。这是典型的递归过程。
-
+**递归**
 ```java
 public ListNode Merge(ListNode list1,ListNode list2) {
         // 鲁棒性检查
@@ -1191,7 +1188,7 @@ public ListNode Merge(ListNode list1,ListNode list2) {
         return mergeHead;
     }
 ```
-
+**迭代**
 ```java
 public ListNode Merge(ListNode list1,ListNode list2) {
     // 鲁棒性检查
