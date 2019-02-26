@@ -1,9 +1,9 @@
-| Ⅰ | Ⅱ | Ⅲ |
+| 1 | 2 | 3 |
 | :--------: | :---------: | :---------: |
-| 数据结构与算法 <br> [:pencil2:](#pencil2-算法)  |  Java <br> [:coffee:](#coffee-java)| 面向对象 <br> [:couple:](#couple-面向对象) |
+| [数据结构与算法](#pencil2-算法)  |  [Java](#coffee-java)| [面向对象](#couple-面向对象) |
 
 
-### :pencil2: 算法
+###  算法
 
 - [剑指 Offer 题解](./notes/剑指offer.md)
 
@@ -18,7 +18,7 @@
    排序、栈和队列、数组、字符串、二叉树。
 
 
-### :coffee: Java
+###  Java
 
 - [Java 基础](https://github.com/LycPandaria/JavaInterview/blob/master/notes/Java%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86.md)
 
@@ -36,14 +36,14 @@
 
   运行时数据区域、垃圾收集、类加载。
 
-- [Java I/O](https://github.com/CyC2018/InnterviewNotes/blob/master/notes/Java%20IO.md)
+- [Java I/O](../notes/JavaIO.md)
 
   NIO 的原理以及实例。
 
-### :wrench: 框架
+###  框架
   - [Mybatis](./notes/mybatis.md)
 
-### :couple: 面向对象
+### 面向对象
 
   - [设计模式](https://github.com/LycPandaria/JavaInterview/blob/master/notes/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F.md)
 
