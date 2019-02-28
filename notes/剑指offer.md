@@ -1298,7 +1298,7 @@ private void swap(TreeNode root){
 
 ### 问题描述
 请实现一个函数，用来判断一颗二叉树是不是对称的。注意，如果一个二叉树同此二叉树的镜像是同样的，定义其为对称的。
-![对称的二叉树](../pic/对称的二叉树/png)
+![对称的二叉树](../pic/对称的二叉树.png)
 
 ### 解题
 1.只要pRoot.left和pRoot.right是否对称即可
@@ -1456,7 +1456,7 @@ public boolean IsPopOrder(int [] pushA,int [] popA) {
 
 例如，以下二叉树层次遍历的结果为：1,2,3,4,5,6,7
 
-<div align="center"> <img src="pic/从上往下打印二叉树.png" width="250"/> </div><br>
+![从上往下打印二叉树.png](../pic/从上往下打印二叉树.png)
 
 ### 解题思路
 
@@ -1470,11 +1470,12 @@ public ArrayList<Integer> PrintFromTopToBottom(TreeNode root) {
     ArrayList<Integer> ret = new ArrayList<>();
     queue.add(root);
     while (!queue.isEmpty()) {
+        // 这个 size 用来限定这次循环中只处理当前层的节点
         int cnt = queue.size();
         while (cnt-- > 0) {
             TreeNode t = queue.poll();
             if (t == null)
-                continue;
+                continue; // 继续处理其他的节点
             ret.add(t.val);
             queue.add(t.left);
             queue.add(t.right);
@@ -1563,9 +1564,10 @@ public ArrayList<ArrayList<Integer>> Print(TreeNode pRoot) {
 
 例如，下图是后序遍历序列 1,3,2 所对应的二叉搜索树。
 
-<div align="center"> <img src="pic/二叉搜索树的后序遍历序列.png" width="150"/> </div><br>
+![二叉搜索树的后序遍历序列](../pic/二叉搜索树的后序遍历序列.png)
 
 ### 解题思路
+搜索二叉树，左节点的值小于根节点，右节点的值大于跟节点。若它的左子树不空，则左子树上所有结点的值均小于它的根结点的值； 若它的右子树不空，则右子树上所有结点的值均大于它的根结点的值； 它的左、右子树也分别为二叉排序树。
 
 ```java
 public boolean VerifySquenceOfBST(int[] sequence) {
@@ -1577,13 +1579,18 @@ public boolean VerifySquenceOfBST(int[] sequence) {
 private boolean verify(int[] sequence, int first, int last) {
     if (last - first <= 1)
         return true;
+    // 1. 对于后序遍历，根节点在末尾，所以通过 rootVal = sequence[last] 指定末尾为根节点
+    // 然后再继续分析这个数字符不符合搜索二叉树的特性
     int rootVal = sequence[last];
+    // 2.这个 cutIndex 用于分割左右子树，它先从左边遍历，找到第一个比 root 大的值，就从这个位置划分左右子树
     int cutIndex = first;
     while (cutIndex < last && sequence[cutIndex] <= rootVal)
         cutIndex++;
+    // 3. 划分完后检查右子树是否符合搜索二叉树特性
     for (int i = cutIndex; i < last; i++)
         if (sequence[i] < rootVal)
             return false;
+    // 4. 从划分出来的左右子树继续检查
     return verify(sequence, first, cutIndex - 1) && verify(sequence, cutIndex, last - 1);
 }
 ```
