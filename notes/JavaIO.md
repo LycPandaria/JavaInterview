@@ -283,7 +283,7 @@ I/O 包和 NIO 已经很好地集成了，java.io.* 已经以 NIO 为基础重�
 发送给一个通道的所有数据都必须首先放到缓冲区中，同样地，从通道中读取的任何数据都要先读到缓冲区中。也就是说，不会直接对通道进行读写数据，而是要先经过缓冲区。
 
 缓冲区实质上是一个数组，但它不仅仅是一个数组。缓冲区提供了对数据的结构化访问，而且还可以跟踪系统的读/写进程。
-
+![buffer](../pic/buffer.png)
 缓冲区包括以下类型：
 - ByteBuffer
 - CharBuffer
@@ -300,28 +300,151 @@ I/O 包和 NIO 已经很好地集成了，java.io.* 已经以 NIO 为基础重�
 3. 从 Buffer 读取数据
 4. 调用 clear() 方法或者 compact()
 
+### Buffer的capacity,position和limit
+- capacity：最大容量；
+- position：当前已经读写的字节数；
+- limit：还可以读写的字节数。
 
+position和limit的含义取决于Buffer处在读模式还是写模式。不管Buffer处在什么模式，capacity的含义总是一样的。
+![buffers-modes](../pic/buffers-modes.png)
+
+1. capacity
+  作为一个内存块，Buffer有一个固定的大小值，也叫“capacity”.你只能往里写capacity个byte、long，char等类型。一旦Buffer满了，需要将其清空（通过读数据或者清除数据）才能继续写数据往里写数据。
+
+2. position
+  当你写数据到Buffer中时，position表示当前的位置。初始的position值为0.当一个byte、long等数据写到Buffer后， position会向前移动到下一个可插入数据的Buffer单元。position最大可为capacity – 1.
+
+    当读取数据时，也是从某个特定位置读。当将Buffer从写模式切换到读模式，position会被重置为0. 当从Buffer的position处读取数据时，position向前移动到下一个可读的位置。
+
+3. limit
+  在写模式下，Buffer的limit表示你最多能往Buffer里写多少数据。 写模式下，limit等于Buffer的capacity。
+
+    当切换Buffer到读模式时， limit表示你最多能读到多少数据。因此，当切换Buffer到读模式时，limit会被设置成写模式下的position值。换句话说，你能读到之前写入的所有数据（limit被设置成已写数据的数量，这个值在写模式下就是position）
 
 ### 基本的 Channel 实例
+快速复制：
 ```java
-RandomAccessFile aFile = new RandomAccessFile("data/nio-data.txt", "rw");
-FileChannel inChannel = aFile.getChannel();
+public static void fastCopy(String src, String dist) throws IOException {
 
-ByteBuffer buf = ByteBuffer.allocate(48);
+    /* 获得源文件的输入字节流 */
+    FileInputStream fin = new FileInputStream(src);
 
-int bytesRead = inChannel.read(buf);
-while (bytesRead != -1) {
+    /* 获取输入字节流的文件通道 */
+    FileChannel fcin = fin.getChannel();
 
-System.out.println("Read " + bytesRead);
-// buf.flip() 的调用，首先读取数据到Buffer，然后反转Buffer,接着再从Buffer中读取数据
-buf.flip();
+    /* 获取目标文件的输出字节流 */
+    FileOutputStream fout = new FileOutputStream(dist);
 
-while(buf.hasRemaining()){
-System.out.print((char) buf.get());
+    /* 获取输出字节流的文件通道 */
+    FileChannel fcout = fout.getChannel();
+
+    /* 为缓冲区分配 1024 个字节 */
+    ByteBuffer buffer = ByteBuffer.allocateDirect(1024);
+
+    while (true) {
+
+        /* 从输入通道中读取数据到缓冲区中 */
+        int r = fcin.read(buffer);
+
+        /* read() 返回 -1 表示 EOF */
+        if (r == -1) {
+            break;
+        }
+
+        /* 切换读写 */
+        buffer.flip();
+
+        /* 把缓冲区的内容写入输出文件中 */
+        fcout.write(buffer);
+
+        /* 清空缓冲区 */
+        buffer.clear();
+    }
 }
-
-buf.clear();
-bytesRead = inChannel.read(buf);
-}
-aFile.close();
 ```
+
+## Selector
+NIO 常常被叫做非阻塞 IO，主要是因为 NIO 在网络通信中的非阻塞特性被广泛使用。
+
+NIO 实现了 IO 多路复用中的 Reactor 模型，一个线程 Thread 使用一个选择器 Selector 通过轮询的方式去监听多个通道 Channel 上的事件，从而让一个线程就可以处理多个事件。
+
+通过配置监听的通道 Channel 为非阻塞，那么当 Channel 上的 IO 事件还未到达时，就不会进入阻塞状态一直等待，而是继续轮询其它 Channel，找到 IO 事件已经到达的 Channel 执行。
+
+因为创建和切换线程的开销很大，因此使用一个线程来处理多个事件而不是一个线程处理一个事件，对于 IO 密集型的应用具有很好地性能。
+
+应该注意的是，**只有套接字 Channel 才能配置为非阻塞，而 FileChannel 不能，为 FileChannel 配置非阻塞也没有意义。**
+
+![Selector](../selector.png)
+
+### selector 创建
+```java
+Selector selector  = Selector.open();
+```
+
+### 注册通道
+```java
+ServerSocketChannel ssChannel = ServerSocketChannel.open();
+ssChannel.configureBlocking(false);
+ssChannel.register(selector, SelectionKey.OP_ACCEPT)
+```
+通道必须配置为非阻塞模式，否则使用选择器就没有任何意义了，因为如果通道在某个事件上被阻塞，那么服务器就不能响应其它事件，必须等待这个事件处理完毕才能去处理其它事件，显然这和选择器的作用背道而驰。
+
+注意register()方法的第二个参数。这是一个“interest集合”，意思是在通过Selector监听Channel时对什么事件感兴趣。可以监听四种不同类型的事件：
+- SelectionKey.OP_ACCEPT
+- SelectionKey.OP_CONNECT
+- SelectionKey.OP_READ
+- SelectionKey.OP_WRITE
+
+通道触发了一个事件意思是该事件已经就绪。所以，某个channel成功连接到另一个服务器称为“连接就绪”。一个server socket channel准备好接收新进入的连接称为“接收就绪”。一个有数据可读的通道可以说是“读就绪”。等待写数据的通道可以说是“写就绪”。
+
+它们在 SelectionKey 的定义如下：
+```java
+public static final int OP_READ = 1 << 0;
+public static final int OP_WRITE = 1 << 2;
+public static final int OP_CONNECT = 1 << 3;
+public static final int OP_ACCEPT = 1 << 4;
+```
+
+所以如果对不止一种事件感兴趣，那么可以用“位或”操作符将常量连接起来，如下：
+```java
+int interestSet = SelectionKey.OP_READ | SelectionKey.OP_WRITE;
+```
+
+### 监听事件
+```java
+int num = selector.select();
+```
+使用 select() 来监听到达的事件，它会一直阻塞直到有至少一个事件到达。
+
+### 获取到达的事件
+一旦调用了select()方法，并且返回值表明有一个或更多个通道就绪了，然后可以通过调用selector的selectedKeys()方法，访问“已选择键集（selected key set）”中的就绪通道。如下所示：
+```java
+Set selectedKeys = selector.selectedKeys();
+```
+
+当像Selector注册Channel时，Channel.register()方法会返回一个SelectionKey 对象。这个对象代表了注册到该Selector的通道。可以通过SelectionKey的selectedKeySet()方法访问这些对象。
+
+可以遍历这个已选择的键集合来访问就绪的通道。如下：
+
+```java
+Set selectedKeys = selector.selectedKeys();
+Iterator keyIterator = selectedKeys.iterator();
+while(keyIterator.hasNext()) {
+    SelectionKey key = keyIterator.next();
+    if(key.isAcceptable()) {
+        // a connection was accepted by a ServerSocketChannel.
+    } else if (key.isConnectable()) {
+        // a connection was established with a remote server.
+    } else if (key.isReadable()) {
+        // a channel is ready for reading
+    } else if (key.isWritable()) {
+        // a channel is ready for writing
+    }
+    keyIterator.remove();
+}
+```
+这个循环遍历已选择键集中的每个键，并检测各个键所对应的通道的就绪事件。
+
+注意每次迭代末尾的keyIterator.remove()调用。Selector不会自己从已选择键集中移除SelectionKey实例。必须在处理完通道时自己移除。下次该通道变成就绪时，Selector会再次将其放入已选择键集中。
+
+SelectionKey.channel()方法返回的通道需要转型成你要处理的类型，如ServerSocketChannel或SocketChannel等。
