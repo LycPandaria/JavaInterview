@@ -1605,7 +1605,7 @@ private boolean verify(int[] sequence, int first, int last) {
 
 下图的二叉树有两条和为 22 的路径：10, 5, 7 和 10, 12
 
-<div align="center"> <img src="pic/f5477abd-c246-4851-89ab-6b1cde2549b1.png" width="200"/> </div><br>
+![二叉树中和为某一值的路径](../pic/f5477abd-c246-4851-89ab-6b1cde2549b1.png)
 
 ### 解题思路
 
@@ -1652,21 +1652,21 @@ public class RandomListNode {
 }
 ```
 
-<div align="center"> <img src="pic/a01d1516-8168-461a-a24b-620b9cfc40f4.png" width="300"/> </div><br>
+![复杂链表的复制-1](../pic/a01d1516-8168-461a-a24b-620b9cfc40f4.png)
 
 ### 解题思路
 
 第一步，在每个节点的后面插入复制的节点。
 
-<div align="center"> <img src="pic/2e6c72f5-3b8e-4e32-b87b-9491322628fe.png" width="600"/> </div><br>
+![复杂链表的复制-2](../pic/2e6c72f5-3b8e-4e32-b87b-9491322628fe.png)
 
 第二步，对复制节点的 random 链接进行赋值。
 
-<div align="center"> <img src="pic/323ffd6c-8b54-4f3e-b361-555a6c8bf218.png" width="600"/> </div><br>
+![复杂链表的复制-3](../pic/323ffd6c-8b54-4f3e-b361-555a6c8bf218.png)
 
 第三步，拆分。
 
-<div align="center"> <img src="pic/8f3b9519-d705-48fe-87ad-2e4052fc81d2.png" width="600"/> </div><br>
+![复杂链表的复制-3](../pic/8f3b9519-d705-48fe-87ad-2e4052fc81d2.png)
 
 ```java
 public RandomListNode Clone(RandomListNode pHead) {
@@ -1691,6 +1691,7 @@ public RandomListNode Clone(RandomListNode pHead) {
     // 拆分
     cur = pHead;
     RandomListNode pCloneHead = pHead.next;
+    // 注意对照图理解，这里的循环是依次拆分原链表和复制的链表
     while (cur.next != null) {
         RandomListNode next = cur.next;
         cur.next = next.next;
@@ -1705,7 +1706,7 @@ public RandomListNode Clone(RandomListNode pHead) {
 
 ### 问题描述
 输入一棵二叉搜索树，将该二叉搜索树转换成一个排序的双向链表。要求不能创建任何新的结点，只能调整树中结点指针的指向。
-![二叉搜索树和双向链表](../pic/二叉搜索树和双向链表.png)
+![二叉搜索树和双向链表](../pic/二叉搜索树与双向链表.png)
 
 ### 解题思路
 由于要求转换之后链表是排好序的，我们可以中序遍历每个节点，这是因为中序遍历算法的特点是按照从小到大顺序遍历二叉树的每个节点。
@@ -1763,6 +1764,8 @@ TreeNode Deserialize(){
     int index = deserializeStr.indexOf(",");
     // 处理 index == -1 的情况
     String nodeStr = index == -1 ? deserializeStr : deserializeStr.substring(0, index);
+
+    // 剩下待处理的序列化字符串
     deserializeStr = index == -1 ? "" : deserializeStr.substring(index + 1);
     if(nodeStr.equals("$"))
         return null;
