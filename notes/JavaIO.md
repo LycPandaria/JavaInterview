@@ -448,3 +448,22 @@ while(keyIterator.hasNext()) {
 注意每次迭代末尾的keyIterator.remove()调用。Selector不会自己从已选择键集中移除SelectionKey实例。必须在处理完通道时自己移除。下次该通道变成就绪时，Selector会再次将其放入已选择键集中。
 
 SelectionKey.channel()方法返回的通道需要转型成你要处理的类型，如ServerSocketChannel或SocketChannel等。
+
+### 事件循环
+因为一次 select() 调用不能处理完所有的事件，并且服务器端有可能需要一直监听事件，因此服务器端处理事件的代码一般会放在一个死循环内。
+```java
+while (true) {
+    int num = selector.select();
+    Set<SelectionKey> keys = selector.selectedKeys();
+    Iterator<SelectionKey> keyIterator = keys.iterator();
+    while (keyIterator.hasNext()) {
+        SelectionKey key = keyIterator.next();
+        if (key.isAcceptable()) {
+            // ...
+        } else if (key.isReadable()) {
+            // ...
+        }
+        keyIterator.remove();
+    }
+}
+```
