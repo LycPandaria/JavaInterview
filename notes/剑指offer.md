@@ -2158,7 +2158,7 @@ private int getDigitAtIndex(int index, int place){
   // n 位数的第一个数字 0,10,100...
   int beginNumber = getBeginNumcerOfPlace(place);
   int shift = index / place;  // 表示 index 所属的数位于 beginNumer 的第几个数字之后
-  String num = (beginNumer + shift) + "";
+  String number = (beginNumer + shift) + "";
   return number.chatAt(index % place) - '0';
 }
 
@@ -2212,15 +2212,17 @@ public int numDecodings(String s) {
     if (s == null || s.length() == 0)
         return 0;
     int n = s.length();
-    int[] dp = new int[n + 1];
+    int[] dp = new int[n + 1];  // 动态规划结果保存
     dp[0] = 1;
     dp[1] = s.charAt(0) == '0' ? 0 : 1;
     for (int i = 2; i <= n; i++) {
+        // 这里取的是第 s[i-1],i表示的是字符串的第i位
         int one = Integer.valueOf(s.substring(i - 1, i));
         if (one != 0)
             dp[i] += dp[i - 1];
         if (s.charAt(i - 2) == '0')
             continue;
+        // 取的是 s[i-2,i] 两个字符
         int two = Integer.valueOf(s.substring(i - 2, i));
         if (two <= 26)
             dp[i] += dp[i - 2];
@@ -2334,7 +2336,7 @@ public int longestSubStringWithoutDuplication(String str) {
   Arrays.fill(preIndexs, -1);   // 如果该字符没有出现记录，则上次出现的位置为 -1
   for(int curI = 0; curI < str.length(); curI++){
     int c = str.charAt(curI) - 'a';
-    int preI = preIndexs[curI];   //上次出现的位置
+    int preI = preIndexs[c];   //上次出现的位置
     if(preI == -1 || curI-preI > curLen)  // 该字符还没出现过 || d > f(i-1)
       curLen++;
     else{ // d <= f(i-1)
