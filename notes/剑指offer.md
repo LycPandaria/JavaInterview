@@ -2751,7 +2751,7 @@ private int heigth(TreeNode root){
     int right = height(root.right);
     if(Math.abs(left-right) > 1)
         isBalanced = false;
-    return 1 + Math.max(left, right);
+    return 1 + Math.max(left, right);   // 这里加 max 是为了让父节点得到左右子节点的最大深度
 }
 ```
 
