@@ -20,7 +20,7 @@
 
 ###  Java
 
-- [Java 基础](https://github.com/LycPandaria/JavaInterview/blob/master/notes/Java%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86.md)
+- [Java 基础](./notes/Java基础知识)
 
   主要是一些原理以及关键特性。
 
@@ -28,7 +28,7 @@
 
   源码分析：ArrayList、Vector、CopyOnWriteArrayList、LinkedList、HashMap、ConcurrentHashMap、LinkedHashMap、WeekHashMap。
 
-- [Java 并发](https://github.com/CyC2018/InnterviewNotes/blob/master/notes/Java%20并发.md)
+- [Java 并发](./notes/Java并发)
 
   线程使用方式、两种互斥同步方法、线程协作、JUC、线程安全、内存模型、锁优化。
 
