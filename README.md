@@ -28,7 +28,11 @@
 
   源码分析：ArrayList、Vector、CopyOnWriteArrayList、LinkedList、HashMap、ConcurrentHashMap、LinkedHashMap、WeekHashMap。
 
+<<<<<<< HEAD
 - [Java 并发](./notes/Java并发吗，，09-9-)
+=======
+- [Java 并发](./notes/Java并发)
+>>>>>>> 42cefe952d84fd068d6f37ef901e25137f156c27
 
   线程使用方式、两种互斥同步方法、线程协作、JUC、线程安全、内存模型、锁优化。
 
