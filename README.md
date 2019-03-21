@@ -1,6 +1,6 @@
-| 1 | 2 | 3 |
-| :--------: | :---------: | :---------: |
-| [数据结构与算法](#pencil2-算法)  |  [Java](#coffee-java)| [面向对象](#couple-面向对象) |
+| 1 | 2 | 3 | 4 | 5 |
+| :--------: | :---------: | :---------: | :---------: | :---------: |
+| [数据结构与算法](#算法)  |  [Java](#Java)| [面向对象](#面向对象) | [数据库](#数据库) | [框架](#框架)
 
 
 ###  算法
@@ -20,7 +20,7 @@
 
 ###  Java
 
-- [Java 基础](https://github.com/LycPandaria/JavaInterview/blob/master/notes/Java%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86.md)
+- [Java 基础](./notes/Java基础知识)
 
   主要是一些原理以及关键特性。
 
@@ -28,7 +28,7 @@
 
   源码分析：ArrayList、Vector、CopyOnWriteArrayList、LinkedList、HashMap、ConcurrentHashMap、LinkedHashMap、WeekHashMap。
 
-- [Java 并发](https://github.com/CyC2018/InnterviewNotes/blob/master/notes/Java%20并发.md)
+- [Java 并发](./notes/Java并发吗，，09-9-)
 
   线程使用方式、两种互斥同步方法、线程协作、JUC、线程安全、内存模型、锁优化。
 
@@ -40,11 +40,17 @@
 
   JavaIO知识，字符流，字节流，Socket，NIO。
 
-###  框架
-  - [Mybatis](./notes/mybatis.md)
+
 
 ### 面向对象
 
   - [设计模式](https://github.com/LycPandaria/JavaInterview/blob/master/notes/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F.md)
 
     Gof 的 23 种设计模式。
+
+### 数据库
+  - [MySQL](./notes/MySQL.md)
+  - [Redis](./notes/Redis.md)
+
+###  框架
+  - [Mybatis](./notes/mybatis.md)

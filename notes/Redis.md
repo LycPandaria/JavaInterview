@@ -255,62 +255,6 @@ rehash 操作不是一次性完成，而是采用渐进方式，这是为了避�
 
 采用渐进式 rehash 会导致字典中的数据分散在两个 dictht 上，因此对字典的查找操作也需要到对应的 dictht 去执行。
 
-```c
-/* Performs N steps of incremental rehashing. Returns 1 if there are still
- * keys to move from the old to the new hash table, otherwise 0 is returned.
- *
- * Note that a rehashing step consists in moving a bucket (that may have more
- * than one key as we use chaining) from the old to the new hash table, however
- * since part of the hash table may be composed of empty spaces, it is not
- * guaranteed that this function will rehash even a single bucket, since it
- * will visit at max N*10 empty buckets in total, otherwise the amount of
- * work it does would be unbound and the function may block for a long time. */
-int dictRehash(dict \*d, int n) {
-    int empty_visits = n * 10; /* Max number of empty buckets to visit. \*/
-    if (!dictIsRehashing(d)) return 0;
-
-    while (n-- && d->ht[0].used != 0) {
-        dictEntry \*de, \*nextde;
-
-        /* Note that rehashidx can't overflow as we are sure there are more
-         * elements because ht[0].used != 0 \*/
-        assert(d->ht[0].size > (unsigned long) d->rehashidx);
-        while (d->ht[0].table[d->rehashidx] == NULL) {
-            d->rehashidx++;
-            if (--empty_visits == 0) return 1;
-        }
-        de = d->ht[0].table[d->rehashidx];
-        /* Move all the keys in this bucket from the old to the new hash HT \*/
-        while (de) {
-            uint64_t h;
-
-            nextde = de->next;
-            /* Get the index in the new hash table \*/
-            h = dictHashKey(d, de->key) & d->ht[1].sizemask;
-            de->next = d->ht[1].table[h];
-            d->ht[1].table[h] = de;
-            d->ht[0].used--;
-            d->ht[1].used++;
-            de = nextde;
-        }
-        d->ht[0].table[d->rehashidx] = NULL;
-        d->rehashidx++;
-    }
-
-    /* Check if we already rehashed the whole table... \*/
-    if (d->ht[0].used == 0) {
-        zfree(d->ht[0].table);
-        d->ht[0] = d->ht[1];
-        _dictReset(&d->ht[1]);
-        d->rehashidx = -1;
-        return 0;
-    }
-
-    /* More to rehash... \*/
-    return 1;
-}
-```
-
 ## 跳跃表
 
 是有序集合的底层实现之一。
