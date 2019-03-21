@@ -1,6 +1,6 @@
-| 1 | 2 | 3 |
-| :--------: | :---------: | :---------: |
-| [数据结构与算法](#pencil2-算法)  |  [Java](#coffee-java)| [面向对象](#couple-面向对象) |
+| 1 | 2 | 3 | 4 | 5 |
+| :--------: | :---------: | :---------: | :---------: | :---------: |
+| [数据结构与算法](#算法)  |  [Java](#Java)| [面向对象](#面向对象) | [数据库](#数据库) | [框架](#框架)
 
 
 ###  算法
@@ -40,11 +40,17 @@
 
   JavaIO知识，字符流，字节流，Socket，NIO。
 
-###  框架
-  - [Mybatis](./notes/mybatis.md)
+
 
 ### 面向对象
 
   - [设计模式](https://github.com/LycPandaria/JavaInterview/blob/master/notes/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F.md)
 
     Gof 的 23 种设计模式。
+
+### 数据库
+  - [MySQL](./notes/MySQL.md)
+  - [Redis](./notes/Redis.md)
+
+###  框架
+  - [Mybatis](./notes/mybatis.md)
