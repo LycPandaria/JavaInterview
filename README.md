@@ -40,7 +40,12 @@
 
   JavaIO知识，字符流，字节流，Socket，NIO。
 
+### 操作系统
+  - [计算机系统](./notes/计算机系统.md)
+  - [Linux](./notes/linux.md)
 
+### 网络
+  - [HTTP](./notes/http.md)
 
 ### 面向对象
 
