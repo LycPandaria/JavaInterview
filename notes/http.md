@@ -153,13 +153,27 @@ DELETE /file.html HTTP/1.1
 
 > 要求在与代理服务器通信时建立隧道
 
+CONNECT这个方法的作用就是把服务器作为跳板，让服务器代替用户去访问其它网页，之后把数据原原本本的返回给用户。这样用户就可以访问到一些只有服务器上才能访问到的网站了，这就是HTTP代理。
+
 使用 SSL（Secure Sockets Layer，安全套接层）和 TLS（Transport Layer Security，传输层安全）协议把通信内容加密后经网络隧道传输。
 
 ```html
 CONNECT www.example.com:443 HTTP/1.1
+Host: www.web-tinker.com:80
+Proxy-Connection: Keep-Alive
+Proxy-Authorization: Basic *
+Content-Length: 0
 ```
 
 <div align="center"> <img src="../pic/http-4.jpg" width=""/> </div><br>
+
+验证通过之后，我们就可以做普通的HTTP操作了。完全可以把现在的代理服务器看作是请求连接的Internet服务器，也就是说可以像直接访问普通的服务器一样，使用GET、POST等方法来请求Internet服务器上的页面了。
+
+```html
+GET / HTTP/1.1
+Host: www.web-tinker.com
+Content-Length: 0
+```
 
 ## TRACE
 
@@ -657,7 +671,7 @@ HTTPS 并不是新协议，而是让 HTTP 先和 SSL（Secure Sockets Layer）�
 
 通过使用 SSL，HTTPS 具有了加密（防窃听）、认证（防伪装）和完整性保护（防篡改）。
 
-<div align="center"> <img src="../pic/http-8.png" width=""/> </div><br>
+<div align="center"> <img src="../pic/http-8.jpg" width=""/> </div><br>
 
 ## 加密
 
@@ -879,4 +893,4 @@ DELETE /idX/delete HTTP/1.1   -> Returns 404
 - [HTTP/2 简介](https://developers.google.com/web/fundamentals/performance/http2/?hl=zh-cn)
 
 
-<div align="center"><img width="180px" src="../pic/https://cyc-1256109796.cos.ap-guangzhou.myqcloud.com/%E5%85%AC%E4%BC%97%E5%8F%B7.jpg"></img></div>
+<div align="center"><img width="180px" src="https://cyc-1256109796.cos.ap-guangzhou.myqcloud.com/%E5%85%AC%E4%BC%97%E5%8F%B7.jpg"></img></div>
