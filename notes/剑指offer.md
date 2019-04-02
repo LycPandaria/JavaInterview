@@ -129,6 +129,7 @@ public boolean duplicate(int numbers[],int length,int [] duplication) {
             numbers[tmp] = tmp;
         }
     }
+    // 循环了一遍没 return true，那就是没找到，返回false
     return false;
 }
 ```
@@ -286,6 +287,7 @@ public class Solution {
         return reConstructBinaryTree(pre, 0, pre.length-1, 0);
     }
     /*
+    pre  - 前序遍历数组
     preL - 表示当前子树前序遍历的开始位置
     preR - 表示当前子树前序遍历的结束位置
     inL  - 表示当前子树的中序遍历的开始位置
@@ -330,9 +332,11 @@ public class TreeLinkNode {
 ### 解题思路
 这题应该按情况来分析：
 1. 如果一个节点有右子树，那么它的下一个节点就是它的右子树的最左子树。从右子节点出发一直沿着左子节点走，遇到 node.left == null 即可返回，这个就是下一个节点。
+
   ![二叉树下一个节点](../pic/二叉树下一个节点1.png)
 2. 接着分析一个节点没有右子节点的情况，如果节点是它父亲的左子节点，那么父亲节点就是下一个节点
 3. 如果一个节点既没有右子节点，而且节点是它父亲的右子节点，我们可以一直沿着父亲节点往上走，知道找到一个是它父节点的左子节点的节点。
+
   ![二叉树下一个节点](../pic/二叉树下一个节点2.png)
 
 ```java
@@ -483,7 +487,7 @@ public int JumpFloorII(int target) {
     Arrays.fill(dp, 1);   // 预设为 1，因为一次性跳 n 次台阶的方法为1次
     for (int i = 1; i < target; i++)
         for (int j = 0; j < i; j++)
-            dp[i] += dp[j];
+            dp[i] += dp[j];   // 根据之前的结果累加到当前台阶的跳法总数
     return dp[target - 1];
 }
 ```

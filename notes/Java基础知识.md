@@ -41,7 +41,7 @@
 - [输入输出流](#输入输出流)
 	- [Java IO流的实现机制是什么？](#java-io流的实现机制是什么)
 	- [管理文件和目录的类：](#管理文件和目录的类)
-	- [Java NIO(待写，不了解)](#java-nio待写不了解)
+	- [Java NIO](#java-nio)
 	- [System.out.println](#systemoutprintln)
 - [Java平台与内存管理](#java平台与内存管理)
 	- [JVM加载class文件机制](#jvm加载class文件机制)
@@ -498,7 +498,7 @@ Java提供了两种错误异常类：Error和Exception,父类都是Throwable
 1. Error表示程序在运行期间出了非常严重的错误，这种错误是不克恢复的，属于JVM层次的错误。会导致程序终止执行。也不推荐程序去捕捉Error，因为这是应该被修复的错误。OutOfMemoryError，ThreadDeath都属于错误。
 2. Exception包含checked exception和runtime exception
    1. 检查异常 checked exception
-   常见于IO和SQL异常，这种异常都发生在编译阶段，Java编译器强制程序去捕捉此类型异常，一般在如下几种情况中使用：
+   常见于IO（IOException及其子类）和SQL异常，这种异常都发生在编译阶段，Java编译器强制程序去捕捉此类型异常，一般在如下几种情况中使用：
       1. 异常发生不会导致程序出错，进行处理之后可以继续。比如：连接数据库失败之后，重新尝试连接
 	    2. 程序依赖于不可靠的外部条件，例如系统IO
    2. runtime exception
@@ -541,7 +541,8 @@ class Test{
 }
 ```
 
-## Java NIO(待写，不了解)
+## Java NIO
+详见 JavaIO 笔记中的 [NIO](./JavaIo.md#NIO)
 
 ## System.out.println
 ```
@@ -563,7 +564,7 @@ GC主要负责：分配内存，确保被引用对象的内存不被错误地回
 对于垃圾回收器来说，它使用有向图来记录和管理堆内存中的所有对象，通过这个有向图可以识别哪些对象是可达的，哪些是不可达的。  
 几种垃圾回收器算法：
 1. 引用计数算法 reference counting collector
-简单但是效率低下。在堆中对每个对象都有个引用计数器；当对象被引用时，计数器加1，当引用被置空或者离开作用域时，计数器减1.JVM并没有采用这种方法，因为它没法解决互相引用问题。
+简单但是效率低下。在堆中对每个对象都有个引用计数器；当对象被引用时，计数器加1，当引用被置空或者离开作用域时，计数器减1. JVM并没有采用这种方法，因为它没法解决互相引用问题。
 2. 追踪回收算法  tracing collector
 追踪回收算法利用JVM维护的对象引用图，从根节点开始遍历对象的引用图，同时标记遍历到的对象，当遍历结束后收回未被标记的对象。
 3. 压缩回收算法  compacting collector
@@ -584,8 +585,8 @@ Java中容易引起内存泄漏的几个方面：
 5. 单例模式可能会造成内存泄漏。例子看书131页。主要是说：在Singleton中存在一个对对象BigClass的引用，由于单例对象是以静态变量的方式存储，所以导致BigClass类的对象不能够被回收。
 
 ## Java中堆和栈
-栈内存主要用来存放基本数据类型和引用变量。  
-堆内存用来存放运行时创建的对象，通过new关键字创建出来的对象都存放在堆中，一个JVM实例维护一个堆，多线程也是共享这个堆。
+栈内存主要用来存放 **基本数据类型** 和 **引用变量**。  
+堆内存用来存放 **运行时创建的对象**，通过new关键字创建出来的对象都存放在堆中，一个JVM实例维护一个堆，多线程也是共享这个堆。
 
 # Java容器
 容器主要包括Collection和 Map 两种，Collection 存储着对象的集合，而 Map 存储着键值对（两个对象）的映射表。
@@ -618,7 +619,7 @@ Java中容易引起内存泄漏的几个方面：
 3. remove()可以删除容器中元素
 
 在使用iterator方法时候经常遇到CurrentModificationException是因为在遍历容器的同时增加或者删除，或者多线程操作时候。原理是：  
-在调用容器的iterator()方法返回Iterator对象时候，容器中的个数的值会传给一个遍历expectedModCount，在调用next()时候会比较expectedModCount和真是熟练modCount比较，不匹配的话就会报异常。   
+在调用容器的iterator()方法返回Iterator对象时候，容器中的个数的值会传给一个遍历expectedModCount，在调用next()时候会比较expectedModCount和实际的modCount比较，不匹配的话就会报异常。   
 解决的办法可以是：
 1. 在遍历时候把要删除的元素放在另外一个集合，遍历结束后调用removeAll()或者iter.remove()
 2. 在多线程中可以使用线程安全的容器如CurrentHashMap，CopyOnWriteArrayList等。
