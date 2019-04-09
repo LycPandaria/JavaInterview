@@ -73,11 +73,11 @@ ArrayList 是一个数组队列，相当于 动态数组。与Java中的数组�
 
 ArrayList 继承了AbstractList，实现了List。它是一个数组队列，提供了相关的添加、删除、修改、遍历等功能。
 
-ArrayList 实现了RandmoAccess接口，即提供了随机访问功能。RandmoAccess是java中用来被List实现，为List提供快速访问功能的。在ArrayList中，我们即可以通过元素的序号快速获取元素对象；这就是快速随机访问。
+ArrayList 实现了RandmoAccess接口，即提供了随机访问功能。RandmoAccess(标识接口)是java中用来被List实现，为List提供快速访问功能的。在ArrayList中，我们即可以通过元素的序号快速获取元素对象；这就是快速随机访问。
 
-ArrayList 实现了Cloneable接口，即覆盖了函数clone()，能被克隆。
+ArrayList 实现了Cloneable(标识接口接口，即覆盖了函数clone()，能被克隆。
 
-ArrayList 实现java.io.Serializable接口，这意味着ArrayList支持序列化，能通过序列化去传输。
+ArrayList 实现java.io.Serializable(标识接口接口，这意味着ArrayList支持序列化，能通过序列化去传输。
 
 和Vector不同，ArrayList中的操作不是线程安全的！所以，建议在单线程中才使用ArrayList，而在多线程中可以选择Vector或者CopyOnWriteArrayList。
 
@@ -257,8 +257,7 @@ public E remove(int index) {
     return oldValue;
 }
 ```
-
-那元素来进行删除,从这里可以看出，ArrayList 是可以存 null 值的。有一点需要注意的就是它只
+根据元素来进行删除,从这里可以看出，ArrayList 是可以存 null 值的。有一点需要注意的就是它只
 删除第一个匹配的元素（如果数组中含有该元素）
 ```java
 /**
@@ -306,6 +305,8 @@ public E get(int index) {
 checkForComodification()
 ```java
 private void checkForComodification() {
+    // 这是 ArrayList 中的一个内部类 SubList 中的一个方法，所以在调用 ArrayList 的 modCount
+    // 时候要加上 ArrayList.this, this.modCount 调用的是 SubList 的 modCount
     if (ArrayList.this.modCount != this.modCount)
         throw new ConcurrentModificationException();
 }
@@ -555,7 +556,7 @@ public class LinkedList<E>
 
 因其底层数据结构是链表，所以可想而知，它的增删只需要移动指针即可，故时间效率较高。不需要批量扩容，也不需要预留空间，所以空间效率比ArrayList高。
 
-缺点就是需要随机访问元素时，时间效率很低，虽然底层在根据下标查询Node的时候，会根据index判断目标Node在前半段还是后半段，然后决定是顺序还是逆序查询，以提升时间效率。不过随着n的增大，总体时间效率依然很低。
+缺点就是需要随机访问元素时，时间效率很低，**虽然底层在根据下标查询Node的时候，会根据index判断目标Node在前半段还是后半段，然后决定是顺序还是逆序查询，以提升时间效率**。不过随着n的增大，总体时间效率依然很低。
 
 当每次增、删时，都会修改modCount。
 
