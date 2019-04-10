@@ -1094,10 +1094,10 @@ public ListNode FindKthToTail(ListNode head,int k) {
 
 ```java
 public ListNode EntryNodeOfLoop(ListNode pHead){
+    if(pHead == null)
+      return null;
     ListNode slow = pHead;
     ListNode fast = pHead;
-    if(pHead == null)
-        return null;
     // 先找相遇点，一个走一次一步，一个一次两步
     while(fast != null && fast.next != null){
         fast = fast.next.next;
@@ -1134,7 +1134,7 @@ m.next=i；因为这样的话就没有办法能够找到n，因为链接断裂�
 public ListNode ReverseList(ListNode head) {
     if(head == null || head.next == null) return head;
 
-    ListNode rHead = null;
+    ListNode rHead = null;    // 反转后的头结点
     ListNode nodePre = null;
     ListNode nodeCur = head;
     ListNode nodeNext = null; // 存储 next 节点
@@ -1178,9 +1178,10 @@ public ListNode ReverseList(ListNode head) {
 **递归**
 ```java
 public ListNode Merge(ListNode list1,ListNode list2) {
-        // 鲁棒性检查
+        // list1到末尾了，那么链表后面直接接上list2
         if(list1 == null)
             return list2;
+        // list2到末尾了，那么链表后面直接接上list1
         if(list2 == null)
             return list1;
         ListNode mergeHead = null;
@@ -1197,11 +1198,7 @@ public ListNode Merge(ListNode list1,ListNode list2) {
 **迭代**
 ```java
 public ListNode Merge(ListNode list1,ListNode list2) {
-    // 鲁棒性检查
-    if(list1 == null)
-        return list2;
-    if(list2 == null)
-        return list1;
+
     ListNode mergeHead = new ListNode(-1);
     ListNode node = mergeHead;
     while(list1 != null && list2 != null){
@@ -1218,6 +1215,7 @@ public ListNode Merge(ListNode list1,ListNode list2) {
         node.next = list2;
     if(list2 == null)
         node.next = list1;
+    // 注意 return 第一个节点是从mergeHead.next
     return mergeHead.next;
 }
 ```
