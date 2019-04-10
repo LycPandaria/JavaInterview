@@ -50,7 +50,7 @@
   - [用 LinkedHashMap 实现 LRU 缓存](#用-linkedhashmap-实现-lru-缓存)
 - [WeakHashMap](#weakhashmap)
   - [概述](#概述-1)
-  - [conCurrentCache](#concurrentcache)
+  - [ConcurrentCache](#concurrentcache)
 
 <!-- TOC END -->
 
@@ -753,7 +753,7 @@ transient int modCount;
 ```java
 public V put(K key, V value) {
   //如果table数组为空数组{}，进行数组填充（为table分配实际内存空间），入参为threshold，
-  // 此时threshold为initialCapacity 默认是1<<4(24=16)
+  // 此时threshold为initialCapacity 默认是1<<4(2^4=16)
     if (table == EMPTY_TABLE) {
         inflateTable(threshold);
     }
@@ -944,7 +944,7 @@ HashMap 不是线程安全的，但是 HashTable 在线程多的情况下效率�
 所以在多线程情况也不是很理想.
 
 ConcurrentHashMap所使用的锁分段技术，首先将数据分成一段一段的存储，然后给每一段数据配一把锁，当一个线程占用锁访问其中一个段数据的时候，其他段的数据也能被其他线程访问。有些方法需要跨段，比如size()和containsValue()，它们可能需要锁定整个表而而不仅仅是某个段，这需要按顺序锁定所有段，操作完毕后，又按顺序释放所有段的锁。
-![ConcurrentHashMap](../pic/conCurrentHashMap.png)
+![ConcurrentHashMap](../pic/concurrentHashMap.png)
 
 ## 数据结构
 ConcurrentHashMap是由Segment数组结构和HashEntry数组结构组成。
@@ -961,7 +961,7 @@ static final class Segment<K,V> extends ReentrantLock implements Serializable {
     static final int MAX_SCAN_RETRIES =
         Runtime.getRuntime().availableProcessors() > 1 ? 64 : 1;
 
-    transient volatile HashEntry<K,V>[] table;
+    transient volatile HashEntry<K,V>[] table;  // 跟 HashMap 类似的 Entry类
 
     transient int count;
 
@@ -982,6 +982,22 @@ static final class HashEntry<K,V> {
 ```
 
 ## get
+```java
+public V get(Object key) {
+    int hash = hash(key.hashCode());
+    return segmentFor(hash).get(key, hash);
+}
+```
+segmentFor这个函数用于确定操作应该在哪一个segment中进行
+```java
+final Segment<K,V> segmentFor(int hash) {
+    return segments[(hash >>> segmentShift) & segmentMask];
+}
+```
+这个函数用了位操作来确定Segment，根据传入的hash值向右无符号右移segmentShift位，然后和segmentMask进行与操作，结合我们之前说的segmentShift和segmentMask的值，就可以得出以下结论：假设Segment的数量是2的n次方，根据元素的hash值的高n位就可以确定元素到底在哪一个Segment中。
+
+segmentShift和segmentMask:假设构造函数确定了Segment的数量是2的n次方，那么segmentShift就等于32减去n，而segmentMask就等于2的n次方减一.
+
 ConcurrentHashMap的get操作是直接委托给Segment的get方法，直接看Segment的get方法：
 ```java
   V get(Object key, int hash) {  
@@ -1125,14 +1141,16 @@ void afterNodeAccess(Node<K,V> e) { // move node to last
             head = a;
         else
             b.after = a;  // p 的前一个节点的 after 改为 p 的 after 节点
+
         if (a != null)
-            a.before = b;
+            a.before = b;   // p 的后续节点的 before 改为 p 的 before
+                            // 这样相当于把 p 删除了，等待移到最后
         else
             last = b;
         if (last == null)
             head = p;
         else {
-            p.before = last;
+            p.before = last;    // 把 p 链接到链表末尾
             last.after = p;
         }
         tail = p;
@@ -1150,6 +1168,11 @@ void afterNodeInsertion(boolean evict) { // possibly remove eldest
         K key = first.key;
         removeNode(hash(key), key, null, false, true);
     }
+}
+```
+```java
+protected boolean removeEldestEntry(Map.Entry<K,V> eldest) {
+    return false;
 }
 ```
 
@@ -1196,7 +1219,7 @@ private static class Entry<K,V> extends WeakReference<Object> implements Map.Ent
 {...}
 ```
 
-## conCurrentCache
+## ConcurrentCache
 Tomcat 中的 ConcurrentCache 使用了 WeakHashMap 来实现缓存功能。
 
 ConcurrentCache 采取的是分代缓存：
