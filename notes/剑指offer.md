@@ -28,7 +28,7 @@
 - [22.链表中环的入口结点](#22链表中环的入口结点)
 - [23.反转链表](#23反转链表)
 - [24.合并两个排序的链表](#24合并两个排序的链表)
-- [25.数的子结构](#25数的子结构)
+- [25.树的子结构](#25树的子结构)
 - [26.二叉树的镜像](#26二叉树的镜像)
 - [27.对称的二叉树](#27对称的二叉树)
 - [28.顺时针打印矩阵](#28顺时针打印矩阵)
@@ -1220,7 +1220,7 @@ public ListNode Merge(ListNode list1,ListNode list2) {
 }
 ```
 
-## 25.数的子结构
+## 25.树的子结构
 [NowCode](https://www.nowcoder.com/practice/6e196c44c7004d15b1610b9afca8bd88?tpId=13&tqId=11170&tPage=1&rp=1&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
 
 ### 问题描述
@@ -3059,3 +3059,7 @@ public int maxProfit(int[] prices) {
     return maxDiff;
 }
 ```
+
+## 小结
+1. 在树的问题中，经常会用到递归求解，就要考虑递归退出条件，要递归的那个函数一般会在一开始的地方
+判断传入的树节点是否为空了，这样来返回相应的值。
