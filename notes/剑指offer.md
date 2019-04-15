@@ -73,6 +73,7 @@
 - [60.扑克牌顺子](#60扑克牌顺子)
 - [61.圆圈中最后剩下的数](#61圆圈中最后剩下的数)
 - [62.股票的最大利润](#62股票的最大利润)
+- [小结](#小结)
 
 <!-- TOC END -->
 
@@ -1588,6 +1589,7 @@ private boolean verify(int[] sequence, int first, int last) {
     int rootVal = sequence[last];
     // 2.这个 cutIndex 用于分割左右子树，它先从左边遍历，找到第一个比 root 大的值，就从这个位置划分左右子树
     int cutIndex = first;
+    // 注意 sequence[cutIndex] <= rootVal, 这个等于是对应没有右子树的情况
     while (cutIndex < last && sequence[cutIndex] <= rootVal)
         cutIndex++;
     // 3. 划分完后检查右子树是否符合搜索二叉树特性
@@ -1595,6 +1597,7 @@ private boolean verify(int[] sequence, int first, int last) {
         if (sequence[i] < rootVal)
             return false;
     // 4. 从划分出来的左右子树继续检查
+    // 注意最后的 last-1，因为 seq[last] 是根节点
     return verify(sequence, first, cutIndex - 1) && verify(sequence, cutIndex, last - 1);
 }
 ```
@@ -1626,12 +1629,15 @@ private void backtracking(TreeNode node, int target, ArrayList<Integer> path) {
         return;
     path.add(node.val);
     target -= node.val;
+    // 因为题目要求到叶子节点，所以要判断 node.left 和 right 都为 null
     if (target == 0 && node.left == null && node.right == null) {
         ret.add(new ArrayList<>(path));
     } else {
+      // 从该节点的左右继续尝试
         backtracking(node.left, target, path);
         backtracking(node.right, target, path);
     }
+    // 这个节点往下的所有节点都尝试过了
     path.remove(path.size() - 1);
 }
 ```
@@ -1696,6 +1702,7 @@ public RandomListNode Clone(RandomListNode pHead) {
     cur = pHead;
     RandomListNode pCloneHead = pHead.next;
     // 注意对照图理解，这里的循环是依次拆分原链表和复制的链表
+    // 第一步是拆分原链表的一个节点，第二步拆分复制链表的一个节点，如此反复
     while (cur.next != null) {
         RandomListNode next = cur.next;
         cur.next = next.next;

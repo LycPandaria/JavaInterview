@@ -1,3 +1,80 @@
+<!-- TOC START min:1 max:3 link:true update:true -->
+- [一、线程状态转换](#一线程状态转换)
+	- [新建-New](#新建-new)
+	- [可运行-Runnable](#可运行-runnable)
+	- [阻塞-blocking](#阻塞-blocking)
+	- [无限期等待-Waiting](#无限期等待-waiting)
+	- [限期等待-Timed Waiting](#限期等待-timed-waiting)
+	- [死亡-Terminated](#死亡-terminated)
+- [二、使用线程](#二使用线程)
+	- [run()和start()](#run和start)
+	- [实现接口 VS 继承 Thread](#实现接口-vs-继承-thread)
+- [三、基础线程机制](#三基础线程机制)
+	- [Executor](#executor)
+	- [Daemon](#daemon)
+	- [sleep()](#sleep)
+	- [yield()](#yield)
+- [四、中断](#四中断)
+	- [InterruptedException](#interruptedexception)
+	- [interrupt()](#interrupt)
+	- [Executor 的中断操作](#executor-的中断操作)
+- [互斥同步](#互斥同步)
+	- [synchronized](#synchronized)
+	- [ReentrantLock](#reentrantlock)
+	- [比较](#比较)
+	- [使用选择](#使用选择)
+- [六、线程之间的协作](#六线程之间的协作)
+	- [join()](#join)
+	- [wait() notify() notifyAll()](#wait-notify-notifyall)
+	- [await() signal() signalAll()](#await-signal-signalall)
+- [七、J.U.C - AQS](#七juc---aqs)
+	- [CountDownLatch](#countdownlatch)
+	- [CyclicBarrier](#cyclicbarrier)
+	- [Semaphore](#semaphore)
+- [八、J.U.C - 其它组件](#八juc---其它组件)
+	- [FutureTask](#futuretask)
+	- [BlockingQueue](#blockingqueue)
+	- [ForkJoin](#forkjoin)
+- [九、线程不安全示例](#九线程不安全示例)
+- [十、Java 内存模型](#十java-内存模型)
+	- [主内存与工作内存](#主内存与工作内存)
+	- [内存间交互操作](#内存间交互操作)
+	- [内存模型三大特性](#内存模型三大特性)
+		- [1. 原子性](#1-原子性)
+		- [2. 可见性](#2-可见性)
+		- [3. 有序性](#3-有序性)
+	- [先行发生原则](#先行发生原则)
+		- [1. 单一线程原则](#1-单一线程原则)
+		- [2. 管程锁定规则](#2-管程锁定规则)
+		- [3. volatile 变量规则](#3-volatile-变量规则)
+		- [4. 线程启动规则](#4-线程启动规则)
+		- [5. 线程加入规则](#5-线程加入规则)
+		- [6. 线程中断规则](#6-线程中断规则)
+		- [7. 对象终结规则](#7-对象终结规则)
+		- [8. 传递性](#8-传递性)
+- [十一、线程安全](#十一线程安全)
+	- [不可变](#不可变)
+	- [互斥同步](#互斥同步-1)
+	- [非阻塞同步](#非阻塞同步)
+		- [1. CAS](#1-cas)
+		- [2. AtomicInteger](#2-atomicinteger)
+		- [3. ABA](#3-aba)
+	- [无同步方案](#无同步方案)
+		- [1. 栈封闭](#1-栈封闭)
+		- [2. 线程本地存储（Thread Local Storage）](#2-线程本地存储thread-local-storage)
+		- [3. 可重入代码（Reentrant Code）](#3-可重入代码reentrant-code)
+- [十二、锁优化](#十二锁优化)
+	- [自旋锁](#自旋锁)
+	- [锁消除](#锁消除)
+	- [锁粗化](#锁粗化)
+	- [轻量级锁](#轻量级锁)
+	- [偏向锁](#偏向锁)
+- [十三、多线程开发良好的实践](#十三多线程开发良好的实践)
+
+<!-- TOC END -->
+
+
+
 # 一、线程状态转换
 ![线程状态转换](../pic/线程状态转换.jpg)
 
@@ -1051,7 +1128,7 @@ public static void main(String[] args) throws InterruptedException {
 - synchronized，对一个变量执行 unlock 操作之前，必须把变量值同步回主内存。
 - final，被 final 关键字修饰的字段在构造器中一旦初始化完成，并且没有发生 this 逃逸（其它线程通过 this 引用访问到初始化了一半的对象），那么其它线程就能看见 final 字段的值。
 
-对前面的线程不安全示例中的 cnt 变量使用 volatile 修饰，不能解决线程不安全问题，因为 volatile 并不能保证操作的原子性。
+**对前面的线程不安全示例中的 cnt 变量使用 volatile 修饰，不能解决线程不安全问题，因为 volatile 并不能保证操作的原子性。**
 
 ### 3. 有序性
 
