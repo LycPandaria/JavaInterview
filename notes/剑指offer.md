@@ -877,7 +877,7 @@ private void print1ToMaxOfNDigits(char[] number, int digit) {
         return;
     }
     for (int i = 0; i < 10; i++) {
-      // 递增设置 digit 位置的字符，没设置一次，digit 后的位置都要重置位置
+      // 递增设置 digit 位置的字符，每设置一次，digit 后的位置都要重置位置
       // 这就是第二行的递归所作的事，直到满足上面 if 的返回条件
         number[digit] = (char) (i + '0');
         print1ToMaxOfNDigits(number, digit + 1);
@@ -1752,6 +1752,7 @@ public void inOrder(TreeNode node){
 
 ### 解题思路
 ![序列化二叉树](../pic/序列化二叉树.png)
+
 使用先序遍历的方法序列化该树为(节点为 null 则标记为 '$'):1,2,4,$,$,5,$,$,3,$,$
 
 在重建树的时候，便可以根据 1,2,4,$,$,5,$,$,3,$,$ 来，第一个读出的数是 1，说明根节点是 1，然后 2 是 1 的左节点。然后 4 是 2 的左节点，后面的两个 $$ 说明 4 是个叶子节点。回到 2 节点，由于下一个是 5，说明 2 的右节点是 5. 同理可以重建这个树
@@ -1760,6 +1761,7 @@ public void inOrder(TreeNode node){
 private String deserializeStr;    // 用于保存需要处理的字符串
 
 String Serialize(TreeNode root) {
+    // 先序遍历序列化树
     if(root == null)
         return "$";
     return root.val + "," + Serialize(root.left) + "," + Serialize(root.right);
@@ -1774,7 +1776,7 @@ TreeNode Deserialize(){
        return null;
     int index = deserializeStr.indexOf(",");
     // 处理 index == -1 的情况
-    String nodeStr = index == -1 ? deserializeStr : deserializeStr.substring(0, index);
+    String nodeStr = index == -1 ? deserializeStr : deserializeStr.substring(0, index);     // root 值
 
     // 剩下待处理的序列化字符串
     deserializeStr = index == -1 ? "" : deserializeStr.substring(index + 1);
@@ -1793,6 +1795,12 @@ TreeNode Deserialize(){
 
 ### 问题描述
 输入一个字符串，按字典序打印出该字符串中字符的所有排列。例如输入字符串 abc，则打印出由字符 a, b, c 所能排列出来的所有字符串 abc, acb, bac, bca, cab 和 cba。
+
+跟第[\(16.打印从 1 到最大的 n 位数\)](#16打印从-1-到最大的-n-位数)题很像：
+  - 一种排列结束的结束条件,都是处理的字符是最后一位的时候
+  - 对当前字符的后续字符进行递归
+    - PermutationHeler(chars, i+1, list);
+    - print1ToMaxOfNDigits(number, digit + 1);
 
 ### 解题思路
 我们求整个字符串的排列，可以看成两步。
@@ -1950,7 +1958,7 @@ public int MoreThanHalfNum_Solution(int [] array) {
   public ArrayList<Integer> GetLeastNumbers_Solution(int[] nums, int k) {
       if (k > nums.length || k <= 0)
           return new ArrayList<>();
-      PriorityQueue<Integer> maxHeap = new PriorityQueue<>((o1, o2) -> o2 - o1);
+      PriorityQueue<Integer> maxHeap = new PriorityQueue<>((o1, o2) -> o2 - o1);  // 大顶堆
       for (int num : nums) {
           maxHeap.add(num);
           if (maxHeap.size() > k)
@@ -3070,3 +3078,14 @@ public int maxProfit(int[] prices) {
 ## 小结
 1. 在树的问题中，经常会用到递归求解，就要考虑递归退出条件，要递归的那个函数一般会在一开始的地方
 判断传入的树节点是否为空了，这样来返回相应的值。
+
+2. 跟第[\(16.打印从 1 到最大的 n 位数\)](#16打印从-1-到最大的-n-位数)题和第[\(38.字符串的排列\)](#38字符串的排列)很像：
+  - 一种排列结束的结束条件,都是处理的字符是最后一位的时候
+    - if(i == chars.length - 1)
+    - if (digit == number.length)
+  - 对当前字符的后续字符进行递归
+    - PermutationHeler(chars, i+1, list);
+    - print1ToMaxOfNDigits(number, digit + 1);
+
+3. Boyer-Moore Majority Vote Algorithm
+  使用 cnt 来统计一个元素出现的次数，当遍历到的元素和统计元素相等时，令 cnt++，否则令 cnt--。如果前面查找了 i 个元素，且 cnt == 0，说明前 i 个元素没有 majority，或者有 majority，但是出现的次数少于 i / 2 ，因为如果多于 i / 2 的话 cnt 就一定不会为 0 。此时剩下的 n - i 个元素中，majority 的数目依然多于 (n - i) / 2，因此继续查找就能找出 majority。
