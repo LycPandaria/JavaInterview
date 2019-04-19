@@ -2224,12 +2224,14 @@ public String PrintMinNumber(int [] numbers) {
 ### 解题思路
 我们有两种不同的选择来翻译第一位数字 1.当最开始的一个或者两个字符被翻译了之后，我们接着翻译剩下的字符。这就是一个递归的过程，很像青蛙跳台阶那样。
 
-递归从最大的问题开始自上而下解决问题。我们也可以从最小的子问题开始自下而上而解决问题，这样就可以消除重复的子问题。也就是说我们从数字的末尾开始，然后从右到左翻译并计算不同翻译的数目。
+递归从最大的问题开始自上而下解决问题。我们也可以从最小的子问题开始自下而上而解决问题，这样就可以消除重复的子问题。
 
 ```java
 public int numDecodings(String s) {
     if (s == null || s.length() == 0)
         return 0;
+    if(s.length()==1)
+        return 1;
     int n = s.length();
     int[] dp = new int[n + 1];  // 动态规划结果保存
     dp[0] = 1;
@@ -2264,7 +2266,7 @@ public int numDecodings(String s) {
 礼物的最大价值为 1+12+5+7+7+16+5=53。
 
 ### 解题思路
-典型的动态规划问题。我们定义一个函数 f(i,j) 表示到达坐标为 (i,j) 的格子适合能拿到的礼物总和的最大值。根据题目要求，我们有两种可能的途径到达坐标 (i,j) 的格子：通过格子 (i-1,j) 或者 (i,j-1)。所以 f(i,j)=max(f(i-1,j),f(i,j-1) + gift[i,j]), g[i,j] 表示坐标为 (i,j) 格子里的礼物的加之。
+典型的动态规划问题。我们定义一个函数 f(i,j) 表示到达坐标为 (i,j) 的格子适合能拿到的礼物总和的最大值。根据题目要求，我们有两种可能的途径到达坐标 (i,j) 的格子：通过格子 (i-1,j) 或者 (i,j-1)。所以 f(i,j)=max(f(i-1,j),f(i,j-1) + gift[i,j]), g[i,j] 表示坐标为 (i,j) 格子里的礼物的价值。
 
 第一种解法是运用一个同样的二维数组来存储结果：
 ```java
@@ -2320,9 +2322,9 @@ public class Bonus {
             dp[0] += val[0];
             // 每循环到一行(vals[k]), dp[0..n-1]都会得到更新
             // 新的值取值依据为 dp[i](new) = Math.max(dp[i], dp[i-1]) + val[i];
-            // 毕竟我们说过只有 往下走一格或者 往右走一格才能到达 (k,i) 左边
-            // 其中dp[i] 存的值是它的上一行的相同列的礼物最大值(k-1,i),往下走一格到达(k,i) （）
-            // dp[i-1] 存的是 同列它的左边的礼物最大值(k,i-1),往右走一格到达(k,i)
+            // 毕竟我们说过只有 往下走一格或者 往右走一格才能到达 (k,i)
+            // 其中dp[i] 存的值是它的上一行的相同列的礼物最大值 f(k-1,i),往下走一格到达(k,i)
+            // dp[i-1] 存的是 同列它的左边的礼物最大值 f(k,i-1),往右走一格到达(k,i)
             // 新的 dp[i] 值即从两者中最大值加上 (k,i) 的礼物值
             for(int i=1; i < n; i++)
                 dp[i] = Math.max(dp[i], dp[i-1]) + val[i];
@@ -2793,7 +2795,7 @@ public void FindNumsAppearOnce(int[] nums, int num1[], int num2[]) {
     diff &= -diff;      // 找到最右为 1 的那一位，记为 n
     for (int num : nums) {
       // 这里是对数进行分类，通过 第 n 位是不是 0 来分类，第一个数组中每个数字的第 n 位都是 1
-      // 第 n 为是 0 的在第二个数组(相同的数会被分到一个组中)，然后在两个数组中再做一次异或，就能分别得到那两个不相同的数
+      // 第 n 位是 0 的在第二个数组(相同的数会被分到一个组中)，然后在两个数组中再做一次异或，就能分别得到那两个不相同的数
         if ((num & diff) == 0)    
             num1[0] ^= num;
         else
@@ -2897,7 +2899,7 @@ public String ReverseSentence(String str) {
     // 对整个反转
     swap(carr, 0, carr.length-1);
     // 对单词反转
-    int begin = 0;
+    int begin = 0;    // 每次遇到空格后都会更新，更新为空格后第一个字符的位置
     for(int i=1; i <= carr.length; i++){
         // 注意这个条件 i==carr.length，最后达到字符串
         // 末尾的时候，也要记得进行一个反转，比如 字符串只有一个单词
@@ -3089,3 +3091,42 @@ public int maxProfit(int[] prices) {
 
 3. Boyer-Moore Majority Vote Algorithm
   使用 cnt 来统计一个元素出现的次数，当遍历到的元素和统计元素相等时，令 cnt++，否则令 cnt--。如果前面查找了 i 个元素，且 cnt == 0，说明前 i 个元素没有 majority，或者有 majority，但是出现的次数少于 i / 2 ，因为如果多于 i / 2 的话 cnt 就一定不会为 0 。此时剩下的 n - i 个元素中，majority 的数目依然多于 (n - i) / 2，因此继续查找就能找出 majority。
+
+4. 分治归并模板代码
+  以下代码是一个我觉得写的比较清晰的分治归并排序的例子，在处理相关问题时候尽量把风格写成这样
+
+  用到的题目有：[51.数组中的逆序对](#51数组中的逆序对)
+  ```java
+  private void mergeSort(int[] nums, int l, int h){
+    if(l < h){
+      int m = (l + h) / 2;
+      mergeSort(nums, l, m);
+      mergeSort(nums, m+1, h);
+      merge(nums, l, m, h);
+    }
+  }
+
+  private void merge(int[] nums, int low, int mid, int high){
+    int i = low;  // 左边下标
+    int j = mid+1;  // 右边下标
+    int k = low;    // tmp 数组下标
+    while(i <= mid || j <= high){
+      if(i > mid)
+        tmp[k] = nums[j++]; // 这一步代表 左边的数已经全部放入tmp中，把右边的部分依次顺序放入tmp中
+      else if(j > high)
+        tmp[k] = nums[i++]; // 这一步代表 右边的数已经全部放入tmp中，把左边的部分依次顺序放入tmp中
+      else if(nums[i] < nums[j])
+        tmp[k] = nums[i++]; // 左边下标的数小于右边下标的数，把左边下标的数移到tmp中，然后移动左边下标
+      else {
+        tmp[k] = nums[j++]; // 左边下标的数大于右边下标的数，把右边下标的数移到tmp中，然后移动右边下标
+        //this.cnt += mid - i + 1;  // 统计反序对数量：nums[i] >= nums[j]，说明 nums[i...mid] 都大于 nums[j]
+      }
+      k++;  // 移动 tmp 下标
+    }
+    for(k = low; k <= high; k++)
+      nums[k] = tmp[k];   // tmp中是排序好的，复制到nums中
+  }
+  ```
+
+5. 数组操作时候注意边界，比如arr[mid-1]或者arr[mid+1]要考虑到是否存在越界的情况
+  例子：[53.数字在排序数组中出现的次数](#53数字在排序数组中出现的次数)中的二分查找中都有对于mid的判断
