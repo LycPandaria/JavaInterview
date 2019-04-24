@@ -46,6 +46,8 @@
 
 ### 网络
   - [HTTP](./notes/http.md)
+  - [传输层](./notes/传输层.md)
+  - [网络层](./notes/网络层.md)
 
 ### 面向对象
 
@@ -54,6 +56,7 @@
     Gof 的 23 种设计模式。
 
 ### 数据库
+  - [数据库系统](./notes/数据库系统.md)
   - [MySQL](./notes/MySQL.md)
   - [Redis](./notes/Redis.md)
 
