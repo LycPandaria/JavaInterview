@@ -5,14 +5,15 @@
 	- [Java程序初始化](#java程序初始化)
 	- [构造函数](#构造函数)
 	- [为什么有些接口没有任何方法?](#为什么有些接口没有任何方法)
-	- [clone()](#clone)
 	- [反射机制](#反射机制)
 	- [如何实现C语言的函数指针](#如何实现c语言的函数指针)
 - [面向对象技术](#面向对象技术)
 	- [面向对象的主要特征：抽象，继承，封装和多态。](#面向对象的主要特征抽象继承封装和多态)
 	- [继承](#继承)
 	- [多态的实现机制](#多态的实现机制)
-	- [重载和覆盖](#重载和覆盖)
+	- [重载和重写](#重载和重写)
+		- [重写(override)](#重写override)
+		- [重载（Overload）](#重载overload)
 	- [接口与抽象类](#接口与抽象类)
 	- [内部类](#内部类)
 - [关键字](#关键字)
@@ -23,18 +24,28 @@
 	- [泛型](#泛型)
 - [基本类型和运算](#基本类型和运算)
 	- [Java基本类型](#java基本类型)
+	- [包装类型](#包装类型)
+	- [缓存池](#缓存池)
 	- [不可变类](#不可变类)
 	- [强制类型转换注意事项](#强制类型转换注意事项)
 	- [运算符优先级](#运算符优先级)
 	- ["<<" 和 ">>"异同](#异同)
-	- [char型变量是否可以存储一个汉字](#char型变量是否可以存储一个汉字)
-	- [字符串与数组](#字符串与数组)
-	- [new String("abc")创建了几个对象？](#new-stringabc创建了几个对象)
 	- ["==",equals 和 hashCode](#equals-和-hashcode)
 	- [String，StringBuffer，StringBuilder，StringTokenizer](#stringstringbufferstringbuilderstringtokenizer)
+		- [Java 8 和 Java 9 的 String](#java-8-和-java-9-的-string)
+		- [不可变的好处](#不可变的好处)
+		- [String实例化](#string实例化)
+		- [char型变量是否可以存储一个汉字](#char型变量是否可以存储一个汉字)
+		- [new String("abc")创建了几个对象？](#new-stringabc创建了几个对象)
 	- [Java中数组是不是对象](#java中数组是不是对象)
 	- [Java数组初始化方式：](#java数组初始化方式)
 	- [length属性和length()方法](#length属性和length方法)
+- [Object 通用方法](#object-通用方法)
+	- [概览](#概览)
+	- [equals()](#equals)
+	- [hashCode()](#hashcode)
+	- [toString()](#tostring)
+	- [clone()](#clone)
 - [异常处理](#异常处理)
 	- [finally块中代码什么时候执行](#finally块中代码什么时候执行)
 	- [运行时异常和普通异常](#运行时异常和普通异常)
@@ -84,7 +95,12 @@ public class Test{
 ```
 
 ## Java程序初始化
-父类静态变量--父类静态代码块--子类静态变量--子类静态代码块--父类非静态变量--父类非静态代码块--父类构造函数--子类非静态变量--子类非静态块--子类构造函数。  
+-	父类（静态变量、静态语句块）
+-	子类（静态变量、静态语句块）
+-	父类（实例变量、普通语句块）
+-	父类（构造函数）
+-	子类（实例变量、普通语句块）
+-	子类（构造函数）
 例题见书([Java程序员面试笔试宝典](https://book.douban.com/subject/20270192/))50页。
 
 ## 构造函数
@@ -103,81 +119,6 @@ public class Test{
 4. 主要的作用是配合instanceof来判断对象的类型是否实现了一个给定的标识接口  
 
 例子见书([Java程序员面试笔试宝典](https://book.douban.com/subject/20270192/))54页
-
-## clone()
-1. Java在处理基本数据类型（int,char,double）时候，采用按值传递，除此之外其他类型都是采用引用传递。
-2. 对象除了在函数调用时候是按引用传递，在使用“=”赋值时候也是引用传递。
-3. 在不影响原因对象的情况下创建一个具有相同状态的对象，就需要使用clone()方法。
-   1. 实现clone()的类需要继承Cloneable接口（这是一个标识接口）
-   2. 在类中重写Object类的clone方法
-   3. 在clone方法中调用super.clone()方法。
-   4. 把浅复制的引用指向原型对象新的克隆体。
-```java
-// 浅复制
-class Obj implements Cloneable{
-	private a=0;
-	public int getA(){return a;}
-	public void setA(int b){this.a=b;}
-	public void changeA(int c){this.a=c;}
-	//override
-	public Object clone(){
-		Object o = null;
-		try{
-		//在clone方法中调用super.clone()方法
-			o = (Obj)super.clone();
-		}catch(CloneNotSupportedException e) {
-			e.printStackTrack();
-		}
-		return o;
-	}
-}
-```
-```java
-// 深复制--在用clone方法复制完后，对对象中的非基本类型的属性也调用clone方法完成深复制。
-class Obj implements Cloneable{
-	private Data data = new Date();
-	...
-	public Objec clone(){
-		Object o = null;
-		try{
-		//在clone方法中调用super.clone()方法
-			o = (Obj)super.clone();
-		}catch(CloneNotSupportedException e) {
-			e.printStackTrack();
-		}
-		//对对象中的非基本类型的属性也调用clone方法
-		o.date = (Date)this.getDate().clone();
-		return o;
-	}
-}
-```
-3. clone() 的替代方案
-使用 clone() 方法来拷贝一个对象即复杂又有风险，它会抛出异常，并且还需要类型转换。Effective Java 书上讲到，最好不要去使用 clone()，可以使用拷贝构造函数或者拷贝工厂来拷贝一个对象。
-```java
-public class CloneConstructorExample {
-    private int[] arr;
-    public CloneConstructorExample() {
-        arr = new int[10];
-        for (int i = 0; i < arr.length; i++) {
-            arr[i] = i;
-        }
-    }
-	//拷贝构造函数
-    public CloneConstructorExample(CloneConstructorExample original) {
-        arr = new int[original.arr.length];
-        for (int i = 0; i < original.arr.length; i++) {
-            arr[i] = original.arr[i];
-        }
-    }
-    public void set(int index, int value) {
-        arr[index] = value;
-    }
-    public int get(int index) {
-        return arr[index];
-    }
-}
-```
-
 
 ## 反射机制
 1. 它允许程序在运行时进行自我检查，同时也允许对其内部的成员进行操作
@@ -263,16 +204,108 @@ java提供了两种多态机制：
 1. 编译时多态--重载
 2. 运行时多态--方法覆盖
 
-## 重载和覆盖
-1. 使用重载时：
-   1. 重载通过不同的方法参数来区分，例不同的参数个数，不同参数类型，不同的参数顺序
-   2. 不能通过方法的**访问权限，返回值类型和抛出的异常类**进行重载
-   3. 如果基类的方法是private，就不能重载。子类中定义的同名方法只能算一个新的方法。
-2. 使用覆盖：
-   1. 派生类中的覆盖方法必须和基类中覆盖的方法有相同的函数名和参数
-   2. 派生类中的覆盖方法的返回值必须和基类中被覆盖方法的返回值相同
-   3. 相同的抛出异常
-   4. 基类中被覆盖的方法不能为private
+## 重载和重写
+### 重写(override)
+存在于继承体系中，指子类实现了一个与父类在方法声明上完全相同的一个方法（父类中方法不能为private）
+
+为了满足里式替换原则，重写有以下三个限制：
+	- 子类方法的访问权限必须大于等于父类方法；
+	- 子类方法的返回类型必须是父类方法返回类型或为其子类型。
+	- 子类方法抛出的异常类型必须是父类抛出异常类型或为其子类型。
+
+使用 @Override 注解，可以让编译器帮忙检查是否满足上面的三个限制条件。
+
+下面的示例中，SubClass 为 SuperClass 的子类，SubClass 重写了 SuperClass 的 func() 方法。其中：
+
+	- 子类方法访问权限为 public，大于父类的 protected。
+	- 子类的返回类型为 ArrayList，是父类返回类型 List 的子类。
+	- 子类抛出的异常类型为 Exception，是父类抛出异常 Throwable 的子类。
+	- 子类重写方法使用 @Override 注解，从而让编译器自动检查是否满足限制条件。
+
+```java
+class SuperClass {
+   protected List<Integer> func() throws Throwable {
+       return new ArrayList<>();
+   }
+}
+
+class SubClass extends SuperClass {
+   @Override
+   public ArrayList<Integer> func() throws Exception {
+       return new ArrayList<>();
+   }
+}
+```
+在调用一个方法时，先从本类中查找看是否有对应的方法，如果没有查找到再到父类中查看，看是否有继承来的方法。否则就要对参数进行转型，转成父类之后看是否有对应的方法。总的来说，方法调用的优先级为：
+	- this.func(this)
+	- super.func(this)
+	- this.func(super)
+	- super.func(super)
+```java
+/*
+   A
+   |
+   B
+   |
+   C
+   |
+   D
+*/
+
+
+class A {
+
+   public void show(A obj) {
+       System.out.println("A.show(A)");
+   }
+
+   public void show(C obj) {
+       System.out.println("A.show(C)");
+   }
+}
+
+class B extends A {
+
+   @Override
+   public void show(A obj) {
+       System.out.println("B.show(A)");
+   }
+}
+
+class C extends B {
+}
+
+class D extends C {
+}
+```
+```java
+public static void main(String[] args) {
+
+   A a = new A();
+   B b = new B();
+   C c = new C();
+   D d = new D();
+
+   // 在 A 中存在 show(A obj)，直接调用
+   a.show(a); // A.show(A)
+   // 在 A 中不存在 show(B obj)，将 B 转型成其父类 A
+   a.show(b); // A.show(A)
+   // 在 B 中存在从 A 继承来的 show(C obj)，直接调用
+   b.show(c); // A.show(C)
+   // 在 B 中不存在 show(D obj)，但是存在从 A 继承来的 show(C obj)，将 D 转型成其父类 C
+   b.show(d); // A.show(C)
+
+   // 引用的还是 B 对象，所以 ba 和 b 的调用结果一样
+   A ba = new B();
+   ba.show(c); // A.show(C)
+   ba.show(d); // A.show(C)
+}
+```
+
+### 重载（Overload）
+存在于同一个类中，指一个方法与已经存在的方法名称上相同，但是参数类型、个数、顺序至少有一个不同。
+
+应该注意的是，返回值不同，其它都相同不算是重载。
 
 ## 接口与抽象类
 1. 相同点：
@@ -377,6 +410,81 @@ public class Box<T> {
 1. 原始数据类型在传递参数时候是传值传递，封装类型是引用传递
 2. 默认值不同：原始数据类型默认值根据类型不同，封装类型实例变量默认值为null
 
+## 包装类型
+基本类型都有对应的包装类型，基本类型与其对应的包装类型之间的赋值使用自动装箱与拆箱完成。
+```java
+Integer x = 2;     // 装箱
+int y = x;         // 拆箱
+```
+
+## 缓存池
+new Integer(123) 与 Integer.valueOf(123) 的区别在于：
+	- new Integer(123) 每次都会新建一个对象；
+	- Integer.valueOf(123) 会使用缓存池中的对象，多次调用会取得同一个对象的引用。
+```java
+Integer x = new Integer(123);
+Integer y = new Integer(123);
+System.out.println(x == y);    // false
+Integer z = Integer.valueOf(123);
+Integer k = Integer.valueOf(123);
+System.out.println(z == k);   // true
+```
+valueOf() 方法的实现比较简单，就是先判断值是否在缓存池中，如果在的话就直接返回缓存池的内容。
+```java
+public static Integer valueOf(int i) {
+    if (i >= IntegerCache.low && i <= IntegerCache.high)
+        return IntegerCache.cache[i + (-IntegerCache.low)];
+    return new Integer(i);
+}
+```
+在 Java 8 中，Integer 缓存池的大小默认为 -128~127。
+```java
+static final int low = -128;
+static final int high;
+static final Integer cache[];
+
+static {
+    // high value may be configured by property
+    int h = 127;
+    String integerCacheHighPropValue =
+        sun.misc.VM.getSavedProperty("java.lang.Integer.IntegerCache.high");
+    if (integerCacheHighPropValue != null) {
+        try {
+            int i = parseInt(integerCacheHighPropValue);
+            i = Math.max(i, 127);
+            // Maximum array size is Integer.MAX_VALUE
+            h = Math.min(i, Integer.MAX_VALUE - (-low) -1);
+        } catch( NumberFormatException nfe) {
+            // If the property cannot be parsed into an int, ignore it.
+        }
+    }
+    high = h;
+
+    cache = new Integer[(high - low) + 1];
+    int j = low;
+    for(int k = 0; k < cache.length; k++)
+        cache[k] = new Integer(j++);
+
+    // range [-128, 127] must be interned (JLS7 5.1.7)
+    assert IntegerCache.high >= 127;
+}
+```
+编译器会在自动装箱过程调用 valueOf() 方法，因此多个值相同且值在缓存池范围内的 Integer 实例使用自动装箱来创建，那么就会引用相同的对象。
+```java
+Integer m = 123;
+Integer n = 123;
+System.out.println(m == n); // true
+```
+基本类型对应的缓冲池如下：
+	- boolean values true and false
+	- all byte values
+	- short values between -128 and 127
+	- int values between -128 and 127
+	- char in the range \u0000 to \u007F
+在使用这些基本类型对应的包装类型时，如果该数值范围在缓冲池范围内，就可以直接使用缓冲池中的对象。
+
+在 jdk 1.8 所有的数值类缓冲池中，Integer 的缓冲池 IntegerCache 很特殊，这个缓冲池的下界是 - 128，上界默认是 127，但是这个上界是可调的，在启动 jvm 的时候，通过 -XX:AutoBoxCacheMax=<size> 来指定这个缓冲池的大小，该选项在 JVM 初始化的时候会设定一个名为 java.lang.IntegerCache.high 系统属性，然后 IntegerCache 初始化的时候就会读取该系统属性来决定上界。
+
 ## 不可变类
 1. 不可变类是指创建了这个类的实例后，不允许修改他的值，它的成员变量就不能被修改了。
 2. 如何创建不可变类：
@@ -410,14 +518,6 @@ class ImmutableClass{
 	1. ">>"有符号右移，若参与运算的数字为正数，则在高位补0，若为负数，在高位补1
 	2. ">>>"为无符号右移，不管正负数，都在高位补0
 
-## char型变量是否可以存储一个汉字
-1. 可以，因为Java默认使用Unicode编码方式，每个字符占两个字节
-2. 在String中，英文字符占用一个字符，中文占两个字符，以减少存储空间，提高效率。
-
-## 字符串与数组
-## new String("abc")创建了几个对象？
-1个或2个，取决于字符串常量池中是否已经存在"abc".
-
 ## "==",equals 和 hashCode
 1. "=="可以用来比较两个基础数据类型的值，但如果是两个对象（引用类型），==可以比较两个变量是否指向同一个地址，但是内容就不能比较了。
 2. Object类中的equals是直接调用==的，它和==的区别就是equals是可以覆盖的，通过覆盖达到比较内容的目的。
@@ -428,7 +528,46 @@ class ImmutableClass{
 ## String，StringBuffer，StringBuilder，StringTokenizer
 String是不可变类，StringBuffer是可变类。当一个字符串需要经常被修改的时候，使用StringBuffer比String好很多。  
 
-String实例化有两种方法：
+### Java 8 和 Java 9 的 String
+在 Java 8 中，String 内部使用 char 数组存储数据。
+```java
+public final class String
+    implements java.io.Serializable, Comparable<String>, CharSequence {
+    /** The value is used for character storage. */
+    private final char value[];
+}
+```
+在 Java 9 之后，String 类的实现改用 byte 数组存储字符串，同时使用 coder 来标识使用了哪种编码。
+```java
+public final class String
+    implements java.io.Serializable, Comparable<String>, CharSequence {
+    /** The value is used for character storage. */
+    private final byte[] value;
+
+    /** The identifier of the encoding used to encode the bytes in {@code value}. */
+    private final byte coder;
+}
+```
+value 数组被声明为 final，这意味着 value 数组初始化之后就不能再引用其它数组。并且 String 内部没有改变 value 数组的方法，因此可以保证 String 不可变。
+
+### 不可变的好处
+1. 可以缓存 hash 值
+
+因为 String 的 hash 值经常被使用，例如 String 用做 HashMap 的 key。不可变的特性可以使得 hash 值也不可变，因此只需要进行一次计算。
+
+2. String Pool 的需要
+
+如果一个 String 对象已经被创建过了，那么就会从 String Pool 中取得引用。只有 String 是不可变的，才可能使用 String Pool。
+
+3. 安全性
+
+String 经常作为参数，String 不可变性可以保证参数不可变。例如在作为网络连接参数的情况下如果 String 是可变的，那么在网络连接过程中，String 被改变，改变 String 对象的那一方以为现在连接的是其它主机，而实际情况却不一定是。
+
+4. 线程安全
+
+String 不可变性天生具备线程安全，可以在多个线程中安全地使用。
+
+### String实例化
 ```java
 String s = "Hello"；
 String s = new String("Hello");
@@ -446,9 +585,16 @@ StringBuffer sb = new StringBuffer(s);
 sb.append("World");
 s=sb.toString();
 ```
-StringBuilder和StringBuffer一样都是字符串缓冲区，StringBuilder不是线程安全的，在单线程环境下，Stringbuilder效率会更高一点。  
+StringBuilder和StringBuffer一样都是字符串缓冲区，StringBuilder不是线程安全的，在单线程环境下，Stringbuilder效率会更高一点。StringBuffer 是线程安全的，内部使用 synchronized 进行同步
 
 StringTokenizer是用来分割字符串的工具类。
+
+### char型变量是否可以存储一个汉字
+1. 可以，因为Java默认使用Unicode编码方式，每个字符占两个字节
+2. 在String中，英文字符占用一个字符，中文占两个字符，以减少存储空间，提高效率。
+
+### new String("abc")创建了几个对象？
+1个或2个，取决于字符串常量池中是否已经存在"abc".
 
 ## Java中数组是不是对象
 数组是对象，数组不仅有其自己的属性，也有一些方法可以调用。  
@@ -482,6 +628,180 @@ c instanceof String[]
 ## length属性和length()方法
 1. 在数组中，数组是一个对象，里面含有length属性来获取数组的长度
 2. length()方法是针对字符串而言的，String提供了length()方法来计算字符串的长度。
+
+# Object 通用方法
+## 概览
+```java
+public native int hashCode()
+
+public boolean equals(Object obj)
+
+protected native Object clone() throws CloneNotSupportedException
+
+public String toString()
+
+public final native Class<?> getClass()
+
+protected void finalize() throws Throwable {}
+
+public final native void notify()
+
+public final native void notifyAll()
+
+public final native void wait(long timeout) throws InterruptedException
+
+public final void wait(long timeout, int nanos) throws InterruptedException
+
+public final void wait() throws InterruptedException
+```
+
+## equals()
+对于基本类型，== 判断两个值是否相等，基本类型没有 equals() 方法。
+对于引用类型，== 判断两个变量是否引用同一个对象，而 equals() 判断引用的对象是否等价。
+```java
+Integer x = new Integer(1);
+Integer y = new Integer(1);
+System.out.println(x.equals(y)); // true
+System.out.println(x == y);      // false
+```
+```java
+/*
+检查是否为同一个对象的引用，如果是直接返回 true；
+检查是否是同一个类型，如果不是，直接返回 false；
+将 Object 对象进行转型；,判断每个关键域是否相等。
+*/
+public class EqualExample {
+
+    private int x;
+    private int y;
+    private int z;
+
+    public EqualExample(int x, int y, int z) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        EqualExample that = (EqualExample) o;
+
+        if (x != that.x) return false;
+        if (y != that.y) return false;
+        return z == that.z;
+    }
+}
+```
+
+## hashCode()
+hashCode() 返回散列值，而 equals() 是用来判断两个对象是否等价。等价的两个对象散列值一定相同，但是散列值相同的两个对象不一定等价。
+
+在覆盖 equals() 方法时应当总是覆盖 hashCode() 方法，保证等价的两个对象散列值也相等。
+
+下面的代码中，新建了两个等价的对象，并将它们添加到 HashSet 中。我们希望将这两个对象当成一样的，只在集合中添加一个对象，但是因为 EqualExample 没有实现 hashCode() 方法，因此这两个对象的散列值是不同的，最终导致集合添加了两个等价的对象。
+```java
+EqualExample e1 = new EqualExample(1, 1, 1);
+EqualExample e2 = new EqualExample(1, 1, 1);
+System.out.println(e1.equals(e2)); // true
+HashSet<EqualExample> set = new HashSet<>();
+set.add(e1);
+set.add(e2);
+System.out.println(set.size());   // 2
+```
+
+## toString()
+默认返回 ToStringExample@4554617c 这种形式，其中 @ 后面的数值为散列码的无符号十六进制表示。
+```java
+public class ToStringExample {
+
+    private int number;
+
+    public ToStringExample(int number) {
+        this.number = number;
+    }
+}
+```
+```java
+ToStringExample example = new ToStringExample(123);
+System.out.println(example.toString());	// ToStringExample@4554617c
+```
+
+## clone()
+1. Java在处理基本数据类型（int,char,double）时候，采用按值传递，除此之外其他类型都是采用引用传递。
+2. 对象除了在函数调用时候是按引用传递，在使用“=”赋值时候也是引用传递。
+3. 在不影响原因对象的情况下创建一个具有相同状态的对象，就需要使用clone()方法。
+   1. 实现clone()的类需要继承Cloneable接口（这是一个标识接口）
+   2. 在类中重写Object类的clone方法(clone方法是Object的一个protected方法)
+   3. 在clone方法中调用super.clone()方法。
+   4. 把浅复制的引用指向原型对象新的克隆体。
+```java
+// 浅复制
+class Obj implements Cloneable{
+	private a=0;
+	public int getA(){return a;}
+	public void setA(int b){this.a=b;}
+	public void changeA(int c){this.a=c;}
+	//override
+	public Object clone(){
+		Object o = null;
+		try{
+		//在clone方法中调用super.clone()方法
+			o = (Obj)super.clone();
+		}catch(CloneNotSupportedException e) {
+			e.printStackTrack();
+		}
+		return o;
+	}
+}
+```
+```java
+// 深复制--在用clone方法复制完后，对对象中的非基本类型的属性也调用clone方法完成深复制。
+class Obj implements Cloneable{
+	private Data data = new Date();
+	...
+	public Objec clone(){
+		Object o = null;
+		try{
+		//在clone方法中调用super.clone()方法
+			o = (Obj)super.clone();
+		}catch(CloneNotSupportedException e) {
+			e.printStackTrack();
+		}
+		//对对象中的非基本类型的属性也调用clone方法
+		o.date = (Date)this.getDate().clone();
+		return o;
+	}
+}
+```
+3. clone() 的替代方案
+使用 clone() 方法来拷贝一个对象即复杂又有风险，它会抛出异常，并且还需要类型转换。Effective Java 书上讲到，最好不要去使用 clone()，可以使用拷贝构造函数或者拷贝工厂来拷贝一个对象。
+```java
+public class CloneConstructorExample {
+    private int[] arr;
+    public CloneConstructorExample() {
+        arr = new int[10];
+        for (int i = 0; i < arr.length; i++) {
+            arr[i] = i;
+        }
+    }
+	//拷贝构造函数
+    public CloneConstructorExample(CloneConstructorExample original) {
+        arr = new int[original.arr.length];
+        for (int i = 0; i < original.arr.length; i++) {
+            arr[i] = original.arr[i];
+        }
+    }
+    public void set(int index, int value) {
+        arr[index] = value;
+    }
+    public int get(int index) {
+        return arr[index];
+    }
+}
+```
 
 # 异常处理
 ## finally块中代码什么时候执行

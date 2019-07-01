@@ -238,12 +238,12 @@ public String replaceSpace(StringBuffer str) {
   递归在本质上也是一个栈。我们每访问一个节点，先递归到它后面的节点，最后再输出节点的值。
   ```java
   public ArrayList<Integer> result = new ArrayList<>();
-    public ArrayList<Integer> printListFromTailToHead(ListNode listNode) {
-        if(listNode != null){
-            printListFromTailToHead(listNode.next);
-            result.add(listNode.val);
-        }
-        return result;
+  public ArrayList<Integer> printListFromTailToHead(ListNode listNode) {
+      if(listNode != null){
+          printListFromTailToHead(listNode.next);
+          result.add(listNode.val);
+      }
+      return result;
   }
   ```
 
@@ -335,6 +335,7 @@ public class TreeLinkNode {
 1. 如果一个节点有右子树，那么它的下一个节点就是它的右子树的最左子树。从右子节点出发一直沿着左子节点走，遇到 node.left == null 即可返回，这个就是下一个节点。
 
   ![二叉树下一个节点](../pic/二叉树下一个节点1.png)
+
 2. 接着分析一个节点没有右子节点的情况，如果节点是它父亲的左子节点，那么父亲节点就是下一个节点
 3. 如果一个节点既没有右子节点，而且节点是它父亲的右子节点，我们可以一直沿着父亲节点往上走，知道找到一个是它父节点的左子节点的节点。
 
