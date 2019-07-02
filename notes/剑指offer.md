@@ -596,7 +596,7 @@ private int minNumber(int[] nums, int l, int h) {
 public class Solution {
     public boolean hasPath(char[] array, int rows, int cols, char[] str)
     {
-        if(rows < 1 || cols < 1 || str.length < 1 || str == null)
+        if(rows < 1 || cols < 1 || str == null || str.length < 1)
             return false;
 
         // 布尔矩阵用于标识走路径格子
