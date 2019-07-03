@@ -27,6 +27,7 @@
     - [addAll](#addall)
     - [add](#add)
   - [get](#get-2)
+  - [ArrayList 和 LinkedList 区别](#arraylist-和-linkedlist-区别)
 - [HashMap](#hashmap)
   - [存储结构](#存储结构)
   - [其他几个重要字段](#其他几个重要字段)
@@ -38,7 +39,7 @@
     - [hash](#hash)
     - [取模](#取模)
   - [resize](#resize)
-  - [从 JDK 1.8 开始，一个桶存储的链表长度大于 8 时会将链表转换为红黑树。](#从-jdk-18-开始一个桶存储的链表长度大于-8-时会将链表转换为红黑树)
+  - [从 JDK 1.8 开始，一个桶存储的链表长度大于 8 时会将链表转换为红黑树。！！](#从-jdk-18-开始一个桶存储的链表长度大于-8-时会将链表转换为红黑树)
   - [与 HashTable 的比较](#与-hashtable-的比较)
 - [ConcurrentHashMap](#concurrenthashmap)
   - [数据结构](#数据结构)
@@ -706,6 +707,8 @@ void linkLast(E e) {
      }
  }
 ```
+## ArrayList 和 LinkedList 区别
+![ArrayList 和 LinkedList 区别](../pic/arraylist和linkedlist.png)
 
 # HashMap
 ## 存储结构
@@ -931,7 +934,36 @@ new capacity : 00100000
   - 如果为 1，那么得到的结果为原来的结果 +16。
 **这样做可以尽量减少之前已经散列好的数组，减少数据移动操作。**
 
-## 从 JDK 1.8 开始，一个桶存储的链表长度大于 8 时会将链表转换为红黑树。
+## 从 JDK 1.8 开始，一个桶存储的链表长度大于 8 时会将链表转换为红黑树。！！
+源码里有如下描述：
+```text
+Because TreeNodes are about twice the size of regular nodes, we
+use them only when bins contain enough nodes to warrant use
+(see TREEIFY_THRESHOLD). And when they become too small (due to
+removal or resizing) they are converted back to plain bins.  In
+usages with well-distributed user hashCodes, tree bins are
+rarely used.  Ideally, under random hashCodes, the frequency of
+nodes in bins follows a Poisson distribution
+(http://en.wikipedia.org/wiki/Poisson_distribution) with a
+parameter of about 0.5 on average for the default resizing
+threshold of 0.75, although with a large variance because of
+resizing granularity. Ignoring variance, the expected
+occurrences of list size k are (exp(-0.5)*pow(0.5, k)/factorial(k)). 
+The first values are:
+0:    0.60653066
+1:    0.30326533
+2:    0.07581633
+3:    0.01263606
+4:    0.00157952
+5:    0.00015795
+6:    0.00001316
+7:    0.00000094
+8:    0.00000006
+more: less than 1 in ten million
+```
+大体翻译为：TreeNodes占用空间是普通Nodes的两倍，所以只有当bin包含足够多的节点时才会转成TreeNodes，而是否足够多就是由TREEIFY_THRESHOLD的值决定的。当bin中节点数变少时，又会转成普通的bin。并且我们查看源码的时候发现，链表长度达到8就转成红黑树，当长度降到6就转成普通bin。
+
+当hashCode离散性很好的时候，树型bin用到的概率非常小，因为数据均匀分布在每个bin中，几乎不会有bin中链表长度会达到阈值。但是在随机hashCode下，离散性可能会变差，然而JDK又不能阻止用户实现这种不好的hash算法，因此就可能导致不均匀的数据分布。不过理想情况下随机hashCode算法下所有bin中节点的分布频率会遵循泊松分布，我们可以看到，一个bin中链表长度达到8个元素的概率为0.00000006，几乎是不可能事件。所以，之所以选择8，不是拍拍屁股决定的，而是根据概率统计决定的。
 
 ## 与 HashTable 的比较
 - HashTable 使用 synchronized 来进行同步。

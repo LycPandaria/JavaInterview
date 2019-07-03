@@ -840,6 +840,7 @@ public int NumberOf1(int n) {
 
 ```java
 public double Power(double base, int exponent) {
+  // 特殊情况处理
   if(exponent == 1) return base;
   if(exponent == 0) return 1;
   // 处理负数指数，注意只有第一次才有机会 isNagetive 设为 false
@@ -848,8 +849,10 @@ public double Power(double base, int exponent) {
       exponent = -exponent;
       isNagetive = true;
   }
+  // 层层递进处理指数
   double result = Power(base * base, exponent / 2);
-  if(exponent % 2 != 0)    // 指数为基数时候， 需要再乘一次
+  // 指数为基数时候， 需要再乘一次
+  if(exponent % 2 != 0)    
       result *= base;
   return isNagetive? 1/result: result;
 }
@@ -943,12 +946,13 @@ public ListNode deleteDuplication(ListNode pHead){
 
     ListNode pNext = pHead.next;
     if(pNext.val == pHead.val){
-        // 处理相等的情况,针对于当前的 pHead.val
+        // 处理相等的情况,针对于当前的 pHead.val，相当于把相等的连续节点都跳过去
         while(pNext != null && pNext.val == pHead.val)
             pNext = pNext.next;
         // 当前的 pNext.val ！= pHead.val，就继续往下递归处理 pNext
         return deleteDuplication(pNext);  
     }else{
+        // 注意这里要使用 pHead,确保返回的是头节点
         pHead.next = deleteDuplication(pHead.next);
         return pHead;
     }

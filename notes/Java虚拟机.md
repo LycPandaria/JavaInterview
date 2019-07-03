@@ -739,6 +739,10 @@ public class FileSystemClassLoader extends ClassLoader {
 }
 ```
 
+# 一些面经上的问题
+## 淘宝热门商品信息在JVM哪个内存区域？
+缓存里？或者堆的老年代里？
+
 # 参考资料
 
 - 周志明. 深入理解 Java 虚拟机 [M]. 机械工业出版社, 2011.
