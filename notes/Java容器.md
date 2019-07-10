@@ -49,6 +49,12 @@
 - [Linked Hash Map](#linked-hash-map)
   - [get](#get-4)
   - [用 LinkedHashMap 实现 LRU 缓存](#用-linkedhashmap-实现-lru-缓存)
+- [HashSet](#hashset)
+  - [概览](#概览-2)
+  - [属性](#属性-1)
+  - [方法](#方法)
+    - [add(E)](#adde)
+    - [remove(Object o)](#removeobject-o)
 - [WeakHashMap](#weakhashmap)
   - [概述](#概述-1)
   - [ConcurrentCache](#concurrentcache)
@@ -1240,6 +1246,59 @@ public static void main(String[] args) {
 ```text
 [3, 1, 4]
 ```
+
+# HashSet
+## 概览
+```java
+public class HashSet<E>
+     extends AbstractSet<E>
+     implements Set<E>, Cloneable, java.io.Serializable { }
+```
+HashSet 是一个 没有重复元素的集合 。
+
+它是由HashMap实现的， 不保证元素的顺序 ，而且 HashSet允许使用 null 元素 。
+
+HashSet是 非同步的 。如果多个线程同时访问一个哈希 set，而其中至少一个线程修改了该 set，那么它必须 保持外部同步。这通常是通过对自然封装该 set 的对象执行同步操作来完成的。如果不存在这样的对象，则应该使用 Collections.synchronizedSet 方法来“包装” set。最好在创建时完成这一操作，以防止对该 set 进行意外的不同步访问：
+```java
+Set s = Collections.synchronizedSet(new HashSet(...));
+```
+HashSet通过iterator()返回的 迭代器是fail-fast的。
+
+## 属性
+```java
+// 底层使用HashMap来保存HashSet的元素
+    private transient HashMap<E,Object> map;
+    // Dummy value to associate with an Object in the backing Map
+    // 由于Set只使用到了HashMap的key，所以此处定义一个静态的常量Object类，来充当HashMap的value
+    // ！！这样可以避免NullPointer错误
+    private static final Object PRESENT = new Object();
+```
+
+## 方法
+### add(E)
+```java
+//这个方法就可以得知HashSet添加的元素是不能够重复的，原因是什么呢，set将每次添加的元素度是通过map中的key来保存，当有相同的key时，也就是添加了相同的元素，那么map会讲value给覆盖掉，而key还是原来的key，所以，这就是set不能够重复的原因。这个方法的PRESENT可以看下面的注释，
+//返回值的式子的意思很好理解，map中增加元素是先通过key查找有没有相同的key值，如果有，则覆盖value，返回oldValue。没有，则创建一个新的entry，并且返回null值。如果key等于null，也会返回null值。所以return会有一个==null的判断
+    public boolean add(E e) {
+        return map.put(e, PRESENT)==null;
+    }
+```
+
+### remove(Object o)
+```java
+//map中通过key来移除对应的元素，如果有该key，会返回其value值，没有，则返回null
+public boolean remove(Object o) {
+    return map.remove(o)==PRESENT;
+}
+
+//HashMap中的remove，看一眼就懂了。
+public V remove(Object key) {
+    Entry<K,V> e = removeEntryForKey(key);
+    return (e == null ? null : e.value);
+}
+```
+
+其他一些函数，比如 contains(Object), isEmpty(), size() 也是用的HashMap的对应方法
 
 # WeakHashMap
 ## 概述

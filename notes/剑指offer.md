@@ -1038,7 +1038,7 @@ public void reOrderArray(int [] array) {
         if(array[i] % 2 == 1)
             oddCount++;
     }
-    int[] arrCp = array.clone();
+    int[] arrCp = array.clone();  // 注意这里不能直接赋值
     int k = 0;
     int j = oddCount;
     for(int num : arrCp){
@@ -1060,7 +1060,7 @@ public void reOrderArray(int [] array) {
 1. 比较容易想到的是先遍历一遍算出链表的节点个数n，然后再遍历到第n-k个元素。但是这种方式需要遍历两次列表。
 2. 还有一种做法是对于每个节点，遍历k个元素，如果刚好到结尾，那么那个节点就是倒数第k个节点。这种办法的问题在于
 对同一批元素进行反复多次的遍历，时间复杂度为O(kn)，效率太低。
-3. 更高效的方法是：设置两个指针，让其中一个比另一个先行**k-1**步，这样，当先行的指针到链表尾部时候，后行指针所指位置就是所要找的位置。
+3. 更高效的方法是：设置两个指针，让其中一个比另一个先行 **k-1** 步，这样，当先行的指针到链表尾部时候，后行指针所指位置就是所要找的位置。
 
 **注意程序的鲁棒性**
 1. 链表是否为空
@@ -1078,7 +1078,7 @@ public ListNode FindKthToTail(ListNode head,int k) {
         p1 = p1.next;
     if(p1 == null)
         return null;    // k 值大于链表长度
-    while(p1.next != null){
+    while(p1.next != null){   // 注意这里是 p1.next，p1走到最后一个节点即可
         p1 = p1.next;
         p2 = p2.next;
     }
@@ -1146,13 +1146,14 @@ public ListNode ReverseList(ListNode head) {
     ListNode nodeNext = null; // 存储 next 节点
     while(nodeCur!= null){
         nodeNext = nodeCur.next;
-        if(nodeNext == null){
+        if(nodeNext == null){   // 注意处理尾节点
             // 尾节点
             rHead = nodeCur;
         }
-        nodeCur.next = nodePre;    // 反转
-        nodePre = nodeCur;
-        nodeCur = nodeNext;
+         // 反转
+        nodeCur.next = nodePre;   // 反转链接
+        nodePre = nodeCur;        // 重新赋值 nodePre和nodeCur
+        nodeCur = nodeNext;      // 注意顺序，要先赋值 nodePre，不然nodePre就找不到了
     }
     return rHead;
 }
