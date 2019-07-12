@@ -1343,7 +1343,7 @@ private boolean isSymmetrical(TreeNode p1, TreeNode p2){
 ### 解题思路
 可以把矩阵想象成若干个圆，然后每次打印矩阵的一个圈。
 
-让循环结束的条件是 columns > startX * 2 && rows > startY * 2.
+循环的条件是 columns > startX * 2 && rows > startY * 2.
 
 但在打印一圈的时候，我们可以把打印分为：
 1. 从左到右打印一行
@@ -1360,7 +1360,7 @@ public ArrayList<Integer> printMatrix(int [][] matrix) {
     int rows = matrix.length;
     int cols = matrix[0].length;
     int start = 0;    // 打印第 n 圈
-    // 循环结束的条件是 columns > startX * 2 && rows > startY * 2
+    // 循环的条件是 columns > startX * 2 && rows > startY * 2
     while(rows > start * 2 && cols > start * 2){
         printMatrixByCycle(matrix, rows, cols, start);
         start++;    // 打印下一圈
@@ -1376,19 +1376,19 @@ private void printMatrixByCycle(int[][] matrix, int rows, int cols, int start){
     for(int i = start; i <= endX; i++)
         out.add(matrix[start][i]);
 
-    // 从上打印到下，条件是：终止行号要大于起始行号
+    // 从上打印到下，条件是：终止行号 endY 要大于起始行号 start
     if(start < endY){
         for(int i=start+1; i <= endY; i++)
             out.add(matrix[i][endX]);
     }
 
-    // 从右往左打印，条件是：圈里至少有两行两列，所以除了需要终止行号要大于起始行号，
-    // 还需要终止列号大于起始列号
+    // 从右往左打印，条件是：圈里至少有两行两列，所以除了需要 终止行号 endY 要大于起始行号 start，
+    // 还需要终止列号 endX 大于起始列号 start
     if(start < endY && start < endX)
         for(int i = endX-1; i >= start; i--)
             out.add(matrix[endY][i]);
 
-    // 从下往上打印，条件是：终止列号大于起始列号，终止行号比起始行号至少大2
+    // 从下往上打印，条件是：圈里至少有三行两列 终止列号 endX 大于起始列号 start，终止行号 endY 比起始行号至少大2
     if(start < endY-1 && start < endX)
         for(int i=endY-1; i >= start+1; i--)
             out.add(matrix[i][start]);
@@ -1408,6 +1408,7 @@ private Stack<Integer> dataStack = new Stack<>();
 private Stack<Integer> minStack = new Stack<>();
 public void push(int node) {
     dataStack.push(node);
+    // 注意为空的判断
     if(minStack.isEmpty() || node < minStack.peek())
         minStack.push(node);
     else
@@ -1415,6 +1416,7 @@ public void push(int node) {
 }
 
 public void pop() {
+    // 注意为空的判断
     if(!dataStack.isEmpty()){
         dataStack.pop();
         minStack.pop();
@@ -1479,7 +1481,8 @@ public boolean IsPopOrder(int [] pushA,int [] popA) {
 public ArrayList<Integer> PrintFromTopToBottom(TreeNode root) {
     Queue<TreeNode> queue = new LinkedList<>();
     ArrayList<Integer> ret = new ArrayList<>();
-    queue.add(root);
+    queue.add(root);  // 注意先加入头结点
+    // 循环结束条件：队列为空
     while (!queue.isEmpty()) {
         // 这个 size 用来限定这次循环中只处理当前层的节点
         int cnt = queue.size();
