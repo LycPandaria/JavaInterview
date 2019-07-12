@@ -1,3 +1,44 @@
+<!-- TOC START min:1 max:3 link:true update:true -->
+  - [附带的实例代码在 /codes/src/edu/io 下](#附带的实例代码在-codessrceduio-下)
+- [概述](#概述)
+- [磁盘操作](#磁盘操作)
+- [字节操作](#字节操作)
+  - [实现文件复制](#实现文件复制)
+  - [装饰者模式](#装饰者模式)
+- [字符操作](#字符操作)
+  - [编码与解码](#编码与解码)
+  - [String 的编码方式](#string-的编码方式)
+  - [Reader 和 Writer](#reader-和-writer)
+  - [实现逐行输出文本文件的内容](#实现逐行输出文本文件的内容)
+- [对象操作](#对象操作)
+  - [序列化](#序列化)
+  - [Serializable接口](#serializable接口)
+  - [transient](#transient)
+- [网络](#网络)
+  - [InetAddress](#inetaddress)
+  - [URL](#url)
+- [Sockets](#sockets)
+  - [Datagram](#datagram)
+- [NIO](#nio)
+  - [流与块](#流与块)
+  - [通道](#通道)
+  - [Buffer](#buffer)
+    - [Buffer的基本用法](#buffer的基本用法)
+    - [Buffer的capacity,position和limit](#buffer的capacityposition和limit)
+    - [基本的 Channel 实例](#基本的-channel-实例)
+  - [Selector](#selector)
+    - [selector 创建](#selector-创建)
+    - [注册通道](#注册通道)
+    - [监听事件](#监听事件)
+    - [获取到达的事件](#获取到达的事件)
+    - [事件循环](#事件循环)
+  - [套接字 NIO 实例](#套接字-nio-实例)
+
+<!-- TOC END -->
+
+## 附带的实例代码在 /codes/src/edu/io 下
+[实例代码](../codes/src/)
+
 # 概述
 Java 的 IO 大致可以分为：
   - 磁盘操作：File
@@ -27,20 +68,30 @@ public static void listAllFiles(File dir){
 ## 实现文件复制
 ```java
 public static void copyFile(String src, String dist) throws IOException{
-  FileInputStream in = new FileInputStream(src);
-  FileOutputStream out = new FileOutputStream(dist);
+    FileInputStream in = new FileInputStream(src);
+    //FileOutputStream out = new FileOutputStream(dist);
+    //续写：FileOutputStream构造方法,的第二个参数中，加入true
+    FileOutputStream out = new FileOutputStream(dist, true);
 
-  byte[] buffer = new byte[20 * 1024];  // 20MB
-  int cnt;
+    byte[] buffer = new byte[20 * 1024];    // 20MB
+    int cnt = 0;
 
-  // read() 最多读取 buffer.length 个字节
-  // 返回的是实际读取的个数
-  // 返回 -1 时候表示读到 eof
-  while((cnt = in.read(buffer, 0, buffer.length)) != -1)
-    out.write(buffer, 0, cnt);
+    // read() 最多读取 buffer.length 个字节
+    // 返回的是实际读取的个数
+    // 返回 -1 时候表示读到 eof
+    while((cnt = in.read(buffer, 0, buffer.length)) != -1 )
+        out.write(buffer, 0, cnt);
 
-  in.close();
-  out.close();
+    in.close();
+    out.close();
+}
+
+public static void main(String[] args) throws IOException{
+
+    // 如果找不到源文件，会抛出 FileNotFoundException
+    // 如果目标文件不存在，会新建。如果存在，覆盖与否取决于 FileOutputStream 的构造方式，见上
+    copyFile("resources/in.txt", "resources/out.txt");
+    System.out.println("OK!");
 }
 ```
 
@@ -91,22 +142,38 @@ System.out.println(str2);
 
 ## 实现逐行输出文本文件的内容
 ```java
-public static void readFileContent(String filePath) throws IOException {
+public static void readFileContent(String src, String dist) throws IOException{
 
-    FileReader fileReader = new FileReader(filePath);
-    // 装饰者模式
-    BufferedReader bufferedReader = new BufferedReader(fileReader);
+        FileReader fileReader = new FileReader(src);
+        //FileWriter fileWriter = new FileWriter(dist);
+        // 续写
+        FileWriter fileWriter = new FileWriter(dist, true);
 
-    String line;
-    while ((line = bufferedReader.readLine()) != null) {
-        System.out.println(line);
+        // 装饰者模式
+        BufferedReader bufferedReader = new BufferedReader(fileReader);
+        BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+
+        String line;
+        while((line = bufferedReader.readLine()) != null){
+            System.out.println(line);
+            bufferedWriter.write(line);
+            bufferedWriter.newLine();
+            bufferedWriter.flush();
+        }
+
+        // 装饰者模式使得 BufferedReader 组合了一个 Reader 对象
+        // 在调用 BufferedReader 的 close() 方法时会去调用 Reader 的 close() 方法
+        // 因此只要一个 close() 调用即可
+        bufferedReader.close();
+        bufferedWriter.close();
     }
 
-    // 装饰者模式使得 BufferedReader 组合了一个 Reader 对象
-    // 在调用 BufferedReader 的 close() 方法时会去调用 Reader 的 close() 方法
-    // 因此只要一个 close() 调用即可
-    bufferedReader.close();
-}
+    public static void main(String[] args) throws IOException{
+        // 如果找不到源文件，会抛出 FileNotFoundException
+        // 如果目标文件不存在，会新建。如果存在，覆盖与否取决于 FileWriter 的构造方式，见上
+        readFileContent("resources/reader_in.txt", "resources/writer_out.txt");
+        System.out.println("OK!");
+    }
 ```
 
 # 对象操作
