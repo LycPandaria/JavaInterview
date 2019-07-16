@@ -39,25 +39,39 @@
     - [hash](#hash)
     - [取模](#取模)
   - [resize](#resize)
+- [HashMap 1.8](#hashmap-18)
+  - [属性区别](#属性区别)
+  - [get()](#get-3)
+  - [put()](#put-1)
+  - [resize()](#resize-1)
   - [从 JDK 1.8 开始，一个桶存储的链表长度大于 8 时会将链表转换为红黑树。！！](#从-jdk-18-开始一个桶存储的链表长度大于-8-时会将链表转换为红黑树)
-  - [与 HashTable 的比较](#与-hashtable-的比较)
-- [ConcurrentHashMap](#concurrenthashmap)
+- [HashTable](#hashtable)
+  - [构造函数](#构造函数-2)
+  - [put()](#put-2)
+  - [rehash()](#rehash)
+  - [其他与 HashMap的比较](#其他与-hashmap的比较)
+- [ConcurrentHashMap 1.7](#concurrenthashmap-17)
   - [数据结构](#数据结构)
-  - [get](#get-3)
+  - [get](#get-4)
   - [size](#size)
+- [Concurrent 1.8](#concurrent-18)
+  - [属性](#属性-1)
+  - [实例初始化](#实例初始化)
+    - [table 初始化](#table-初始化)
   - [JDK 1.8 的改动](#jdk-18-的改动)
 - [Linked Hash Map](#linked-hash-map)
-  - [get](#get-4)
+  - [get](#get-5)
   - [用 LinkedHashMap 实现 LRU 缓存](#用-linkedhashmap-实现-lru-缓存)
 - [HashSet](#hashset)
   - [概览](#概览-2)
-  - [属性](#属性-1)
+  - [属性](#属性-2)
   - [方法](#方法)
     - [add(E)](#adde)
     - [remove(Object o)](#removeobject-o)
 - [WeakHashMap](#weakhashmap)
   - [概述](#概述-1)
   - [ConcurrentCache](#concurrentcache)
+- [参考资料](#参考资料)
 
 <!-- TOC END -->
 
@@ -744,6 +758,8 @@ static class Entry<K,V> implements Map.Entry<K,V> {
 }
 ```
 所以Entry 存储着键值对。它包含了四个字段，从 next 字段我们可以看出 Entry 是一个链表。即数组中的每个位置被当成一个桶，一个桶存放一个链表。HashMap 使用拉链法来解决冲突，同一个链表中存放哈希值相同的 Entry。
+
+应该注意到链表的插入是以头插法方式进行的
 ![HashMap](../pic/hashmap.png)
 
 ## 其他几个重要字段
@@ -807,6 +823,8 @@ HashMap 允许插入键为 null 的键值对。但是因为无法调用 null 的
 也就无法确定该键值对的桶下标，只能通过强制指定一个桶下标来存放。HashMap 使用第 0 个桶存放键为 null 的键值对。
 ```java
 private V putForNullKey(V value) {
+    // 这里为什么循环我想了一下，应该是因为有的元素的hashcode算出来为0，所以第 0 桶
+    // 任然有可能出现冲突链，所以要在冲突链中找 key==null 的那对键值
     for (Entry<K,V> e = table[0]; e != null; e = e.next) {
         if (e.key == null) {
             V oldValue = e.value;
@@ -848,7 +866,7 @@ void createEntry(int hash, K key, V value, int bucketIndex) {
 这个函数主要是用来确定一个键值对应该所处的桶下标，它是根据键值对的 hash 值和 HashMap 的
 大小来决定
 ```java
-hash = (null != key) ? hash(key) : 0;   // key = null -> hash = 0
+hash = (null != key) ? hash(key) : 0;   // key == null -> hash = 0
 bucketIndex = indexFor(hash, table.length);
 ```
 
@@ -940,6 +958,191 @@ new capacity : 00100000
   - 如果为 1，那么得到的结果为原来的结果 +16。
 **这样做可以尽量减少之前已经散列好的数组，减少数据移动操作。**
 
+# HashMap 1.8
+JDK 1.8对HashMap进行了比较大的优化，底层实现由之前的“数组+链表”改为“数组+链表+红黑树”
+![hashmap18-1](../pic/hashmap18-1.png)
+
+## 属性区别
+由于添加了红黑树，属性上增加了树相关的属性
+```java
+static final int TREEIFY_THRESHOLD = 8; // 链表节点转换红黑树节点的阈值, 9个节点转
+static final int UNTREEIFY_THRESHOLD = 6;   // 红黑树节点转换链表节点的阈值, 6个节点转
+static final int MIN_TREEIFY_CAPACITY = 64; // 转红黑树时, table的最小长度
+```
+
+## get()
+因为红黑树的引入，get() 和 put() 都有了变化
+
+get() 的主要流程如下：
+  1. 先对table进行校验，校验是否为空，length是否大于0
+  2. 使用table.length - 1和hash值进行位与运算，得出在table上的索引位置，将该索引位置的节点赋值给first节点，校验该索引位置是否为空
+  3. 检查first节点的hash值和key是否和入参的一样，如果一样则first即为目标节点，直接返回first节点
+  4. 如果first的next节点不为空则继续遍历
+  5. 如果first节点为TreeNode，则调用getTreeNode方法（见下文代码块1）查找目标节点
+  6. 如果first节点不为TreeNode，则调用普通的遍历链表方法查找目标节点
+  7. 如果查找不到目标节点则返回空
+
+```java
+public V get(Object key) {
+    Node<K,V> e;
+    return (e = getNode(hash(key), key)) == null ? null : e.value;
+}
+
+final Node<K,V> getNode(int hash, Object key) {
+    Node<K,V>[] tab; Node<K,V> first, e; int n; K k;
+    // table不为空 && table长度大于0 && table索引位置(根据hash值计算出)不为空
+    if ((tab = table) != null && (n = tab.length) > 0 &&
+        (first = tab[(n - 1) & hash]) != null) {    
+        if (first.hash == hash && // always check first node
+            ((k = first.key) == key || (key != null && key.equals(k))))
+            return first;	// first的key等于传入的key则返回first对象
+        if ((e = first.next) != null) { // 向下遍历
+            if (first instanceof TreeNode)  // 判断是否为TreeNode
+            	// 如果是红黑树节点，则调用红黑树的查找目标节点方法getTreeNode
+                return ((TreeNode<K,V>)first).getTreeNode(hash, key);
+            // 走到这代表节点为链表节点
+            do { // 向下遍历链表, 直至找到节点的key和传入的key相等时,返回该节点
+                if (e.hash == hash &&
+                    ((k = e.key) == key || (key != null && key.equals(k))))
+                    return e;
+            } while ((e = e.next) != null);
+        }
+    }
+    return null;    // 找不到符合的返回空
+}
+```
+
+## put()
+1. 校验table是否为空或者length等于0，如果是则调用resize方法（见下文resize方法）进行初始化
+2. 通过hash值计算索引位置，将该索引位置的头节点赋值给p节点，如果该索引位置节点为空则使用传入的参数新增一个节点并放在该索引位置
+3. 判断p节点的key和hash值是否跟传入的相等，如果相等, 则p节点即为要查找的目标节点，将p节点赋值给e节点
+4. 如果p节点不是目标节点，则判断p节点是否为TreeNode，如果是则调用红黑树的putTreeVal方法（见下文代码块4）查找目标节点
+5. 走到这代表p节点为普通链表节点，则调用普通的链表方法进行查找，并定义变量binCount来统计该链表的节点数
+6. 如果p的next节点为空时，则代表找不到目标节点，则新增一个节点并插入链表尾部，并校验节点数是否超过8个，如果超过则调用treeifyBin方法将链表节点转为红黑树节点
+7. 如果遍历的e节点存在hash值和key值都与传入的相同，则e节点即为目标节点，跳出循环
+8. 如果e节点不为空，则代表目标节点存在，使用传入的value覆盖该节点的value，并返回oldValue
+9. 如果插入节点后节点数超过阈值，则调用resize方法（见下文resize方法）进行扩容
+
+```java
+public V put(K key, V value) {
+    return putVal(hash(key), key, value, false, true);
+}
+
+final V putVal(int hash, K key, V value, boolean onlyIfAbsent,
+               boolean evict) {
+    Node<K,V>[] tab; Node<K,V> p; int n, i;
+    // table是否为空或者length等于0, 如果是则调用resize方法进行初始化
+    if ((tab = table) == null || (n = tab.length) == 0)
+        n = (tab = resize()).length;    
+    // 通过hash值计算索引位置, 如果table表该索引位置节点为空则新增一个
+    if ((p = tab[i = (n - 1) & hash]) == null)// 将索引位置的头节点赋值给p
+        tab[i] = newNode(hash, key, value, null);
+    else {  // table表该索引位置不为空
+        Node<K,V> e; K k;
+        if (p.hash == hash && // 判断p节点的hash值和key值是否跟传入的hash值和key值相等
+            ((k = p.key) == key || (key != null && key.equals(k))))
+            e = p;  // 如果相等, 则p节点即为要查找的目标节点，赋值给e
+        // 判断p节点是否为TreeNode, 如果是则调用红黑树的putTreeVal方法查找目标节点
+        else if (p instanceof TreeNode)
+            e = ((TreeNode<K,V>)p).putTreeVal(this, tab, hash, key, value);
+        else {	// 走到这代表p节点为普通链表节点
+            for (int binCount = 0; ; ++binCount) {  // 遍历此链表, binCount用于统计节点数
+                if ((e = p.next) == null) { // p.next为空代表不存在目标节点则新增一个节点插入链表尾部
+                    p.next = newNode(hash, key, value, null);
+                    // 计算节点是否超过8个, 减一是因为循环是从p节点的下一个节点开始的
+                    if (binCount >= TREEIFY_THRESHOLD - 1)
+                        treeifyBin(tab, hash);// 如果超过8个，调用treeifyBin方法将该链表转换为红黑树
+                    break;
+                }
+                if (e.hash == hash && // e节点的hash值和key值都与传入的相等, 则e即为目标节点,跳出循环
+                    ((k = e.key) == key || (key != null && key.equals(k))))
+                    break;
+                p = e;  // 将p指向下一个节点
+            }
+        }
+        // e不为空则代表根据传入的hash值和key值查找到了节点,将该节点的value覆盖,返回oldValue
+        if (e != null) {
+            V oldValue = e.value;
+            if (!onlyIfAbsent || oldValue == null)
+                e.value = value;
+            afterNodeAccess(e); // 用于LinkedHashMap
+            return oldValue;
+        }
+    }
+    ++modCount;
+    if (++size > threshold) // 插入节点后超过阈值则进行扩容
+        resize();
+    afterNodeInsertion(evict);  // 用于LinkedHashMap
+    return null;
+}
+```
+
+## resize()
+这里只展示部分代码，主要的区别在于 1.8 里面再重新计算索引位置的时候，如果 e 的 hash 值与老表的容量
+（为一串只有1个为2的二进制数，例如16为0000 0000 0001 0000）进行位与运算为 0，则说明 e 节点扩容后的索引位置跟老表的索引位置一样，进行链表拼接操作：
+如果 loTail 为空，代表该节点为第一个节点，则将 loHead 赋值为该节点；否则将节点添加在 loTail 后面，并将 loTail 赋值为新增的节点。
+
+如果 e 的 hash 值与老表的容量（为一串只有1个为2的二进制数，例如16为0000 0000 0001 0000）进行位与运算为1，
+则说明 e 节点扩容后的索引位置为：老表的 索引位置＋oldCap，进行链表拼接操作：
+如果 hiTail 为空，代表该节点为第一个节点，则将 hiHead 赋值为该节点；否则将节点添加在 hiTail 后面，并将 hiTail 赋值为新增的节点。
+
+在 JDK 1.7 中，Entry 链表采用的是 **头插法** ，而在1.8中，采用 **尾插法**（见上面的 put() ）。
+同时，因为 1.7 的头插法，在 resize() 之后，链表的中节点顺序其实会跟原链表反过来。而 1.8 中不会存在这个情况。
+```java
+// 前面还有部分代码
+// 定义新表,容量为刚计算出来的新容量
+Node<K,V>[] newTab = (Node<K,V>[])new Node[newCap];
+table = newTab; // 将当前的表赋值为新定义的表
+if (oldTab != null) {   // 如果老表不为空, 则需遍历将节点赋值给新表
+    for (int j = 0; j < oldCap; ++j) {
+        Node<K,V> e;
+        if ((e = oldTab[j]) != null) {  // 将索引值为j的老表头节点赋值给e
+            oldTab[j] = null; // 将老表的节点设置为空, 以便垃圾收集器回收空间
+            // 如果e.next为空, 则代表老表的该位置只有1个节点,
+            // 通过hash值计算新表的索引位置, 直接将该节点放在该位置
+            if (e.next == null)
+                newTab[e.hash & (newCap - 1)] = e;
+            else if (e instanceof TreeNode)
+            	 // 调用treeNode的hash分布(跟下面最后一个else的内容几乎相同)
+                ((TreeNode<K,V>)e).split(this, newTab, j, oldCap);
+            else { // preserve order
+                Node<K,V> loHead = null, loTail = null; // 存储跟原索引位置相同的节点
+                Node<K,V> hiHead = null, hiTail = null; // 存储索引位置为:原索引+oldCap的节点
+                Node<K,V> next;
+                do {
+                    next = e.next;
+                    //如果e的hash值与老表的容量进行与运算为0,则扩容后的索引位置跟老表的索引位置一样
+                    if ((e.hash & oldCap) == 0) {   
+                        if (loTail == null) // 如果loTail为空, 代表该节点为第一个节点
+                            loHead = e; // 则将loHead赋值为第一个节点
+                        else    
+                            loTail.next = e;    // 否则将节点添加在loTail后面(尾插法)
+                        loTail = e; // 并将loTail赋值为新增的节点
+                    }
+                    //如果e的hash值与老表的容量进行与运算为1,则扩容后的索引位置为:老表的索引位置＋oldCap
+                    else {  
+                        if (hiTail == null) // 如果hiTail为空, 代表该节点为第一个节点
+                            hiHead = e; // 则将hiHead赋值为第一个节点
+                        else
+                            hiTail.next = e;    // 否则将节点添加在hiTail后面(尾插法)
+                        hiTail = e; // 并将hiTail赋值为新增的节点
+                    }
+                } while ((e = next) != null);
+                if (loTail != null) {
+                    loTail.next = null; // 最后一个节点的next设为空
+                    newTab[j] = loHead; // 将原索引位置的节点设置为对应的头结点
+                }
+                if (hiTail != null) {
+                    hiTail.next = null; // 最后一个节点的next设为空
+                    newTab[j + oldCap] = hiHead; // 将索引位置为原索引+oldCap的节点设置为对应的头结点
+                }
+            }
+        }
+    }
+}
+return newTab;
+```
+
 ## 从 JDK 1.8 开始，一个桶存储的链表长度大于 8 时会将链表转换为红黑树。！！
 源码里有如下描述：
 ```text
@@ -971,13 +1174,137 @@ more: less than 1 in ten million
 
 当hashCode离散性很好的时候，树型bin用到的概率非常小，因为数据均匀分布在每个bin中，几乎不会有bin中链表长度会达到阈值。但是在随机hashCode下，离散性可能会变差，然而JDK又不能阻止用户实现这种不好的hash算法，因此就可能导致不均匀的数据分布。不过理想情况下随机hashCode算法下所有bin中节点的分布频率会遵循泊松分布，我们可以看到，一个bin中链表长度达到8个元素的概率为0.00000006，几乎是不可能事件。所以，之所以选择8，不是拍拍屁股决定的，而是根据概率统计决定的。
 
-## 与 HashTable 的比较
-- HashTable 使用 synchronized 来进行同步。
-- HashMap 可以插入键为 null 的 Entry。
-- HashMap 的迭代器是 fail-fast 迭代器(因为不是线程安全的)。
-- HashMap 不能保证随着时间的推移 Map 中的元素次序是不变的(扩容会重新计算位置并移动)。
+# HashTable
+Hashtable的底层结构是数组+链表，下面主要比较 HashTable 和 HashMap的区别
+## 构造函数
+Hashtable的构造方法如下：
+```java
+public Hashtable(int initialCapacity, float loadFactor) {
+       if (initialCapacity < 0)
+           throw new IllegalArgumentException("Illegal Capacity: "+
+                                              initialCapacity);
+       if (loadFactor <= 0 || Float.isNaN(loadFactor))
+           throw new IllegalArgumentException("Illegal Load: "+loadFactor);
 
-# ConcurrentHashMap
+       if (initialCapacity==0)
+           initialCapacity = 1;
+       this.loadFactor = loadFactor;
+       table = new Entry<?,?>[initialCapacity];
+       threshold = (int)Math.min(initialCapacity * loadFactor, MAX_ARRAY_SIZE + 1);
+   }
+   public Hashtable(int initialCapacity) {
+       this(initialCapacity, 0.75f);
+   }
+   public Hashtable() {
+       this(11, 0.75f);
+   }
+   public Hashtable(Map<? extends K, ? extends V> t) {
+       this(Math.max(2*t.size(), 11), 0.75f);
+       putAll(t);
+   }
+```
+可以看到，Hashtable和HashMap的构造方法相同的是，均是对初始容量和加载因子完成了设置；不同的地方有2点：
+1. HashMap对底层数组采取的懒加载，即当执行第一次插入时才会创建数组；而Hashtable在初始化时就创建了数组；
+2. HashMap中数组的默认初始容量是16，并且必须的是2的指数倍数；而Hashtable中默认的初始容量是11，并且不要求必须是2的指数倍数。
+
+## put()
+```java
+public synchronized V put(K key, V value) {
+   //值不允许为null
+   if (value == null) {
+       throw new NullPointerException();
+   }
+
+   // Makes sure the key is not already in the hashtable.
+   Entry<?,?> tab[] = table;
+   //得到键的hash
+   int hash = key.hashCode();
+   //得到对应hash在数组中的桶索引
+   int index = (hash & 0x7FFFFFFF) % tab.length;
+   @SuppressWarnings("unchecked")
+   //得到桶中链表头节点
+   Entry<K,V> entry = (Entry<K,V>)tab[index];
+   //从头开始遍历
+   for(; entry != null ; entry = entry.next) {
+       //一旦hash值相等并且键相等，替换旧值
+       if ((entry.hash == hash) && entry.key.equals(key)) {
+           V old = entry.value;
+           entry.value = value;
+           return old;
+       }
+   }
+   //如果没有找到相同键，那么添加新节点
+   addEntry(hash, key, value, index);
+   return null;
+}
+
+private void addEntry(int hash, K key, V value, int index) {
+    modCount++;
+    Entry<?,?> tab[] = table;
+    //如果尺寸超过了阈值，进行rehash
+    if (count >= threshold) {
+        // Rehash the table if the threshold is exceeded
+        rehash();
+
+        tab = table;
+        hash = key.hashCode();
+        index = (hash & 0x7FFFFFFF) % tab.length;
+    }
+    // Creates the new entry.
+    @SuppressWarnings("unchecked")
+    Entry<K,V> e = (Entry<K,V>) tab[index];   // 头插法
+    tab[index] = new Entry<>(hash, key, value, e);
+    count++;
+}
+```
+在上面的put方法中可以看到很多点与 HashMap 中不同的地方:
+1. Hashtable的put()是线程安全的，而HashMap的put()方法不是线程安全的
+2. HashMap中键和值均允许为null；Hashtable中均不允许
+3. 计算hash的方式不同。Hashtable中使用键的哈希码作为哈希值，而HashMap中的哈希值将根据键的哈希值经过计算得到
+4. 得到数组中桶的方式不一样。HashMap 中采用 h & (length-1)，因为 HashMap 中桶的个数必须是 2 的指数倍数，但是 HashTable 因为桶个数并不限制在 2 的指数倍数，所以在写法上跟 HashMap 不一致
+  (hash & 0x7FFFFFFF) % tab.length
+
+## rehash()
+从上面可以看出，在当插入一个节点时，如果哈希表的尺寸已经达到了扩容的阈值，那么进行 rehash()，之后再将节点插入到链表的头部，这一点和 HashMap(1.7) 是一样的，即新节点总是位于桶的头结点。
+
+所以 HashTable 和 HashMap 一样，rehash() 时桶中的链表顺序会颠倒
+```java
+protected void rehash() {
+       int oldCapacity = table.length;
+       Entry<?,?>[] oldMap = table;
+
+       // 扩容，newCapacity=2*oldCapacity+1
+       int newCapacity = (oldCapacity << 1) + 1;
+       if (newCapacity - MAX_ARRAY_SIZE > 0) {
+           if (oldCapacity == MAX_ARRAY_SIZE)
+               // Keep running with MAX_ARRAY_SIZE buckets
+               return;
+           newCapacity = MAX_ARRAY_SIZE;
+       }
+       Entry<?,?>[] newMap = new Entry<?,?>[newCapacity];
+
+       modCount++;
+       threshold = (int)Math.min(newCapacity * loadFactor, MAX_ARRAY_SIZE + 1);
+       table = newMap;
+
+       //rehash
+       for (int i = oldCapacity ; i-- > 0 ;) {
+           for (Entry<K,V> old = (Entry<K,V>)oldMap[i] ; old != null ; ) {
+               Entry<K,V> e = old;
+               old = old.next;
+
+               int index = (e.hash & 0x7FFFFFFF) % newCapacity;
+               e.next = (Entry<K,V>)newMap[index];
+               newMap[index] = e;
+           }
+       }
+   }
+```
+
+## 其他与 HashMap的比较
+- HashMap 的迭代器是 fail-fast 迭代器(因为不是线程安全的)。
+
+# ConcurrentHashMap 1.7
 HashMap 不是线程安全的，但是 HashTable 在线程多的情况下效率会下降很快(所以线程争一个锁)
 所以在多线程情况也不是很理想.
 
@@ -1129,6 +1456,90 @@ public int size() {
     return overflow ? Integer.MAX_VALUE : size;
 }
 ```
+# Concurrent 1.8
+1.8的实现已经抛弃了Segment分段锁机制，利用CAS+Synchronized来保证并发更新的安全，底层采用数组+链表+红黑树的存储结构。
+
+## 属性
+大致的属性和 1.7 差不多，几个重要的区别在下面：
+```java
+static final int TREEIFY_THRESHOLD = 8; // 链表节点转换红黑树节点的阈值, 9个节点转
+static final int UNTREEIFY_THRESHOLD = 6;   // 红黑树节点转换链表节点的阈值, 6个节点转
+static final int MIN_TREEIFY_CAPACITY = 64; // 转红黑树时, table的最小长度
+
+// 默认为0，用来控制table的初始化和扩容操作 -1-代表table正在初始化  -N 表示有N-1个线程正在进行扩容操作
+// 如果table未初始化，表示table需要初始化的大小。如果table初始化完成，表示table的容量，默认是table大小的0.75倍
+private transient volatile int sizeCtl;
+
+// Node：保存key，value及key的hash值的数据结构。
+class Node<K,V> implements Map.Entry<K,V> {
+    final int hash;   // final 确保不被修改和线程安全
+    final K key;
+    volatile V val;   // 其中value和next都用volatile修饰，保证并发的可见性。
+    volatile Node<K,V> next;
+    ... 省略部分代码
+}
+
+// ForwardingNode：一个特殊的Node节点，hash值为-1，其中存储nextTable的引用。
+// 只有table发生扩容的时候，ForwardingNode才会发挥作用，作为一个占位符放在table中表示当前节点为null或则已经被移动。
+final class ForwardingNode<K,V> extends Node<K,V> {
+    final Node<K,V>[] nextTable;
+    ForwardingNode(Node<K,V>[] tab) {
+        super(MOVED, null, null, null);
+        this.nextTable = tab;
+    }
+}
+```
+
+## 实例初始化
+实例化 ConcurrentHashMap 时带参数时，会根据参数调整table的大小，假设参数为100，最终会调整成256，确保table的大小总是2的幂次方
+```java
+// 函数 tableSizeFor((int)size) 确保了返回的数是一个 2 的 n 次幂
+// 注意这里只是只会初始化sizeCtl值，并不会直接初始化table，而是延缓到第一次put操作。
+public ConcurrentHashMap(int initialCapacity,
+                         float loadFactor, int concurrencyLevel) {
+    if (!(loadFactor > 0.0f) || initialCapacity < 0 || concurrencyLevel <= 0)
+        throw new IllegalArgumentException();
+    if (initialCapacity < concurrencyLevel)   // Use at least as many bins
+        initialCapacity = concurrencyLevel;   // as estimated threads
+    long size = (long)(1.0 + (long)initialCapacity / loadFactor);
+    int cap = (size >= (long)MAXIMUM_CAPACITY) ?
+        MAXIMUM_CAPACITY : tableSizeFor((int)size);
+    this.sizeCtl = cap;
+}
+```
+### table 初始化
+table初始化操作会延缓到第一次put行为。但是put是可以并发执行的，Doug Lea是如何实现table只初始化一次的？
+```java
+/**
+ * Initializes table, using the size recorded in sizeCtl.
+ */
+private final Node<K,V>[] initTable() {
+    Node<K,V>[] tab; int sc;
+    while ((tab = table) == null || tab.length == 0) {
+      //如果一个线程发现 sizeCtl<0 ，意味着另外的线程执行 CAS 操作成功，当前线程只需要让出cpu时间片，然后直接返回，因为 table 已经被其他线程初始化好了
+        if ((sc = sizeCtl) < 0)
+            Thread.yield(); // lost initialization race; just spin
+        // 这里的 SIZECTL 是 sizeCtl 的地址偏移量
+        // 某个线程执行 CAS 成功, 将 sizeCtl 设置为 -1, sc值不变，还是 sizeCtl 初始的值
+        else if (U.compareAndSwapInt(this, SIZECTL, sc, -1)) {  
+            try {
+                if ((tab = table) == null || tab.length == 0) {
+                    int n = (sc > 0) ? sc : DEFAULT_CAPACITY;
+                    @SuppressWarnings("unchecked")
+                    Node<K,V>[] nt = (Node<K,V>[])new Node<?,?>[n];
+                    table = tab = nt;
+                    sc = n - (n >>> 2);
+                }
+            } finally {
+                sizeCtl = sc;
+            }
+            break;
+        }
+    }
+    return tab;
+}
+```
+
 
 ## JDK 1.8 的改动
 JDK 1.7 使用分段锁机制来实现并发更新操作，核心类为 Segment，它继承自重入锁 ReentrantLock，并发度与 Segment 数量相等。
@@ -1354,3 +1765,8 @@ public final class ConcurrentCache<K, V> {
     }
 }
 ```
+
+# 参考资料
+- [Cyc-2018:Java 容器](https://github.com/CyC2018/CS-Notes/blob/master/notes/Java%20%E5%AE%B9%E5%99%A8.md#hashmap)
+- [Java集合：HashMap详解（JDK 1.8）](https://blog.csdn.net/v123411739/article/details/78996181)
+- [Hashtable源码分析](https://blog.csdn.net/qq_19431333/article/details/76165464)
