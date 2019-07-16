@@ -1606,7 +1606,8 @@ private boolean verify(int[] sequence, int first, int last) {
         if (sequence[i] < rootVal)
             return false;
     // 4. 从划分出来的左右子树继续检查
-    // 注意最后的 last-1，因为 seq[last] 是根节点
+    // 注意 cutIndex 是属于右子树的，因为它比根节点大，所以左子树是 first 到 cutIndex-1
+    // 最后的 last-1，因为 seq[last] 是根节点
     return verify(sequence, first, cutIndex - 1) && verify(sequence, cutIndex, last - 1);
 }
 ```
@@ -1704,6 +1705,7 @@ public RandomListNode Clone(RandomListNode pHead) {
     while (cur != null) {
         RandomListNode clone = cur.next;
         if (cur.random != null)
+            // 注意等式后面的 cur.random.next
             clone.random = cur.random.next;
         cur = clone.next;
     }
@@ -1808,7 +1810,7 @@ TreeNode Deserialize(){
 跟第[\(16.打印从 1 到最大的 n 位数\)](#16打印从-1-到最大的-n-位数)题很像：
   - 一种排列结束的结束条件,都是处理的字符是最后一位的时候
   - 对当前字符的后续字符进行递归
-    - PermutationHeler(chars, i+1, list);
+    - PermutationHeler(chars, digit+1, list);
     - print1ToMaxOfNDigits(number, digit + 1);
 
 ### 解题思路
@@ -1822,31 +1824,31 @@ TreeNode Deserialize(){
 ```java
 public ArrayList<String> Permutation(String str) {
     ArrayList<String> ret = new ArrayList<>();
-    if(str.length() == 0 || str == null)
+    if(str == null || str.length() == 0 )
         return ret;
     PermutationHeler(str.toCharArray(), 0, ret);
     Collections.sort(ret);
     return ret;
 }
 
-private void PermutationHeler(char[] chars, int i, ArrayList<String> list){
+private void PermutationHeler(char[] chars, int digit, ArrayList<String> list){
     // 递归结束的标志就是循环到需要固定的字符已经是字符串的最后一个字符
-    if(i == chars.length - 1){
+    if(digit == chars.length - 1){
         String val = String.valueOf(chars);
         if(!list.contains(val))
             list.add(val);    // 避免重复
     } else {
         // 第一步：求所有可能出现在第一个位置的字符，即把第一个字符和后面所有的字符交换
-        for(int j=i; j < chars.length; j++){
-            swap(chars, i, j);
+        for(int j=digit; j < chars.length; j++){
+            swap(chars, digit, j);
             /*
             第二步固定第一个字符，任把后面的所有字符分成两个部分：
             后面字符的第一个字符，以及这个字符之后的所有字符。
             然后把第一个字符逐一和它后面的字符交换
             */
-            PermutationHeler(chars, i+1, list);
+            PermutationHeler(chars, digit+1, list);
             // 然后恢复，进入下一个循环
-            swap(chars, i, j);
+            swap(chars, digit, j);
         }
     }
 }
@@ -1939,8 +1941,8 @@ public int MoreThanHalfNum_Solution(int [] array) {
       int p = nums[low];     // 左边第一个元素作为基准
       int i = low, j = high + 1;
       while(true){
-          while(i != high && nums[++i] < p); // 从左侧扫描，寻找比基准元素大的元素
-          while(j != low && nums[--j] > p);    // 从左侧扫描，寻找比基准元素小的元素
+          while(i != high && nums[++i] <= p); // 从左侧扫描，寻找比基准元素大的元素
+          while(j != low && nums[--j] >= p);    // 从左侧扫描，寻找比基准元素小的元素
           if(i >= j)
               break;    // 扫描结束
           swap(nums, i, j);    // 交换两个位置，相当于就把比基准元素大的放右边，小的放左边
