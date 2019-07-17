@@ -33,6 +33,7 @@
     - [获取到达的事件](#获取到达的事件)
     - [事件循环](#事件循环)
   - [套接字 NIO 实例](#套接字-nio-实例)
+- [参考资料](#参考资料)
 
 <!-- TOC END -->
 
@@ -621,3 +622,6 @@ public class NIOClient {
     }
 }
 ```
+
+# 参考资料
+- [Cyc2018-JavaIO](https://github.com/CyC2018/CS-Notes/blob/master/notes/Java%20IO.md#%E4%B8%83nio)
