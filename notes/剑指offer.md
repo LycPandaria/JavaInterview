@@ -1997,7 +1997,7 @@ private int N = 0;
 public void Insert(Integer val) {
     /* 插入要保证两个堆存于平衡状态 */
     if (N % 2 == 0) {
-        /* N 为偶数的情况下插入到右半边。
+        /*
          * 因为右半边元素都要大于左半边，但是新插入的元素不一定比左半边元素来的大，
          * 因此需要先将元素插入左半边，然后利用左半边为大顶堆的特点，取出堆顶元素即为最大元素，此时插入右半边 */
         left.add(val);
@@ -2086,10 +2086,12 @@ public staic int maxSubArray(int arr[]){
 以534为例，在从1增长到n的过程中，534的个位从0-9变化了53次，记为round。每一轮变化中，1在个位出现一次，所以一共出现了53次。 再来看weight的值。weight为4，大于0，说明第54轮变化是从0-4，1又出现了1次。我们记1出现的次数为count，所以：
 
   **count = round+1 = 53 + 1 = 54**
+  (count = round*base + base)
 
 如果此时weight为0（n=530），说明第54轮到0就停止了，那么：
 
 **count = round = 53**
+(count = round*base)
 
 2. 十位
 对于10位来说，其0-9周期的出现次数与个位的统计方式是相同的，见图：
@@ -2097,15 +2099,15 @@ public staic int maxSubArray(int arr[]){
 不同点在于：从1到n，每增加10，十位的weight才会增加1，所以，一轮0-9周期内，1会出现10次。即rount*10。
 再来看weight的值。当此时weight为3，大于1，说明第6轮出现了10次1，则：
 
-**count = round\*10+10 = 5\*10+10 = 60**
+**count = round\*10+10 = 5\*10+10 = 60**(count = round*base+base)
 
 如果此时weight的值等于0（n=504），说明第6轮到0就停止了，所以：
 
-**count = round\*10+10 = 5\*10 = 50**
+**count = round\*10+10 = 5\*10 = 50**(count = round*base)
 
 如果此时weight的值等于1（n=514），那么第6轮中1出现了多少次呢？很明显，这与个位数的值有关，个位数为k，第6轮中1就出现了k+1次(0-k)。我们记个位数为former，则：
 
-**count = round\*10+former +1= 5\*10+4+1 = 55**
+**count = round\*10+former +1= 5\*10+4+1 = 55**(count = round*base+former+1)
 
 3) 更高位
 更高位的计算方式其实与十位是一致的，不再阐述。
@@ -2158,7 +2160,7 @@ public int count(int n){
 ### 解题思路
 假设我们找第 1001 位，序列的前 10 位是 10 个 1 位数字，所以我们找后面第 991 位（1001-10）
 
-接下来 180 位数字是 90 个 100-999 的三位数。由于 991 > 180，所以我们继续从后面找 811(991-180) 位
+接下来 180 位数字是 90 个 10-99 的两位数位数。由于 991 > 180，所以我们继续从后面找 811(991-180) 位
 
 接下来是 2700 个三位数。由于 811 < 2700 所以第 811 为是某个三位数，又因为 811 = 270*3+1,所以我们知道 811 位是从 100 开始的 270 个数字 370 的中间一位 -> '7'
 
@@ -2188,7 +2190,7 @@ private int getDigitAtIndex(int index, int place){
   // n 位数的第一个数字 0,10,100...
   int beginNumber = getBeginNumcerOfPlace(place);
   int shift = index / place;  // 表示 index 所属的数位于 beginNumer 的第几个数字之后
-  String number = (beginNumer + shift) + "";
+  String number = (beginNumer + shift) + "";  // 得到 index 对应所在数字
   return number.chatAt(index % place) - '0';
 }
 

@@ -58,9 +58,11 @@
   - [属性](#属性-1)
   - [实例初始化](#实例初始化)
     - [table 初始化](#table-初始化)
+  - [put()](#put-3)
+  - [get()](#get-5)
   - [JDK 1.8 的改动](#jdk-18-的改动)
 - [Linked Hash Map](#linked-hash-map)
-  - [get](#get-5)
+  - [get](#get-6)
   - [用 LinkedHashMap 实现 LRU 缓存](#用-linkedhashmap-实现-lru-缓存)
 - [HashSet](#hashset)
   - [概览](#概览-2)
@@ -1467,7 +1469,7 @@ static final int UNTREEIFY_THRESHOLD = 6;   // 红黑树节点转换链表节点
 static final int MIN_TREEIFY_CAPACITY = 64; // 转红黑树时, table的最小长度
 
 // 默认为0，用来控制table的初始化和扩容操作 -1-代表table正在初始化  -N 表示有N-1个线程正在进行扩容操作
-// 如果table未初始化，表示table需要初始化的大小。如果table初始化完成，表示table的容量，默认是table大小的0.75倍
+// 如果table未初始化，表示table需要初始化的大小。如果table初始化完成，表示table的容量阈值，超过了就要进行扩容，默认是table大小的0.75倍
 private transient volatile int sizeCtl;
 
 // Node：保存key，value及key的hash值的数据结构。
@@ -1539,7 +1541,156 @@ private final Node<K,V>[] initTable() {
     return tab;
 }
 ```
+sizeCtl默认为0，如果ConcurrentHashMap实例化时有传参数，sizeCtl会是一个2的幂次方的值。
+所以执行第一次put操作的线程会执行Unsafe.compareAndSwapInt方法修改sizeCtl为-1，
+有且只有一个线程能够修改成功，其它线程通过Thread.yield()让出CPU时间片等待table初始化完成。
 
+## put()
+假设table已经初始化完成，put操作采用CAS+synchronized实现并发插入或更新操作，具体实现如下。
+```java
+final V putVal(K key, V value, boolean onlyIfAbsent) {
+    if (key == null || value == null) throw new NullPointerException();
+    // 1.计算hash值
+    int hash = spread(key.hashCode());
+    int binCount = 0;
+    for (Node<K,V>[] tab = table;;) {
+        Node<K,V> f; int n, i, fh;
+        if (tab == null || (n = tab.length) == 0)
+            tab = initTable();  // 初始化 table
+        // 2.i 指的就是该 hash 值在表中对应的 index 位置
+        // 3.
+        else if ((f = tabAt(tab, i = (n - 1) & hash)) == null) {  
+            if (casTabAt(tab, i, null, new Node<K,V>(hash, key, value, null)))
+                break;                   // no lock when adding to empty bin
+        }
+        else if ((fh = f.hash) == MOVED)
+            tab = helpTransfer(tab, f);
+        ...省略部分代码
+    }
+    addCount(1L, binCount);
+    return null;
+}
+
+// 代码中一些 cas 函数
+static final <K,V> Node<K,V> tabAt(Node<K,V>[] tab, int i) {
+    return (Node<K,V>)U.getObjectVolatile(tab, ((long)i << ASHIFT) + ABASE);
+}
+static final <K,V> boolean casTabAt(Node<K,V>[] tab, int i,
+                                    Node<K,V> c, Node<K,V> v) {
+    return U.compareAndSwapObject(tab, ((long)i << ASHIFT) + ABASE, c, v);
+}
+static final <K,V> void setTabAt(Node<K,V>[] tab, int i, Node<K,V> v) {
+    U.putObjectVolatile(tab, ((long)i << ASHIFT) + ABASE, v);
+}
+```
+主要的过程：
+1. 计算 hash
+```java
+static final int spread(int h) {return (h ^ (h >>> 16)) & HASH_BITS;}
+```
+
+2. table 中定位索引位置
+```java
+i = (n - 1) & hash)
+```
+
+3. 获取table中对应索引元素
+```text
+f = tabAt(tab, i)
+```
+这里是采用了 Unsafe.getObjectVolatile 来获取（tabAt 代码见上面)。因为在java内存模型中，我们已经知道每个线程都有一个工作内存，里面存储着table的副本，虽然table是volatile修饰的，但不能保证线程每次都拿到table中的最新元素，Unsafe.getObjectVolatile可以直接获取指定内存的数据，保证了每次拿到数据都是最新的。
+
+4. 如果f为null，说明table中这个位置第一次插入元素，利用Unsafe.compareAndSwapObject方法插入Node节点。
+```text
+casTabAt(tab, i, null, new Node<K,V>(hash, key, value, null)
+```
+  - 如果CAS成功，说明Node节点已经插入，随后 addCount(1L, binCount) 方法会检查当前容量是否需要进行扩容.
+  - 如果CAS失败，说明有其它线程提前插入了节点，自旋(有一层for循环套在外面)重新尝试在这个位置插入节点。
+
+5. 如果f的hash值为-1，说明当前f是ForwardingNode节点，意味有其它线程正在扩容，则一起进行扩容操作。
+
+6. 其余情况把新的Node节点按链表或红黑树的方式插入到合适的位置，这个过程采用同步内置锁实现并发，代码如下:
+```java
+// 这里的代码就是上个代码段中省略的部分，主要作用是在 CAS 失败情况下用 synchronized 加锁进行 putVal()
+synchronized (f) {
+    // 在节点f上进行同步，节点插入之前，再次利用tabAt(tab, i) == f判断，防止被其它线程修改。
+    if (tabAt(tab, i) == f) {
+        if (fh >= 0) {  // 链表结构
+            binCount = 1;
+            for (Node<K,V> e = f;; ++binCount) {
+                K ek;
+                if (e.hash == hash &&
+                    ((ek = e.key) == key ||
+                     (ek != null && key.equals(ek)))) {   // key 值相等，根据 onlyIfAbsent 的值确定是否替换原值
+                    oldVal = e.val;
+                    if (!onlyIfAbsent)
+                        e.val = value;
+                    break;
+                }
+                Node<K,V> pred = e;     // 尾插法插入节点
+                if ((e = e.next) == null) {
+                    pred.next = new Node<K,V>(hash, key,
+                                              value, null);
+                    break;
+                }
+            }
+        }
+        else if (f instanceof TreeBin) {  // f是红黑树根节点，则在树结构上遍历元素，更新或增加节点。
+            Node<K,V> p;
+            binCount = 2;
+            if ((p = ((TreeBin<K,V>)f).putTreeVal(hash, key,
+                                           value)) != null) {
+                oldVal = p.val;
+                if (!onlyIfAbsent)
+                    p.val = value;
+            }
+        }
+    }
+}
+if (binCount != 0) {
+    if (binCount >= TREEIFY_THRESHOLD)
+        treeifyBin(tab, i);
+    if (oldVal != null)
+        return oldVal;
+    break;
+}
+```
+1. 如果f.hash >= 0，说明f是链表结构的头结点，遍历链表，如果找到对应的node节点，则修改value，否则在链表尾部加入节点。
+2. 如果f是TreeBin类型节点，说明f是红黑树根节点，则在树结构上遍历元素，更新或增加节点。
+3. 如果链表中节点数binCount >= TREEIFY_THRESHOLD(默认是8)，则把链表转化为红黑树结构。
+
+## get()
+ConcurrentHashMap的get方法就是从Hash表中读取数据，而且与扩容不冲突。该方法没有同步锁。
+
+通过键值的hash计算索引位置，如果满足条件，直接返回对应的值；
+
+如果相应节点的hash值小于0 ，即该节点在进行扩容，直接在调用ForwardingNodes节点的find方法进行查找。
+
+否则，遍历当前节点直到找到对应的元素。
+```java
+public V get(Object key) {
+    Node<K,V>[] tab; Node<K,V> e, p; int n, eh; K ek;
+    int h = spread(key.hashCode());
+    //满足条件直接返回对应的值
+    if ((tab = table) != null && (n = tab.length) > 0 &&
+        (e = tabAt(tab, (n - 1) & h)) != null) {
+        if ((eh = e.hash) == h) {
+            if ((ek = e.key) == key || (ek != null && key.equals(ek)))
+                return e.val;
+        }
+        //e.hash<0，正在扩容
+        else if (eh < 0)
+            return (p = e.find(h, key)) != null ? p.val : null;
+        //遍历当前节点
+        while ((e = e.next) != null) {
+            if (e.hash == h &&
+                ((ek = e.key) == key || (ek != null && key.equals(ek))))
+                return e.val;
+        }
+    }
+    return null;
+}
+```
 
 ## JDK 1.8 的改动
 JDK 1.7 使用分段锁机制来实现并发更新操作，核心类为 Segment，它继承自重入锁 ReentrantLock，并发度与 Segment 数量相等。
@@ -1770,3 +1921,4 @@ public final class ConcurrentCache<K, V> {
 - [Cyc-2018:Java 容器](https://github.com/CyC2018/CS-Notes/blob/master/notes/Java%20%E5%AE%B9%E5%99%A8.md#hashmap)
 - [Java集合：HashMap详解（JDK 1.8）](https://blog.csdn.net/v123411739/article/details/78996181)
 - [Hashtable源码分析](https://blog.csdn.net/qq_19431333/article/details/76165464)
+- [深入浅出HashMap](https://www.jianshu.com/p/c0642afe03e0)
