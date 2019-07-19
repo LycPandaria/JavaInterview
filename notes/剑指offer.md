@@ -2247,6 +2247,9 @@ public int numDecodings(String s) {
         return 1;
     int n = s.length();
     int[] dp = new int[n + 1];  // 动态规划结果保存
+    // 初始化数组，只有一个字符的时候，可翻译方法为1
+    // 两个字符的时候, 当第一个字符为 0 的时候，就只有1种翻译方法
+    // 所以当 s.charAt(0) == '0' 的时候 dp[1] 要设置为 0
     dp[0] = 1;
     dp[1] = s.charAt(0) == '0' ? 0 : 1;
     for (int i = 2; i <= n; i++) {
@@ -2377,7 +2380,8 @@ public int longestSubStringWithoutDuplication(String str) {
       maxLen = Math.max(maxLen, curLen);
       curLen = curI-preI; // f(i) = d, 所以在更新 curLen 之前要比较它和 maxLen 的大小
     }
-    preIndexs[c] = curI;    // 更新该字符出现的位置
+    // 都次循环完更新该字符出现的位置
+    preIndexs[c] = curI;    
   }
   maxLen = Math.max(maxLen, curLen);
   return maxLen;
