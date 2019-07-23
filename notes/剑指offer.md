@@ -2213,7 +2213,7 @@ public int getBeginNumcerOfPlace(place){
 
 ```java
 public String PrintMinNumber(int [] numbers) {
-    if(numbers.length == 0 || numbers == null)
+    if(numbers == null || numbers.length == 0)
         return "";
     int n = numbers.length;
     String[] numStr = new String[n];
@@ -2322,7 +2322,8 @@ public int getMost(int[][] board) {
 }
 ```
 
-以上的方法可以进一步优化：到达坐标为 (i,j) 的格子时能够拿到的礼物的最大价值只依赖坐标为 (i-1,j) 和 (i,j-1) 的两个格子，因此第 i-2 行及以上的格子礼物的最大价值实际上没有必要保存下来。我们可以用一个一维数组来替代签名代码中的二维矩阵。该一维矩阵的数字长度为棋盘的列数 n。当我们计算到达坐标 (i,j) 的格子时能够拿到的礼物的最大价值 f(i,j)，数组中前 j 个数字分别是 f(i,0), f(i,1)...f(i,j-1)，数组从下表为 j 的数字开始到最后一个数字，分别为 f(i-1, j), f(i-1, j+1)...f(i-1,n-1)。也就是说，该数组前面 j 个数字分别是当前第 i 行前面 j 个格子的礼物最大价值，而之后的数字分别保存前面 第 i-1 行 n-j 个格子礼物的最大值
+以上的方法可以进一步优化：到达坐标为 (i,j) 的格子时能够拿到的礼物的最大价值只依赖
+坐标为 (i-1,j) 和 (i,j-1) 的两个格子，因此第 i-2 行及以上的格子礼物的最大价值实际上没有必要保存下来。我们可以用一个一维数组来替代签名代码中的二维矩阵。该一维矩阵的数字长度为棋盘的列数 n。当我们计算到达坐标 (i,j) 的格子时能够拿到的礼物的最大价值 f(i,j)，数组中前 j 个数字分别是 f(i,0), f(i,1)...f(i,j-1)，数组从下表为 j 的数字开始到最后一个数字，分别为 f(i-1, j), f(i-1, j+1)...f(i-1,n-1)。也就是说，该数组前面 j 个数字分别是当前第 i 行前面 j 个格子的礼物最大价值，而之后的数字分别保存前面 第 i-1 行 n-j 个格子礼物的最大值
 ```java
 import java.util.*;
 
@@ -2473,11 +2474,33 @@ public int FirstNotRepeatingChar2(String str) {
         else if (bs1.get(c) && !bs2.get(c))
             bs2.set(c);     // 如果该数字又出现了一遍，0 1 -> 1 1
     }
-    for (int i = 0; i < str.length(); i++) {
-        char c = str.charAt(i);
-        if (bs1.get(c) && !bs2.get(c))  // 0 1 -- 只出现过一次
-            return i;
+    int index = -1;
+    int cur = -1;
+    for(char c : str.toCharArray()){
+      cur++;
+      if(bs1.get(c) && !bs2.get(c)){
+        index = cur;
+        break;
+      }  
     }
+    return index;
+    // for (int i = 0; i < str.length(); i++) {
+    //     char c = str.charAt(i);
+    //     if (bs1.get(c) && !bs2.get(c))  // 0 1 -- 只出现过一次
+    //         return i;
+    // }
+    // return -1;
+}
+```
+```java
+// 更简单的类似于位图法的方法
+public int FirstNotRepeatingChar(String str) {
+    int[] cnts = new int[256];  // 每一位都可以对应到一个字符,空间换时间
+    for(int i = 0; i < str.length(); i++)
+      cnts[str.charAt(i)] ++;   // 出现过一次，相应的位置 +1
+    for(int i = 0; i < str.length(); i++)
+      if(cnts[str.charAt(i)] == 1)
+        return i;
     return -1;
 }
 ```
