@@ -1,3 +1,17 @@
+<!-- TOC START min:1 max:3 link:true update:true -->
+- [集中式与分布式](#集中式与分布式)
+- [中心服务器](#中心服务器)
+- [Git 命令一览](#git-命令一览)
+- [其他问题](#其他问题)
+  - [merge和rebase的区别](#merge和rebase的区别)
+    - [为什么不要再公共分支使用rebase?](#为什么不要再公共分支使用rebase)
+    - [merge和rebase实际上只是用的场景不一样](#merge和rebase实际上只是用的场景不一样)
+- [参考资料](#参考资料)
+
+<!-- TOC END -->
+
+
+
 # 集中式与分布式
 Git 属于分布式版本控制系统，而 SVN 属于集中式。
 ![git1](../pic/git1.png)

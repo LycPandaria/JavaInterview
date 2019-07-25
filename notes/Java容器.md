@@ -103,25 +103,23 @@ ArrayList 实现了Cloneable(标识接口接口，即覆盖了函数clone()，�
 
 ArrayList 实现java.io.Serializable(标识接口接口，这意味着ArrayList支持序列化，能通过序列化去传输。
 
-和Vector不同，ArrayList中的操作不是线程安全的！所以，建议在单线程中才使用ArrayList，而在多线程中可以选择Vector或者CopyOnWriteArrayList。
+和Vector不同，**ArrayList中的操作不是线程安全的！** 所以，建议在单线程中才使用ArrayList，而在多线程中可以选择Vector或者CopyOnWriteArrayList。
 
 ## ArrayList属性
 ArrayList属性主要就是当前数组长度size，以及存放数组的对象elementData数组，除此之外还有一个经常用到的属性就是从AbstractList继承过来的modCount属性，代表ArrayList集合的修改次数。
 ```java
-/**
- * 默认容量
- */
+// 默认容量
 private static final int DEFAULT_CAPACITY = 10;
 
-/**
- * Shared empty array instance used for empty instances.
- */
+// Shared empty array instance used for empty instances. 用于空实例的空数组
+// new ArrayList(0)
 private static final Object[] EMPTY_ELEMENTDATA = {};
 
 /**
  * Shared empty array instance used for default sized empty instances. We
  * distinguish this from EMPTY_ELEMENTDATA to know how much to inflate when
  * first element is added.
+ * new ArrayList()
  */
 private static final Object[] DEFAULTCAPACITY_EMPTY_ELEMENTDATA = {};
 
@@ -133,9 +131,7 @@ private static final Object[] DEFAULTCAPACITY_EMPTY_ELEMENTDATA = {};
  */
 transient Object[] elementData; // non-private to simplify nested class access
 
-/**
- * 数组实际大小
- */
+// 数组实际大小
 private int size;
 ```
 
@@ -198,7 +194,7 @@ public boolean add(E e) {
 }
 ```
 
-确保添加的元素有地方存储，当第一次添加元素的时候this.size+1 的值是1，所以第一次添加的时候会将当前elementData数组的长度变为10
+确保添加的元素有地方存储，当第一次添加元素的时候 this.size+1 的值是 1，所以第一次添加的时候会将当前 elementData 数组的长度变为 10
 ```java
 private void ensureCapacityInternal(int minCapacity) {
     ensureExplicitCapacity(calculateCapacity(elementData, minCapacity));
@@ -374,6 +370,8 @@ public class Vector<E>
 Vector  实现了RandmoAccess接口，即提供了随机访问功能。RandmoAccess是java中用来被List实现，为List提供快速访问功能的。在 Vector 中，我们即可以通过元素的序号快速获取元素对象；这就是快速随机访问。
 
 Vector  实现了Cloneable接口，即覆盖了函数 clone() ，能被克隆。
+
+**Vector是线程安全的。**
 
 ArrayList 实现 Serializable 接口，这意味着ArrayList支持序列化，能通过序列化去传输。
 
