@@ -2944,6 +2944,8 @@ public String ReverseSentence(String str) {
     for(int i=1; i <= carr.length; i++){
         // 注意这个条件 i==carr.length，最后达到字符串
         // 末尾的时候，也要记得进行一个反转，比如 字符串只有一个单词
+        // 而且这个条件必须在第一个，不然当 i==len 时候如果先判断
+        // carr[i]==' ' 会引发 OutOfBoundsException
         if(i==carr.length || carr[i] == ' '){
             // 遇到空格，则进行一个反转
             swap(carr, begin, i-1);
@@ -2974,8 +2976,8 @@ private void swap(char[] carr, int front, int end){
 先将 "abc" 和 "XYZdef" 分别翻转，得到 "cbafedZYX"，然后再把整个字符串翻转得到 "XYZdefabc"。
 ```java
 public String LeftRotateString(String str,int n) {
-    if(str.length()==0 || str==null)
-        return "";
+    if(str==null || str.length() == 0 || n < 1)
+        return str;
     char[] carr = str.toCharArray();
     int len = str.length();
     n = n % len;
@@ -3015,9 +3017,11 @@ public ArrayList<Integer> maxInWindows(int [] num, int size)
         return ret;
     // 大顶堆
     PriorityQueue<Integer> heap = new PriorityQueue<>((o1,o2) -> (o2 - o1));
+    // 填充 heap
     for(int i=0; i < size; i++)
         heap.add(num[i]);
-    ret.add(heap.peek());
+    ret.add(heap.peek()); // 第一个滑动窗口最大值
+    // 滑动窗口移动，先头元素移除，再加入新元素，再把根节点值(滑动窗口最大值)加入到结果中
     for(int i = 0, j = i + size; j < num.length; i++, j++){
         heap.remove(num[i]);
         heap.add(num[j]);
