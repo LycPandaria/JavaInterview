@@ -38,12 +38,12 @@
   - [indexFor](#indexfor)
     - [hash](#hash)
     - [取模](#取模)
-  - [resize](#resize)
+  - [resize 扩容](#resize-扩容)
 - [HashMap 1.8](#hashmap-18)
   - [属性区别](#属性区别)
   - [get()](#get-3)
   - [put()](#put-1)
-  - [resize()](#resize-1)
+  - [resize()](#resize)
   - [引申：红黑树](#引申红黑树)
   - [为什么是8的时候转红黑树？](#为什么是8的时候转红黑树)
 - [HashTable](#hashtable)
@@ -183,7 +183,9 @@ public ArrayList(Collection<? extends E> c) {
 ```
 
 ## 扩容
-添加元素时使用 ensureCapacityInternal() 方法来保证容量足够，如果不够时，需要使用 grow() 方法进行扩容，新容量的大小为 oldCapacity + (oldCapacity >> 1)，也就是旧容量的 1.5 倍。
+添加元素时使用 ensureCapacityInternal() 方法来保证容量足够，如果不够时，需要使用 grow() 方法进行扩容，**新容量的大小为 oldCapacity + (oldCapacity >> 1)，也就是旧容量的 1.5 倍。**。
+
+ensureCapacityInternal(int minCapacity) 方法主要的逻辑是传入当前数组实际个数 size+1 作为数组添加完元素后需要的容量大小，如果这个大小大于了数组大小(elementData.length)，就会调用 grow(minCapacity)进行扩容。
 
 扩容操作需要调用 Arrays.copyOf() 把原数组整个复制到新数组中，这个操作代价很高，因此最好在创建 ArrayList 对象时就指定大概的容量大小，减少扩容操作的次数。
 ```java
@@ -901,7 +903,7 @@ static int indexFor(int h, int length) {
 }
 ```
 
-## resize
+## resize 扩容
 从 addEntry 的以下代码中可以看到 HashMap 的扩容方法
 ```java
 // 当size超过临界阈值threshold，并且即将发生哈希冲突时进行扩容
@@ -927,7 +929,7 @@ void resize(int newCapacity) {
     threshold = (int)Math.min(newCapacity * loadFactor, MAXIMUM_CAPACITY + 1);
 }
 ```
-在对数组进行扩容后，键值对就需要重新计算所属的桶下标
+在对数组进行扩容后，键值对就需要重新计算所属的桶下标，transfer到扩容后的新的地址，在transfer数据中需要注意的是，如果hashSeed有变化，需要重新计算原有key的hash值。
 ```java
 void transfer(Entry[] newTable, boolean rehash) {
     int newCapacity = newTable.length;
@@ -1095,7 +1097,7 @@ final V putVal(int hash, K key, V value, boolean onlyIfAbsent,
 Node<K,V>[] newTab = (Node<K,V>[])new Node[newCap];
 table = newTab; // 将当前的表赋值为新定义的表
 if (oldTab != null) {   // 如果老表不为空, 则需遍历将节点赋值给新表
-    for (int j = 0; j < oldCap; ++j) {
+    for (int j = 0; j < oldCap; ++j) {  // 遍历老表
         Node<K,V> e;
         if ((e = oldTab[j]) != null) {  // 将索引值为j的老表头节点赋值给e
             oldTab[j] = null; // 将老表的节点设置为空, 以便垃圾收集器回收空间
@@ -1106,7 +1108,7 @@ if (oldTab != null) {   // 如果老表不为空, 则需遍历将节点赋值给
             else if (e instanceof TreeNode)
             	 // 调用treeNode的hash分布(跟下面最后一个else的内容几乎相同)
                 ((TreeNode<K,V>)e).split(this, newTab, j, oldCap);
-            else { // preserve order
+            else { // preserve order--保证 resize 前后每个 Node 下的链表的顺序和原理
                 Node<K,V> loHead = null, loTail = null; // 存储跟原索引位置相同的节点
                 Node<K,V> hiHead = null, hiTail = null; // 存储索引位置为:原索引+oldCap的节点
                 Node<K,V> next;

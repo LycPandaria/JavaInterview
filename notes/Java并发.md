@@ -23,6 +23,11 @@
 	- [synchronized](#synchronized)
 	- [ReentrantLock](#reentrantlock)
 	- [比较](#比较)
+	- [公平锁和非公平锁](#公平锁和非公平锁)
+		- [实现原理](#实现原理)
+		- [公平锁示例](#公平锁示例)
+		- [非公平锁示例](#非公平锁示例)
+		- [优缺点](#优缺点)
 	- [使用选择](#使用选择)
 - [六、线程之间的协作](#六线程之间的协作)
 	- [join()](#join)
@@ -493,6 +498,190 @@ synchronized 中的锁是非公平的，ReentrantLock 默认情况下也是非�
 **5. 锁绑定多个条件**
 
 一个 ReentrantLock 可以同时绑定多个 Condition 对象。
+
+## 公平锁和非公平锁
+公平锁就是保障了多线程下各线程获取锁的顺序，先到的线程优先获取锁，而非公平锁则无法提供这个保障。
+
+### 实现原理
+那如何能保证每个线程都能拿到锁呢，队列FIFO是一个完美的解决方案，也就是先进先出，java的ReenTrantLock也就是用队列实现的公平锁和非公平锁。
+
+在公平的锁中，如果有另一个线程持有锁或者有其他线程在等待队列中等待这个所，那么新发出的请求的线程将被放入到队列中。而非公平锁上，只有当锁被某个线程持有时，新发出请求的线程才会被放入队列中（此时和公平锁是一样的）。所以，它们的差别在于非公平锁会有更多的机会去抢占锁。
+```java
+//非公平锁
+final boolean nonfairTryAcquire(int acquires) {
+	 final Thread current = Thread.currentThread();
+	 int c = getState();
+	 if (c == 0) {
+		 //区别重点看这里
+			 if (compareAndSetState(0, acquires)) {
+					 setExclusiveOwnerThread(current);
+					 return true;
+			 }
+	 }
+	 else if (current == getExclusiveOwnerThread()) {
+			 int nextc = c + acquires;
+			 if (nextc < 0) // overflow
+					 throw new Error("Maximum lock count exceeded");
+			 setState(nextc);
+			 return true;
+	 }
+	 return false;
+}
+
+//公平锁
+protected final boolean tryAcquire(int acquires) {
+	 final Thread current = Thread.currentThread();
+	 int c = getState();
+	 if (c == 0) {
+		 //hasQueuedPredecessors这个方法就是最大区别所在
+			 if (!hasQueuedPredecessors() &&
+					 compareAndSetState(0, acquires)) {
+					 setExclusiveOwnerThread(current);
+					 return true;
+			 }
+	 }
+	 else if (current == getExclusiveOwnerThread()) {
+			 int nextc = c + acquires;
+			 if (nextc < 0)
+					 throw new Error("Maximum lock count exceeded");
+			 setState(nextc);
+			 return true;
+	 }
+	 return false;
+}
+// hasQueuedPredecessors的实现
+public final boolean hasQueuedPredecessors() {
+		Node t = tail; // Read fields in reverse initialization order
+		Node h = head;
+		Node s;
+		return h != t &&
+				((s = h.next) == null || s.thread != Thread.currentThread());
+}
+```
+分析以上代码，我们可以看到公平锁就是在获取锁之前会先判断等待队列是否为空或者自己是否位于队列头部，该条件通过才能继续获取锁。
+
+非公平锁的获取其实取决于 请求锁，释放锁和获取锁的先后顺序：
+1. 若在释放锁的时候总是没有新的进程来进行 CAS 获取锁操作，该进程还是会被放到 队列末尾，则非公平锁等于公平锁；
+2. 若释放锁的时候，正好一个进程来尝试获取锁，而此时位于队列头的进程还没有被唤醒（因为线程上下文切换是需要不少开销的），此时后来的进程则优先获得锁，成功打破公平，成为非公平锁；
+
+其实对于非公平锁，只要线程进入了等待队列，队列里面依然是FIFO的原则，跟公平锁的顺序是一样的。因为公平锁与非公平锁的release()部分代码是共用AQS的代码。
+```java
+private void unparkSuccessor(Node node) {
+    int ws = node.waitStatus;
+    if (ws < 0)
+        compareAndSetWaitStatus(node, ws, 0);
+	 // 获取线程队列下一个节点
+    Node s = node.next;
+		// 这个 if 语句是当 s 为空或已取消，从后往前遍历队列唤醒等待队列中最前边的那个未放弃线程
+    if (s == null || s.waitStatus > 0) {
+        s = null;
+        for (Node t = tail; t != null && t != node; t = t.prev)
+            if (t.waitStatus <= 0)
+                s = t;
+    }
+    if (s != null)
+       //唤醒队列头的线程
+        LockSupport.unpark(s.thread);
+}
+```
+### 公平锁示例
+```java
+import java.util.concurrent.locks.ReentrantLock;
+
+/**
+ * Created by Fant.J.
+ */
+public class MyFairLock {
+    /**
+     *     true 表示 ReentrantLock 的公平锁
+     */
+    private  ReentrantLock lock = new ReentrantLock(true);
+
+    public   void testFail(){
+        try {
+            lock.lock();
+            System.out.println(Thread.currentThread().getName() +"获得了锁");
+        }finally {
+            lock.unlock();
+        }
+    }
+    public static void main(String[] args) {
+        MyFairLock fairLock = new MyFairLock();
+        Runnable runnable = () -> {
+            System.out.println(Thread.currentThread().getName()+"启动");
+            fairLock.testFail();
+        };
+        Thread[] threadArray = new Thread[10];
+        for (int i=0; i<10; i++) {
+            threadArray[i] = new Thread(runnable);
+        }
+        for (int i=0; i<10; i++) {
+            threadArray[i].start();
+        }
+    }
+}
+```
+```TEXT
+Thread-0启动
+Thread-0获得了锁
+Thread-1启动
+Thread-1获得了锁
+Thread-2启动
+Thread-2获得了锁
+Thread-3启动
+Thread-3获得了锁
+Thread-4启动
+Thread-4获得了锁
+Thread-5启动
+Thread-5获得了锁
+
+```
+### 非公平锁示例
+```java
+public class MyNonfairLock {
+    /**
+     *     false 表示 ReentrantLock 的非公平锁
+     */
+    private  ReentrantLock lock = new ReentrantLock(false);
+
+    public  void testFail(){
+        try {
+            lock.lock();
+            System.out.println(Thread.currentThread().getName() +"获得了锁");
+        }finally {
+            lock.unlock();
+        }
+    }
+    public static void main(String[] args) {
+        MyNonfairLock nonfairLock = new MyNonfairLock();
+        Runnable runnable = () -> {
+            System.out.println(Thread.currentThread().getName()+"启动");
+            nonfairLock.testFail();
+        };
+        Thread[] threadArray = new Thread[10];
+        for (int i=0; i<10; i++) {
+            threadArray[i] = new Thread(runnable);
+        }
+        for (int i=0; i<10; i++) {
+            threadArray[i].start();
+        }
+    }
+}
+```
+```TEXT
+Thread-1启动
+Thread-0启动
+Thread-0获得了锁
+Thread-1获得了锁
+Thread-8启动
+Thread-8获得了锁
+Thread-3启动
+Thread-3获得了锁
+Thread-4启动
+Thread-4获得了锁
+```
+### 优缺点
+非公平锁性能高于公平锁性能。首先，在恢复一个被挂起的线程与该线程真正运行之间存在着严重的延迟。而且，非公平锁能更充分的利用cpu的时间片，尽量的减少cpu空闲的状态时间。
 
 ## 使用选择
 
