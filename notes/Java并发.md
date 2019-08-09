@@ -9,12 +9,7 @@
 - [二、使用线程](#二使用线程)
 	- [run()和start()](#run和start)
 	- [实现接口 VS 继承 Thread](#实现接口-vs-继承-thread)
-- [三、基础线程机制](#三基础线程机制)
-	- [Executor（线程池种类）](#executor线程池种类)
-	- [阻塞队列（runnableTaskQueue）](#阻塞队列runnabletaskqueue)
-	- [Daemon](#daemon)
-	- [sleep()](#sleep)
-	- [yield()](#yield)
+- [三、线程机制](#三线程机制)
 - [四、中断](#四中断)
 	- [InterruptedException](#interruptedexception)
 	- [interrupt()](#interrupt)
@@ -176,71 +171,11 @@ public class CallableAndFuture{
   - Java 不支持多重继承，因此继承了 Thread 类就无法继承其它类，但是可以实现多个接口；
   - 类可能只要求可执行就行，继承整个 Thread 类开销过大。
 
-# 三、基础线程机制
-## Executor（线程池种类）
-Executor 管理多个异步任务的执行，而无需程序员显式地管理线程的生命周期。这里的异步是指多个任务的执行互不干扰，不需要进行同步操作。
+# 三、线程机制
+[线程机制](./Java并发-线程机制.md)
+内容偏多，新建一文介绍线程机制.
 
-Executor 主要有三种：
-- CachedThreadPool：一个任务创建一个线程；
-- FixedThreadPool：所有任务只能使用固定大小的线程；
-- SingleThreadExecutor：相当于大小为 1 的 FixedThreadPool。
-
-```java
-public static void main(String[] args) {
-    ExecutorService executorService = Executors.newCachedThreadPool();
-    for (int i = 0; i < 5; i++) {
-        executorService.execute(new MyRunnable());
-    }
-    executorService.shutdown();
-}
-```
-
-## 阻塞队列（runnableTaskQueue）
--	ArrayBlockingQueue:一个基于数组结构的有界阻塞队列，此队列按照先进先出原则对元素进行排序；
--	LinkedBlockingQueue:一个基于链表结构的阻塞队列，按照先进先出对元素进行排序。吞吐量通常要高于ArrayBlockingQueue。静态工厂方法Excutors.newFixedThreadPool()使用了这个队列；
--	SynchronousQueue:一个不存储元素的阻塞队列。每个插入操作必须等到另一个线程调用移除操作，否则插入操作一直处于阻塞状态。吞吐量要高于LinkedBlockingQueue。静态工厂方法Excutors.newCachedThreadPool()使用了这个队列；
--	PriorityBlockingQueue:一个具有优先级的无界阻塞队列。
-
-
-## Daemon
-守护线程是程序运行时在后台提供服务的线程，不属于程序中不可或缺的部分。
-
-当所有非守护线程结束时，程序也就终止，同时会杀死所有守护线程。
-
-main() 属于非守护线程。
-
-使用 setDaemon() 方法将一个线程设置为守护线程。
-
-```java
-public static void main(String[] args) {
-    Thread thread = new Thread(new MyRunnable());
-    thread.setDaemon(true);
-}
-```
-
-## sleep()
-Thread.sleep(millisec) 方法会休眠当前正在执行的线程，millisec 单位为毫秒。
-
-sleep() 可能会抛出 InterruptedException，因为异常不能跨线程传播回 main() 中，因此必须在本地进行处理。线程中抛出的其它异常也同样需要在本地进行处理。
-
-```java
-public void run() {
-    try {
-        Thread.sleep(3000);
-    } catch (InterruptedException e) {
-        e.printStackTrace();
-    }
-}
-```
-
-## yield()
-对静态方法 Thread.yield() 的调用声明了当前线程已经完成了生命周期中最重要的部分，可以切换给其它线程来执行。该方法只是对线程调度器的一个建议，而且也只是建议具有相同优先级的其它线程可以运行。
-
-```java
-public void run() {
-    Thread.yield();
-}
-```
+内容主要包括：线程池的种类，原理，阻塞队列，sleep(), yield()
 
 # 四、中断
 一个线程执行完毕之后会自动结束，如果在运行过程中发生异常也会提前结束
