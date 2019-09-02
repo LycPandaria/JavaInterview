@@ -109,10 +109,12 @@ position-3 : (0,1,2,3,2,5) // already in position
 position-4 : (0,1,2,3,2,5) // nums[i] == nums[nums[i]], exit
 ```
 ```java
-public boolean duplicate(int numbers[],int length,int [] duplication) {
+public boolean duplicate(int
+ numbers[],int length,int [] duplication) {
     // 数组检查
     if(numbers==null || length <=0)
-        return false;
+        re
+        turn false;
     for(Integer num : numbers)   // 迭代器只能用包装类 Integer,不能用 int
         if(num < 0 || num > length-1)
             return false;
@@ -1962,9 +1964,11 @@ public int MoreThanHalfNum_Solution(int [] array) {
   - 复杂度：O(NlogK) + O(K)
   - 特别适合处理海量数据
   **大顶堆：根结点（亦称为堆顶）的关键字是堆里所有结点关键字中最大者，称为大根堆，又称最大堆（大顶堆）**
-  应该使用大顶堆来维护最小堆，而不能直接创建一个小顶堆并设置一个大小，企图让小顶堆中的元素都是最小元素。
+  应该使用大顶堆来维护最小堆，而不能直接创建一个小顶堆并设置一个大小，企图让小顶堆
+  中的元素都是最小元素。
 
-  维护一个大小为 K 的最小堆过程如下：在添加一个元素之后，如果大顶堆的大小大于 K，那么需要将大顶堆的堆顶元素去除。
+  维护一个大小为 K 的最小堆过程如下：在添加一个元素之后，如果大顶堆的大小大于 K，
+  那么需要将大顶堆的堆顶元素去除。
   ```java
   public ArrayList<Integer> GetLeastNumbers_Solution(int[] nums, int k) {
       if (k > nums.length || k <= 0)
@@ -3013,15 +3017,16 @@ private void swap(char[] carr, int begin, int end){
 public ArrayList<Integer> maxInWindows(int [] num, int size)
 {
     ArrayList<Integer> ret = new ArrayList<>();
+    // 1. check
     if(num == null || num .length==0 || size < 1 || size > num.length)
         return ret;
-    // 大顶堆
+    // 2/ 大顶堆
     PriorityQueue<Integer> heap = new PriorityQueue<>((o1,o2) -> (o2 - o1));
-    // 填充 heap
+    // 3. 填充 heap
     for(int i=0; i < size; i++)
         heap.add(num[i]);
     ret.add(heap.peek()); // 第一个滑动窗口最大值
-    // 滑动窗口移动，先头元素移除，再加入新元素，再把根节点值(滑动窗口最大值)加入到结果中
+    // 4. 滑动窗口移动，先头元素移除，再加入新元素，再把根节点值(滑动窗口最大值)加入到结果中
     for(int i = 0, j = i + size; j < num.length; i++, j++){
         heap.remove(num[i]);
         heap.add(num[j]);
@@ -3040,25 +3045,25 @@ public ArrayList<Integer> maxInWindows(int [] num, int size)
 ### 解题思路
 ```java
 public boolean isContinuous(int[] nums) {
-
+  // 1. check
     if (nums.length < 5)
         return false;
-
+  // 2. 排序
     Arrays.sort(nums);
 
-    // 统计癞子数量
+  // 3. 统计癞子数量
     int cnt = 0;
     for (int num : nums)
         if (num == 0)
             cnt++;
 
-    // 使用癞子去补全不连续的顺子
+    // 4. 使用癞子去补全不连续的顺子
+    // 因为排过序，所以在 numbers[cnt] 之前的就是代表癞子的 0
     for (int i = cnt; i < nums.length - 1; i++) {
         if (nums[i + 1] == nums[i])
-            return false;
+            return false;     // 相同的牌之间不是顺子也不能用癞子
         cnt -= nums[i + 1] - nums[i] - 1;
     }
-
     return cnt >= 0;
 }
 ```
@@ -3076,17 +3081,18 @@ import java.util.LinkedList;
 
 public class Solution {
     public int LastRemaining_Solution(int n, int m) {
+      // 1. 构建小朋友链表
         LinkedList<Integer> list = new LinkedList<Integer>();
         for (int i = 0; i < n; i ++) {
             list.add(i);
         }
-
+      // 2. 模拟游戏过程
         int bt = 0;
         while (list.size() > 1) {
             bt = (bt + m - 1) % list.size();
             list.remove(bt);
         }
-
+      // 3. 判断最后链表里是否还有小朋友
         return list.size() == 1 ? list.get(0) : -1;
     }
 }
