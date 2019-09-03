@@ -193,9 +193,11 @@ InnoDB 的 B+Tree 索引分为主索引和辅助索引。主索引的叶子节�
 
 如果我们定义了主键(PRIMARY KEY)，那么InnoDB会选择主键作为聚集索引、如果没有显式定义主键，则InnoDB会选择第一个不包含有NULL值的唯一索引作为主键索引、如果也没有这样的唯一索引，则InnoDB会选择内置6字节长的ROWID作为隐含的聚集索引(ROWID随着行记录的写入而主键递增，这个ROWID不像ORACLE的ROWID那样可引用，是隐含的)。
 
-<div align="center"> <img src="../pic/index1.png"/> </div><br>
+![index1](../pic/index1.PNG)
 
-<div align="center"> <img src="../pic/index2.png"/> </div><br>
+![index2](../pic/index2.PNG)
+
+<div align="center"> <img src="../pic/index2.PNG"/> </div><br>
 
 1. InnoDB使用的是聚簇索引，将主键组织到一棵B+树中，而行数据就储存在叶子节点上，若使用"where id = 14"这样的条件查找主键，则按照B+树的检索算法即可查找到对应的叶节点，之后获得行数据。
 
