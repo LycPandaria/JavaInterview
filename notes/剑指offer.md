@@ -2811,10 +2811,14 @@ public boolean IsBalanced_Solution(TreeNode root) {
 }
 private int heigth(TreeNode root){
     // 后序遍历
+    // 1. 递归函数的 return 控制
     if(root == null || !isBalanced)
         return 0;
+    // 2. 递归 左子树
     int left = height(root.left);    // 得到左右子树的高度
+    // 3. 递归右子树
     int right = height(root.right);
+    // 4. 深度检查
     if(Math.abs(left-right) > 1)
         isBalanced = false;
     return 1 + Math.max(left, right);   // 这里加 max 是为了让父节点得到左右子节点的最大深度
@@ -2836,10 +2840,10 @@ diff &= -diff 得到出 diff 最右侧不为 0 的位，也就是不存在重复
 public void FindNumsAppearOnce(int[] nums, int num1[], int num2[]) {
     int diff = 0;
     for (int num : nums)
-        diff ^= num;  // 得到两个不同的元素的异或
-    diff &= -diff;      // 找到最右为 1 的那一位，记为 n
+        diff ^= num;  // 1. 得到两个不同的元素的异或
+    diff &= -diff;      // 2. 找到最右为 1 的那一位，记为 n
     for (int num : nums) {
-      // 这里是对数进行分类，通过 第 n 位是不是 0 来分类，第一个数组中每个数字的第 n 位都是 1
+      // 3. 这里是对数进行分类，通过 第 n 位是不是 0 来分类，第一个数组中每个数字的第 n 位都是 1
       // 第 n 位是 0 的在第二个数组(相同的数会被分到一个组中)，然后在两个数组中再做一次异或，就能分别得到那两个不相同的数
         if ((num & diff) == 0)    
             num1[0] ^= num;
@@ -2906,20 +2910,20 @@ public ArrayList<ArrayList<Integer> > FindContinuousSequence(int sum) {
     int end = (1+sum)/2;    // small 从1增到end
     while(small < end){
         if(curSum > sum){
-            // 和大于sum，需要去掉序列中最小的值，即small++
+            // 1. 和大于sum，需要去掉序列中最小的值，即small++
             curSum -= small;
             small++;
         } else if(curSum < sum){
-            // 和小于sum,需要加入更大的数，big++
+            // 2. 和小于sum,需要加入更大的数，big++
             big++;
             curSum += big;
         }else{
-            // 符合要求的序列
+            // 3. 符合要求的序列
             ArrayList<Integer> list = new ArrayList<>();
             for(int i=small; i<=big; i++)
                 list.add(i);
             ret.add(list);
-            // 继续寻找符合的序列
+            // 4. 继续寻找符合的序列
             curSum -= small;
             small++;
             big++;
@@ -2941,9 +2945,9 @@ public ArrayList<ArrayList<Integer> > FindContinuousSequence(int sum) {
 ```java
 public String ReverseSentence(String str) {
     char[] carr = str.toCharArray();
-    // 对整个反转
+    // 1. 对整个反转
     swap(carr, 0, carr.length-1);
-    // 对单词反转
+    // 2. 对单词反转
     int begin = 0;    // 每次遇到空格后都会更新，更新为空格后第一个字符的位置
     for(int i=1; i <= carr.length; i++){
         // 注意这个条件 i==carr.length，最后达到字符串
