@@ -197,7 +197,6 @@ InnoDB 的 B+Tree 索引分为主索引和辅助索引。主索引的叶子节�
 
 ![index2](../pic/index2.PNG)
 
-<div align="center"> <img src="../pic/index2.PNG"/> </div><br>
 
 1. InnoDB使用的是聚簇索引，将主键组织到一棵B+树中，而行数据就储存在叶子节点上，若使用"where id = 14"这样的条件查找主键，则按照B+树的检索算法即可查找到对应的叶节点，之后获得行数据。
 

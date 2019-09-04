@@ -2456,17 +2456,6 @@ boolean isUgly(int n){
 
 ### 解题思路
 可以使用 HashMap 或者 BitSet
-```java
-public int FirstNotRepeatingChar(String str) {
-  int[] cnts = new int[256];  // 每一位都可以对应到一个字符,空间换时间
-  for(int i = 0; i < str.length(); i++)
-    cnts[str.charAt(i)] ++;   // 出现过一次，相应的位置 +1
-  for(int i = 0; i < str.length(); i++)
-    if(cnts[str.charAt(i)] == 1)
-      return i;
-  return -1;
-}
-```
 
 ```java
 public int FirstNotRepeatingChar2(String str) {
@@ -2561,18 +2550,24 @@ public int InverseParis(int[] nums){
 }
 
 private void mergeSort(int[] nums, int l, int h){
+  // 1. 判断 low 和 high
   if(l < h){
-    int m = (l + h) / 2;
-    mergeSort(nums, l, m);
-    mergeSort(nums, m+1, h);
-    merge(nums, l, m, h);
-  }
+      // 2. 求mid
+      int m = (l+h)/2;
+      // 3. 分隔左右分别做mergeSort
+      mergeSort(arr, l, m);
+      mergeSort(arr, m+1, h);
+      // 4. 做 merge
+      merge(arr, l, m, h);
+    }
 }
 
 private void merge(int[] nums, int low, int mid, int high){
+  // 1. 需要用到的变量
   int i = low;  // 左边下标
   int j = mid+1;  // 右边下标
   int k = low;    // tmp 数组下标
+  // 2. 排序的条件判断
   while(i <= mid || j <= high){
     if(i > mid)
       tmp[k] = nums[j++]; // 这一步代表 左边的数已经全部放入tmp中，把右边的部分依次顺序放入tmp中
@@ -2586,6 +2581,7 @@ private void merge(int[] nums, int low, int mid, int high){
     }
     k++;  // 移动 tmp 下标
   }
+  // 3. copy back
   for(k = low; k <= high; k++)
     nums[k] = tmp[k];   // tmp中是排序好的，复制到nums中
 }

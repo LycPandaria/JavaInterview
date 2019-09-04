@@ -381,6 +381,7 @@ future.cancel(true);
 ## ReentrantLock
 ReentrantLock 是 java.util.concurrent（J.U.C）包中的锁。
 ```java
+/*  codes/edu/concurrent/lock/LockExample.java  */
 public class LockExample {
 
     private Lock lock = new ReentrantLock();
@@ -521,14 +522,11 @@ private void unparkSuccessor(Node node) {
 ```
 ### 公平锁示例
 ```java
+/*  codes/edu/concurrent/lock/MyFairLock.java  */
 import java.util.concurrent.locks.ReentrantLock;
-
-/**
- * Created by Fant.J.
- */
 public class MyFairLock {
     /**
-     *     true 表示 ReentrantLock 的公平锁
+     *     true 表示 ReentrantLock 的公平锁，默认是 false
      */
     private  ReentrantLock lock = new ReentrantLock(true);
 
@@ -573,6 +571,7 @@ Thread-5获得了锁
 ```
 ### 非公平锁示例
 ```java
+/*  codes/edu/concurrent/lock/MyNonfairLock.java  */
 public class MyNonfairLock {
     /**
      *     false 表示 ReentrantLock 的非公平锁
@@ -731,14 +730,13 @@ after
 - wait() 会释放锁，sleep() 不会。
 
 ## await() signal() signalAll()
-
 java.util.concurrent 类库中提供了 Condition 类来实现线程之间的协调，可以在 Condition 上调用 await() 方法使线程等待，其它线程调用 signal() 或 signalAll() 方法唤醒等待的线程。
 
 相比于 wait() 这种等待方式，await() 可以指定等待的条件，因此更加灵活。
 
 使用 Lock 来获取一个 Condition 对象。
-
 ```java
+/*  codes/edu/concurrent/lock/AwaitSignalExample.java  */
 public class AwaitSignalExample {
 
     private Lock lock = new ReentrantLock();
@@ -748,7 +746,7 @@ public class AwaitSignalExample {
         lock.lock();
         try {
             System.out.println("before");
-            condition.signalAll();
+            condition.signalAll();		// 唤醒等待的线程
         } finally {
             lock.unlock();
         }
@@ -757,7 +755,7 @@ public class AwaitSignalExample {
     public void after() {
         lock.lock();
         try {
-            condition.await();
+            condition.await();				// 等待 condition 的 signal
             System.out.println("after");
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -784,7 +782,7 @@ after
 
 # 七、J.U.C - AQS
 
-java.util.concurrent（J.U.C）大大提高了并发性能，AQS 被认为是 J.U.C 的核心。
+java.util.concurrent（J.U.C）大大提高了并发性能，AQS(AbstractQueuedSynchronizer) 被认为是 J.U.C 的核心。
 
 ## CountDownLatch
 
@@ -1418,6 +1416,27 @@ public void add() {
     cnt.incrementAndGet();
 }
 ```
+一下代码是 AtomicInteger 的源码：
+```java
+public class AtomicInteger extends Number implements java.io.Serializable {
+    // setup to use Unsafe.compareAndSwapInt for updates
+    private static final Unsafe unsafe = Unsafe.getUnsafe();
+    private static final long valueOffset;
+
+    static {
+        try {
+            valueOffset = unsafe.objectFieldOffset
+                (AtomicInteger.class.getDeclaredField("value"));
+        } catch (Exception ex) { throw new Error(ex); }
+    }
+
+    private volatile int value;
+    public final int get() {return value;}
+}
+```
+1. Unsafe，是CAS的核心类，由于Java方法无法直接访问底层系统，需要通过本地（native）方法来访问，Unsafe相当于一个后门，基于该类可以直接操作特定内存的数据。
+2. 变量 valueOffset，表示该变量值在内存中的偏移地址，因为Unsafe就是根据内存偏移地址获取数据的。
+3. 变量 value 用 volatile 修饰，保证了多线程之间的内存可见性。
 
 以下代码是 incrementAndGet() 的源码，它调用了 Unsafe 的 getAndAddInt() 。
 
@@ -1441,6 +1460,12 @@ public final int getAndAddInt(Object var1, long var2, int var4) {
     return var5;
 }
 ```
+假设线程A和线程B同时执行getAndAdd操作（分别跑在不同CPU上）：
+	1. AtomicInteger里面的value原始值为3，即主内存中AtomicInteger的value为3，根据Java内存模型，线程A和线程B各自持有一份value的副本，值为3。
+	2. 线程A通过getIntVolatile(var1, var2)拿到value值3，这时线程A被挂起。
+	3. 线程B也通过getIntVolatile(var1, var2)方法获取到value值3，运气好，线程B没有被挂起，并执行compareAndSwapInt方法比较内存值也为3，成功修改内存值为2。
+	4. 这时线程A恢复，执行compareAndSwapInt方法比较，发现自己手里的值(3)和内存的值(2)不一致，说明该值已经被其它线程提前修改过了，那只能重新来一遍了。
+	5. 重新获取value值，因为变量value被volatile修饰，所以其它线程对它的修改，线程A总是能够看到，线程A继续执行compareAndSwapInt进行比较替换，直到成功。
 
 ### 3. ABA
 
