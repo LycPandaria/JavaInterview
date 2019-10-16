@@ -2245,30 +2245,32 @@ public String PrintMinNumber(int [] numbers) {
 
 ```java
 public int numDecodings(String s) {
-    if (s == null || s.length() == 0)
-        return 0;
-    if(s.length()==1)
-        return 1;
-    int n = s.length();
-    int[] dp = new int[n + 1];  // 动态规划结果保存
-    // 初始化数组，只有一个字符的时候，可翻译方法为1
-    // 两个字符的时候, 当第一个字符为 0 的时候，就只有1种翻译方法
-    // 所以当 s.charAt(0) == '0' 的时候 dp[1] 要设置为 0
-    dp[0] = 1;
-    dp[1] = s.charAt(0) == '0' ? 0 : 1;
-    for (int i = 2; i <= n; i++) {
-        // 这里取的是第 s[i-1],i表示的是字符串的第i位
-        int one = Integer.valueOf(s.substring(i - 1, i));
-        if (one != 0)
-            dp[i] += dp[i - 1];
-        if (s.charAt(i - 2) == '0')
-            continue;
-        // 取的是 s[i-2,i] 两个字符
-        int two = Integer.valueOf(s.substring(i - 2, i));
-        if (two <= 26)
-            dp[i] += dp[i - 2];
-    }
-    return dp[n];
+    if(s == null || s.length() == 0)
+         return 0;
+     int n = s.length();
+     /* 1.  dp
+      初始化数组，只有一个字符的时候，可翻译方法为1
+     两个字符的时候, 当第一个字符为 0 的时候，就只有1种翻译方法
+     所以当 s.charAt(0) == '0' 的时候 dp[1] 要设置为 0
+     */
+     int[] dp = new int[n+1];
+     dp[0] = 1;
+     dp[1] = s.charAt(0) != '0' ? 1 : 0;
+     
+     for(int i = 2; i <= n; i++) {
+         // 2. 获得前面 1 个字符 和 2 个字符组合
+         int first = Integer.valueOf(s.substring(i-1, i));
+         int second = Integer.valueOf(s.substring(i-2, i));
+         // 3. 如果前面 1 个字符不是 0，加上 dp[i-1]
+         if(first >= 1 && first <= 9) {
+            dp[i] += dp[i-1];  
+         }
+         // 4. 如果 前面两个字符的组合在 10-26之间，加上 dp[i-2]
+         if(second >= 10 && second <= 26) {
+             dp[i] += dp[i-2];
+         }
+     }
+     return dp[n];
 }
 ```
 
@@ -2315,14 +2317,11 @@ public int getMost(int[][] board) {
             //因为从一开始我们就进行了大小的比较，每一个点存储的都是到达当前点
             //的最大值。所以直到最后一个点为止，她的值就是当前最大值的和。只要返回
             //最后一个点的内容就可以了。
-              if(temup>templeft){
-                  board[i][j] +=temup ;
-              }else{
-                  board[i][j] +=templeft;
-              }
+              board[i][j] += Math.max(temup, templeft);
           }
       }
   }
+  return board[board.length-1][board[0].length-1];
 }
 ```
 
@@ -2335,18 +2334,20 @@ public class Bonus {
     public int getMost(int[][] vals) {
         if(vals == null || vals.length == 0 || vals[0].length == 0)
             return 0;
-        int n = vals[0].length;    // 数组的列数
-        int[] dp = new int[n];    // 用一维数组存储动态规划的结果
+        int n = vals[0].length;    
+        // 1. 用一维数组存储动态规划的结果
+        int[] dp = new int[n];    
         for(int[] val : vals){
-            // 每循环到一行(vals[k]), dp[0] += vals[k][0]，因为这种情况下运功方向是
-            // 向下移动，相当于 dp[0] 存储的是一直往下走的礼物的最大值情况
+            /* 2. 每循环到一行(vals[k]), dp[0] += vals[k][0]，因为这种情况下运功方向是向下移动，相当于 dp[0] 存储的是一直往下走的礼物的最大值情况 */
             dp[0] += val[0];
-            // 每循环到一行(vals[k]), dp[0..n-1]都会得到更新
-            // 新的值取值依据为 dp[i](new) = Math.max(dp[i], dp[i-1]) + val[i];
-            // 毕竟我们说过只有 往下走一格或者 往右走一格才能到达 (k,i)
-            // 其中dp[i] 存的值是它的上一行的相同列的礼物最大值 f(k-1,i),往下走一格到达(k,i)
-            // dp[i-1] 存的是 同列它的左边的礼物最大值 f(k,i-1),往右走一格到达(k,i)
-            // 新的 dp[i] 值即从两者中最大值加上 (k,i) 的礼物值
+            /* 3. 更新 dp
+             每循环到一行(vals[k]), dp[0..n-1]都会得到更新
+             新的值取值依据为 dp[i](new) = Math.max(dp[i], dp[i-1]) + val[i];
+             毕竟我们说过只有 往下走一格或者 往右走一格才能到达 (k,i)
+             其中dp[i] 存的值是它的上一行的相同列的礼物最大值 f(k-1,i),往下走一格到达(k,i)
+             dp[i-1] 存的是 同列它的左边的礼物最大值 f(k,i-1),往右走一格到达(k,i)
+             新的 dp[i] 值即从两者中最大值加上 (k,i) 的礼物值
+            */
             for(int i=1; i < n; i++)
                 dp[i] = Math.max(dp[i], dp[i-1]) + val[i];
         }
@@ -2373,9 +2374,12 @@ public class Bonus {
 public int longestSubStringWithoutDuplication(String str) {
   int curLen = 0;   // f(i)
   int maxLen = 0;   // 记录最大长度
+  // 1. 初始化 index 数组
   // 这个数组用于方便我们计算当我们碰到一个重复的字符之后，它的上一次出现的位置
   int[] preIndexs = new int[26];  
-  Arrays.fill(preIndexs, -1);   // 如果该字符没有出现记录，则上次出现的位置为 -1
+  // 如果该字符没有出现记录，则上次出现的位置为 -1
+  Arrays.fill(preIndexs, -1);   
+
   for(int curI = 0; curI < str.length(); curI++){
     int c = str.charAt(curI) - 'a';
     int preI = preIndexs[c];   //上次出现的位置
@@ -2423,22 +2427,22 @@ boolean isUgly(int n){
  * 乘以 2,3 或者 5 得到的。
  * 解决的办法是我们要记录上 i2, i3, i5，表示 num[i2] 这个丑数 *2 是一定大于或等于 M 的，然后我们再取 num[i2]*2, num[i3]*3, num[i5]*5 的最小值作为下一个丑数
  */
- import java.util.Math;
  public class Solution {
      public int GetUglyNumber_Solution(int index) {
          if(index <= 6)
              return index;
          int i2 = 0, i3 = 0, i5 = 0;
-         int num[] = new int[index];    // 丑数数组
-         num[0] = 1;    // 第一个丑数
+         int num[] = new int[index];    // 1. 丑数数组
+         num[0] = 1;    // 2. 第一个丑数
          for(int i = 1; i < index; i++){
+              // 3. 计算下一个丑数
              // 这三个数字都是大于 M 的，M为当前丑数数组的最大值
              int next2 = num[i2] * 2;
              int next3 = num[i3] * 3;
              int next5 = num[i5] * 5;
-             // 将最小值放入丑数数组中
+             // 4. 将最小值放入丑数数组中
              num[i] = Math.min(next2, Math.min(next3,next5));
-             // 更新 i2,i3,i5,确保num[i2]*2, num[i3]*3, num[i5]*5 是下一个丑数的候选
+             // 5. 更新 i2,i3,i5,确保num[i2]*2, num[i3]*3, num[i5]*5 是下一个丑数的候选
              if(num[i] == next2) i2++;
              if(num[i] == next3) i3++;
              if(num[i] == next5) i5++;

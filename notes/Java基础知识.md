@@ -357,9 +357,9 @@ class OuterClass{
 
 # 关键字
 ## static关键字有什么用
-1. static成员变量：静态变量属于类，在内存中只有一个复制（所以实例都指向同一个内存地址）--达到一种全局的效果
+1. static成员变量：静态变量属于类，在内存中只有一个复制（所有实例都指向同一个内存地址）--达到一种全局的效果
 2. static成员方法：static方法中不能使用this和super，只能访问所属类的静态成员变量和成员方法。  
-static方法一个重要的应用是**单例模式**：隐藏构造函数，只能通过类的方法获取类的唯一对象。
+static方法一个重要的应用是 **单例模式**：隐藏构造函数，只能通过类的方法获取类的唯一对象。
 ```java
 class Singleton{
 	private static Singleton instance = null;
@@ -606,7 +606,7 @@ StringBuffer sb = new StringBuffer(s);
 sb.append("World");
 s=sb.toString();
 ```
-StringBuilder和StringBuffer一样都是字符串缓冲区，StringBuilder不是线程安全的，在单线程环境下，Stringbuilder效率会更高一点。StringBuffer 是线程安全的，内部使用 synchronized 进行同步
+StringBuilder和StringBuffer一样都是字符串缓冲区，**StringBuilder不是线程安全的**，在单线程环境下，Stringbuilder效率会更高一点。**StringBuffer 是线程安全的**，内部使用 synchronized 进行同步
 
 StringTokenizer是用来分割字符串的工具类。
 
@@ -753,7 +753,7 @@ System.out.println(example.toString());	// ToStringExample@4554617c
 ## clone()
 1. Java在处理基本数据类型（int,char,double）时候，采用按值传递，除此之外其他类型都是采用引用传递。
 2. 对象除了在函数调用时候是按引用传递，在使用“=”赋值时候也是引用传递。
-3. 在不影响原因对象的情况下创建一个具有相同状态的对象，就需要使用clone()方法。
+3. 在不影响原对象的情况下创建一个具有相同状态的对象，就需要使用clone()方法。
    1. 实现clone()的类需要继承Cloneable接口（这是一个标识接口）
    2. 在类中重写Object类的clone方法(clone方法是Object的一个protected方法)
    3. 在clone方法中调用super.clone()方法。
@@ -761,7 +761,7 @@ System.out.println(example.toString());	// ToStringExample@4554617c
 ```java
 // 浅复制
 class Obj implements Cloneable{
-	private a=0;
+	private int a=0;
 	public int getA(){return a;}
 	public void setA(int b){this.a=b;}
 	public void changeA(int c){this.a=c;}
@@ -857,7 +857,7 @@ Java提供了两种错误异常类：Error和Exception,父类都是Throwable
 1. 字节流以字节（8bit）为单位，包含两个抽象类：InputStream和OutputStream。
 2. 字符流以字符（16bit）为单位，一次可以读取多个字节，它包含两个抽象类：Reader和Writer
 3. 两者最主要的区别为：在处理输入输出时候，字节流不会用到缓存，而字符流用到缓存。
-4. Java IO类在涉及时候采用了Decorator 装饰者设计模式。
+4. Java IO类在涉及时候采用了 Decorator 装饰者设计模式。
 
 ## 管理文件和目录的类：
 File类，常用的几个方法为：File(String pathname), createNewFile(), delete(), isFile(), isDirectory(), listFiles(), mkdir(), exists()
@@ -892,31 +892,6 @@ System.out.println(""+1+2);	// 12
 ```
 
 # Java平台与内存管理
-## JVM加载class文件机制
-当运行指定程序时，JVM会将编译生成的.class文件按照需求和一定的规则加载到内存中。
-这个过程是由类加载器来完成的，ClassLoader和它的子类。
-Java的三种类加载器：
-1. Bootstrap Loader（C++写的）：负责加载系统类（jre/lib/rt.jar的类）
-2. ExtClass Loader：负责加载扩展类（jar/lib/ext/\*jar的类）
-3. APPClassLoader：负责加载应用类
-
-## 什么是GC--垃圾回收器
-GC主要负责：分配内存，确保被引用对象的内存不被错误地回收，回收不再被引用的对象的内存空间。  
-对于垃圾回收器来说，它使用有向图来记录和管理堆内存中的所有对象，通过这个有向图可以识别哪些对象是可达的，哪些是不可达的。  
-几种垃圾回收器算法：
-1. 引用计数算法 reference counting collector
-简单但是效率低下。在堆中对每个对象都有个引用计数器；当对象被引用时，计数器加1，当引用被置空或者离开作用域时，计数器减1. JVM并没有采用这种方法，因为它没法解决互相引用问题。
-2. 追踪回收算法  tracing collector
-追踪回收算法利用JVM维护的对象引用图，从根节点开始遍历对象的引用图，同时标记遍历到的对象，当遍历结束后收回未被标记的对象。
-3. 压缩回收算法  compacting collector
-把堆中活动的对象移动到堆的一端，这样就会在堆中另一端留出很大的空闲区域，相当于对堆中碎片进行了处理，但是代价是性能损失。
-4. 复制回收算法  coping collector
-把堆分成两个大小相同的区域，在任何时候，只有一个区域被使用，知道该区域被用完，此时GC中断程序执行，通过变量方式把活动对象复制到另一个区域，在复制过程中他们是紧挨着分布的，这样可以消除碎片。
-5. 按代回收算法 generation collector
-复制回收算法主要缺点是复制次数太多。由于程序有“程序创建的大部分对象的生命周期都很短，只有一部分对象有很长的生命周期”的特点，按代回收将堆分成两个或者多个子堆，每个子堆代表一代。算法在运行过程中优先收集“年幼的对象”，如果一个对象经过多次收集仍然存活，就把该对象转移到高一级的堆中，减少对其的扫描次数。  
-
-开发人员可以通过System.gc()通知垃圾回收器运行，但不推荐，因为该方法会停止所有响应。
-
 ## Java是否存在内存泄漏
 Java中容易引起内存泄漏的几个方面：
 1. 静态集合类，例如hashmap和vector。如果这些容器是静态的，由于他们生命周期与程序一致，容易引起内存泄漏。
@@ -930,7 +905,7 @@ Java中容易引起内存泄漏的几个方面：
 栈内存主要用来存放 **基本数据类型** 和 **引用变量**。  
 堆内存用来存放 **运行时创建的对象**，通过new关键字创建出来的对象都存放在堆中，一个JVM实例维护一个堆，多线程也是共享这个堆。
 
-# Java容器
+# Java容器 (详见笔记 Java IO)
 容器主要包括Collection和 Map 两种，Collection 存储着对象的集合，而 Map 存储着键值对（两个对象）的映射表。
 ## Collection
 ![Collection框架](../pic/java容器.png)
@@ -1063,5 +1038,8 @@ synchronized使用Object对象本身的notify，wait，notifyAll控制调度，�
 1. 用法不一样。synchronized既可以加到方法上，也可以在特定代码块中。Lock需要显式地指出起始位置。
 2. 性能不一样。Lock不仅拥有和synchronized相同的并发性和内存语义，还有锁投票，定时，等候和中断锁。在竞争不激烈时候，性能差距不大，但是竞争激烈时候，synchronized性能下降很快，ReentrantLock性格基本不变。
 3. 锁机制不一样。synchronized获得锁和释放的方式都是在块结构中，当获取多个锁时，必须以相反的顺序释放，并自动解锁。Lock需要开发人员手动释放锁，并且必须在finally中释放。Lock的tryLock()方法可以采用非阻塞的方式获取锁。
+
+### synchronized, 偏向锁，轻量锁，重量级锁
+[synchronized原理分析](https://segmentfault.com/a/1190000017255044)
 
 [synchronized的源码分析](https://www.jianshu.com/p/c13c0a80dbca)
