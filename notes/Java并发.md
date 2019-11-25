@@ -271,7 +271,7 @@ java.lang.InterruptedException: sleep interrupted
     at java.lang.Thread.run(Thread.java:745)
 ```
 
-如果只想中断 Executor 的一个线程，可以通过使用 submit() 方法来提交一个线程，它会返回一个 Future<?> 对象，调用该对象的 cancel(true) 方法就可以中断线程
+如果只想中断 Executor 的一个线程，可以通过使用 **submit() 方法来提交一个线程，它会返回一个 Future<?> 对象，调用该对象的 cancel(true) 方法就可以中断线程**
 ```java
 Future<?> future = executorService.submit(() -> {
     // ..
@@ -434,6 +434,16 @@ synchronized 中的锁是非公平的，ReentrantLock 默认情况下也是非�
 **5. 锁绑定多个条件**
 
 一个 ReentrantLock 可以同时绑定多个 Condition 对象。
+
+### 其他不同
+synchronized使用Object对象本身的notify，wait，notifyAll控制调度，而Lock主要通过Condition控制线程。区别主要有：
+1. 用法不一样。synchronized既可以加到方法上，也可以在特定代码块中。Lock需要显式地指出起始位置。
+2. 锁机制不一样。synchronized获得锁和释放的方式都是在块结构中，当获取多个锁时，必须以相反的顺序释放，并自动解锁。Lock需要开发人员手动释放锁，并且必须在finally中释放。Lock的tryLock()方法可以采用非阻塞的方式获取锁。
+
+### synchronized, 偏向锁，轻量锁，重量级锁（仔细品一下）
+[synchronized原理分析](https://segmentfault.com/a/1190000017255044)
+
+[synchronized的源码分析](https://www.jianshu.com/p/c13c0a80dbca)
 
 ## 公平锁和非公平锁
 公平锁就是保障了多线程下各线程获取锁的顺序，先到的线程优先获取锁，而非公平锁则无法提供这个保障。
@@ -793,8 +803,8 @@ java.util.concurrent（J.U.C）大大提高了并发性能，AQS(AbstractQueuedS
 <div align="center"> <img src="../pic/912a7886-fb1d-4a05-902d-ab17ea17007f.jpg"/> </div><br>
 
 ```java
+/*  codes/edu/concurrent/aqs/CountdownLatchExample.java  */
 public class CountdownLatchExample {
-
     public static void main(String[] args) throws InterruptedException {
         final int totalThread = 10;
         CountDownLatch countDownLatch = new CountDownLatch(totalThread);
@@ -842,8 +852,8 @@ public CyclicBarrier(int parties) {
 <div align="center"> <img src="../pic/f944fac3-482b-4ca3-9447-17aec4a3cca0.png"/> </div><br>
 
 ```java
+/*  codes/edu/concurrent/aqs/CyclicBarrierExample.java  */
 public class CyclicBarrierExample {
-
     public static void main(String[] args) {
         final int totalThread = 10;
         CyclicBarrier cyclicBarrier = new CyclicBarrier(totalThread);
@@ -875,8 +885,8 @@ Semaphore 类似于操作系统中的信号量，可以控制对互斥资源的�
 以下代码模拟了对某个服务的并发请求，每次只能有 3 个客户端同时访问，请求总数为 10。
 
 ```java
+/*  codes/edu/concurrent/aqs/SemaphoreExample.java  */
 public class SemaphoreExample {
-
     public static void main(String[] args) {
         final int clientCount = 3;
         final int totalRequestCount = 10;
@@ -911,50 +921,50 @@ public class SemaphoreExample {
 
 ```java
 public class FutureTask<V> implements RunnableFuture<V>
+{}
 ```
 
 ```java
 public interface RunnableFuture<V> extends Runnable, Future<V>
+{}
 ```
 
 FutureTask 可用于异步获取执行结果或取消执行任务的场景。当一个计算任务需要执行很长时间，那么就可以用 FutureTask 来封装这个任务，主线程在完成自己的任务之后再去获取结果。
 
 ```java
+/*  codes/edu/concurrent/aqs/FutureTaskExample.java  */
 public class FutureTaskExample {
+	public class FutureTaskExample {
+	public static void main(String[] args) throws Exception {
+			FutureTask<Integer> futureTask = new FutureTask<>(new Callable<Integer>() {
+					@Override
+					public Integer call() throws Exception {
+							int result = 0;
+							for(int i = 0; i < 100; i++){
+									result += i;
+									Thread.sleep(10);
+							}
+							return result;
+					}
+			});
 
-    public static void main(String[] args) throws ExecutionException, InterruptedException {
-        FutureTask<Integer> futureTask = new FutureTask<Integer>(new Callable<Integer>() {
-            @Override
-            public Integer call() throws Exception {
-                int result = 0;
-                for (int i = 0; i < 100; i++) {
-                    Thread.sleep(10);
-                    result += i;
-                }
-                return result;
-            }
-        });
+			Thread computer = new Thread(futureTask);
+			computer.start();
 
-        Thread computeThread = new Thread(futureTask);
-        computeThread.start();
-
-        Thread otherThread = new Thread(() -> {
-            System.out.println("other task is running...");
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        });
-        otherThread.start();
-        System.out.println(futureTask.get());
-    }
+			while(!futureTask.isDone()){
+					System.out.println("Processing...");
+					Thread.sleep(1000);
+			}
+			System.out.println("Finish, result = " + futureTask.get());
+	}
+}
 }
 ```
 
 ```html
-other task is running...
-4950
+Processing...
+Processing...
+Finish, result = 4950
 ```
 
 ## BlockingQueue

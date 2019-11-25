@@ -396,9 +396,9 @@ Serial 翻译为串行，也就是说它 **以串行的方式执行**。
 
 <div align="center"> <img src="../pic/xnj12.jpg" width=""/> </div><br>
 
-是 **Parallel Scavenge 收集器的老年代版本。
+是 **Parallel Scavenge 收集器的老年代版本。**
 
-在注重吞吐量以及 CPU 资源敏感的场合，都可以优先考虑 Parallel Scavenge 加 Parallel Old 收集器**。
+**在注重吞吐量以及 CPU 资源敏感的场合，都可以优先考虑 Parallel Scavenge 加 Parallel Old 收集器。**
 
 ### 6. **CMS 收集器**
 

@@ -49,7 +49,7 @@ public ThreadPoolExecutor(int corePoolSize,
 	3. 如果此时线程池中的数量大于corePoolSize，缓冲队列workQueue满，并且线程池中的数量小于maximumPoolSize，建新的线程来处理被添加的任务。
 	4. 如果此时线程池中的数量大于corePoolSize，缓冲队列workQueue满，并且线程池中的数量等于maximumPoolSize，那么通过 handler所指定的策略来处理此任务,表示线程池拒绝接收任务。
 
-1. execute(Runnable command) 源码：
+### execute(Runnable command) 源码：
 ```java
 int c = ctl.get();
 // 1. 判断当前活跃线程数是否小于corePoolSize,如果小于，则调用addWorker创建线程执行任务
@@ -71,7 +71,7 @@ else if (!addWorker(command, false))
     reject(command);
 ```
 
-2. addWorker(Runnable firstTask, boolean core) 源码：
+### addWorker(Runnable firstTask, boolean core) 源码：
 ```java
 private boolean addWorker(Runnable firstTask, boolean core) {
     retry:
@@ -144,7 +144,7 @@ private boolean addWorker(Runnable firstTask, boolean core) {
 }
 ```
 
-3. Worker
+### Worker
 可以看到在创建 Worker 时会调用 threadFactory 来创建一个线程。addWorker 的 t.start() 中启动一个线程就会触发Worker的run方法被线程调用。
 ```java
 Worker(Runnable firstTask) {
@@ -159,7 +159,7 @@ public void run() {
 }
 ```
 
-4. runWorker()
+### runWorker()
 线程调用runWorker，会while循环调用getTask方法从workerQueue里读取任务，然后执行任务。只要getTask方法不返回null,此线程就不会退出。
 ```java
 final void runWorker(Worker w) {
@@ -206,7 +206,7 @@ final void runWorker(Worker w) {
     }
 }
 ```
-5. getTask()
+### getTask()
 ```java
 private Runnable getTask() {
     boolean timedOut = false; // Did the last poll() time out?
@@ -252,7 +252,7 @@ private Runnable getTask() {
 }
 ```
 
-6. 流程图
+## 流程图
 ![ThreadPoolExecutor流程图](../pic/tpe-2.png)
 ### FixedThreadPool
 创建固定长度的线程池，每次提交任务创建一个线程，直到达到线程池的最大数量，线程池的大小不再变化。
@@ -358,6 +358,7 @@ public void run() {
 # yield()
 对静态方法 Thread.yield() 的调用声明了当前线程已经完成了生命周期中最重要的部分，可以切换给其它线程来执行。该方法只是对线程调度器的一个建议，而且也只是建议具有相同优先级的其它线程可以运行。
 
+ 在 ConcurrentHashMap 1.8 中的 初始化过程中运用到了 yield()。
 ```java
 public void run() {
     Thread.yield();

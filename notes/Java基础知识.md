@@ -55,11 +55,9 @@
 	- [Java NIO](#java-nio)
 	- [System.out.println](#systemoutprintln)
 - [Java平台与内存管理](#java平台与内存管理)
-	- [JVM加载class文件机制](#jvm加载class文件机制)
-	- [什么是GC--垃圾回收器](#什么是gc--垃圾回收器)
 	- [Java是否存在内存泄漏](#java是否存在内存泄漏)
 	- [Java中堆和栈](#java中堆和栈)
-- [Java容器](#java容器)
+- [Java容器 (详见笔记 Java IO)](#java容器-详见笔记-java-io)
 	- [Collection](#collection)
 	- [Map](#map)
 	- [迭代器 Iterator](#迭代器-iterator)
@@ -67,10 +65,9 @@
 	- [HashMap，HashTable，TreeMap，WeakHashMap](#hashmaphashtabletreemapweakhashmap)
 	- [Collection和Collections](#collection和collections)
 - [多线程](#多线程)
-	- [如何实现多线程](#如何实现多线程)
+	- [如何实现多线程（详见Java 并发）](#如何实现多线程详见java-并发)
 	- [run()和start()](#run和start)
 	- [终止线程的方法](#终止线程的方法)
-	- [synchronized和Lock](#synchronized和lock)
 
 <!-- TOC END -->
 
@@ -960,33 +957,10 @@ Collection是一个接口集合。它提供了对集合对象进行基本操作�
 Collections是针对集合类的一个包装类，它提供一系列静态方法以实现对各种集合的搜索，排序，线程安全等操作。Collections类不能实例化，如图一个工具类，服务于Collection框架。
 
 # 多线程
-## 如何实现多线程
+## 如何实现多线程（详见Java 并发）
 1. 继承Thread类，重写run
-Thread本质上也是实现了Runnable接口的一个实例，它代表一个线程的实例，启动线程的唯一办法是通过Thread的start方法，这是一个native方法。
-```java
-class MyThread extends Thread{
-	public void run{ System.out.println("Thread Body");}
-}
-public class Test{
-	public static void main(String[] args){
-		MyThread t = new MyThread();
-		t.start();
-	}
-}
-```
 2. 实现Runnable接口，并实现run()方法
-```java
-class MyThread implements Runnable{
-	public void run{ System.out.println("Thread Body");}
-}
-public class Test{
-	public static void main(String[] args){
-		MyThread t = new MyThread();
-		Thread thread = new Thread(t);
-		thread.start();
-	}
-}
-```
+
 不管是通过继承Thread类还是通过Runnable接口实现多线程方法，最终都是要通过调用Thread对象的API来控制线程。
 
 3. 实现Callable接口，重写call()方法。
@@ -994,25 +968,6 @@ Callable接口实际是属于Executor框架中的功能类：
    1. Callable可以在任务结束后提供一个返回值，Runnable不行
    2. Callable中的call()可以抛出异常
    3. 运行Callable可以拿到一个Future对象，表示异步计算的结果，它提供了检查计算是否完成的方法。可以使用Future监视目标线程调用call()方法的情况，当调用Future的get()方法获取结果，当前线程就会阻塞，直到call()方法结束返回结果。
-```java
-import java.util.concurrent.*;
-public class CallableAndFuture{
-//创建线程类
-	public static class CallableTest implements Callable<String> {
-		public String call() throws Exception{ return "Hello World";}
-	}
-	public static void main(String[] args){
-		ExecutorService threadPool = Executor.newSingleThreadExecutor();
-		//启动线程
-		Future<String> future = threadPool.submit(new CallableTest());
-		try{
-			System.out.println(future.get());
-		}catch(Exception e){
-			e.printStackTrack();)
-	}
-}
-}
-```
 
 ## run()和start()
 系统通过start()方法启动线程，此刻线程处于就绪状态，JVM调用run方法完成实际操作。   
@@ -1032,14 +987,3 @@ public void run(){
 }
 ```
 2. 如果线程处于非运行状态时候（sleep和IO阻塞），可以用interrupt()。
-
-## synchronized和Lock
-synchronized使用Object对象本身的notify，wait，notifyAll控制调度，而Lock主要通过Condition控制线程。区别主要有：
-1. 用法不一样。synchronized既可以加到方法上，也可以在特定代码块中。Lock需要显式地指出起始位置。
-2. 性能不一样。Lock不仅拥有和synchronized相同的并发性和内存语义，还有锁投票，定时，等候和中断锁。在竞争不激烈时候，性能差距不大，但是竞争激烈时候，synchronized性能下降很快，ReentrantLock性格基本不变。
-3. 锁机制不一样。synchronized获得锁和释放的方式都是在块结构中，当获取多个锁时，必须以相反的顺序释放，并自动解锁。Lock需要开发人员手动释放锁，并且必须在finally中释放。Lock的tryLock()方法可以采用非阻塞的方式获取锁。
-
-### synchronized, 偏向锁，轻量锁，重量级锁
-[synchronized原理分析](https://segmentfault.com/a/1190000017255044)
-
-[synchronized的源码分析](https://www.jianshu.com/p/c13c0a80dbca)

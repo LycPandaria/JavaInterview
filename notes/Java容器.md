@@ -2135,11 +2135,11 @@ HashSet通过iterator()返回的 迭代器是fail-fast的。
 ## 属性
 ```java
 // 底层使用HashMap来保存HashSet的元素
-    private transient HashMap<E,Object> map;
-    // Dummy value to associate with an Object in the backing Map
-    // 由于Set只使用到了HashMap的key，所以此处定义一个静态的常量Object类，来充当HashMap的value
-    // ！！这样可以避免NullPointer错误
-    private static final Object PRESENT = new Object();
+private transient HashMap<E,Object> map;
+// Dummy value to associate with an Object in the backing Map
+// 由于Set只使用到了HashMap的key，所以此处定义一个静态的常量Object类，来充当HashMap的value
+// ！！这样可以避免NullPointer错误
+private static final Object PRESENT = new Object();
 ```
 
 ## 方法
