@@ -440,7 +440,7 @@ synchronized使用Object对象本身的notify，wait，notifyAll控制调度，�
 1. 用法不一样。synchronized既可以加到方法上，也可以在特定代码块中。Lock需要显式地指出起始位置。
 2. 锁机制不一样。synchronized获得锁和释放的方式都是在块结构中，当获取多个锁时，必须以相反的顺序释放，并自动解锁。Lock需要开发人员手动释放锁，并且必须在finally中释放。Lock的tryLock()方法可以采用非阻塞的方式获取锁。
 
-### synchronized, 偏向锁，轻量锁，重量级锁（仔细品一下）
+### synchronized, 偏向锁，轻量锁，重量级锁
 [synchronized原理分析](https://segmentfault.com/a/1190000017255044)
 
 [synchronized的源码分析](https://www.jianshu.com/p/c13c0a80dbca)
@@ -1677,6 +1677,7 @@ public static String concatString(String s1, String s2, String s3) {
 上一节的示例代码中连续的 append() 方法就属于这类情况。如果虚拟机探测到由这样的一串零碎的操作都对同一个对象加锁，将会把加锁的范围扩展（粗化）到整个操作序列的外部。对于上一节的示例代码就是扩展到第一个 append() 操作之前直至最后一个 append() 操作之后，这样只需要加锁一次就可以了。
 
 ## 轻量级锁
+参考上面的 [synchronized 源码分析](#synchronized, 偏向锁，轻量锁，重量级锁) 能更好理解。
 
 JDK 1.6 引入了偏向锁和轻量级锁，从而让锁拥有了四个状态：无锁状态（unlocked）、偏向锁状态（biasble）、轻量级锁状态（lightweight locked）和重量级锁状态（inflated）。
 
