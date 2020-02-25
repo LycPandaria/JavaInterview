@@ -18,6 +18,8 @@
 	- [synchronized](#synchronized)
 	- [ReentrantLock](#reentrantlock)
 	- [比较](#比较)
+		- [其他不同](#其他不同)
+		- [synchronized, 偏向锁，轻量锁，重量级锁](#synchronized-偏向锁轻量锁重量级锁)
 	- [公平锁和非公平锁](#公平锁和非公平锁)
 		- [实现原理](#实现原理)
 		- [公平锁示例](#公平锁示例)
@@ -371,12 +373,13 @@ future.cancel(true);
 	```
 
 4. 同步一个静态方法
+	作用于整个类
 	```java
 	public synchronized static void fun() {
     // ...
 	}
 	```
-	作用于整个类
+
 
 ## ReentrantLock
 ReentrantLock 是 java.util.concurrent（J.U.C）包中的锁。
@@ -540,7 +543,7 @@ public class MyFairLock {
      */
     private  ReentrantLock lock = new ReentrantLock(true);
 
-    public   void testFail(){
+    public   void testFair(){
         try {
             lock.lock();
             System.out.println(Thread.currentThread().getName() +"获得了锁");
@@ -552,7 +555,7 @@ public class MyFairLock {
         MyFairLock fairLock = new MyFairLock();
         Runnable runnable = () -> {
             System.out.println(Thread.currentThread().getName()+"启动");
-            fairLock.testFail();
+            fairLock.testFair();
         };
         Thread[] threadArray = new Thread[10];
         for (int i=0; i<10; i++) {
@@ -934,28 +937,27 @@ FutureTask 可用于异步获取执行结果或取消执行任务的场景。当
 ```java
 /*  codes/edu/concurrent/aqs/FutureTaskExample.java  */
 public class FutureTaskExample {
-	public class FutureTaskExample {
-	public static void main(String[] args) throws Exception {
-			FutureTask<Integer> futureTask = new FutureTask<>(new Callable<Integer>() {
-					@Override
-					public Integer call() throws Exception {
-							int result = 0;
-							for(int i = 0; i < 100; i++){
-									result += i;
-									Thread.sleep(10);
-							}
-							return result;
-					}
-			});
-
-			Thread computer = new Thread(futureTask);
-			computer.start();
-
-			while(!futureTask.isDone()){
-					System.out.println("Processing...");
-					Thread.sleep(1000);
+  public class FutureTaskExample {
+  public static void main(String[] args) throws Exception {
+    FutureTask<Integer> futureTask = new FutureTask<>(new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        int result = 0;
+        for(int i = 0; i < 100; i++){
+					result += i;
+					Thread.sleep(10);
+				}
+				return result;
 			}
-			System.out.println("Finish, result = " + futureTask.get());
+		});
+
+		Thread computer = new Thread(futureTask);
+		computer.start();
+    while(!futureTask.isDone()){
+			System.out.println("Processing...");
+			Thread.sleep(1000);
+		}
+		System.out.println("Finish, result = " + futureTask.get());
 	}
 }
 }
@@ -979,6 +981,7 @@ java.util.concurrent.BlockingQueue 接口有以下阻塞队列的实现：
 **使用 BlockingQueue 实现生产者消费者问题**
 
 ```java
+/*  codes/edu/concurrent/aqs/ProducerConsumer.java  */
 public class ProducerConsumer {
 
     private static BlockingQueue<String> queue = new ArrayBlockingQueue<>(5);
@@ -1036,6 +1039,8 @@ produce..produce..consume..consume..produce..consume..produce..consume..produce.
 主要用于并行计算中，和 MapReduce 原理类似，都是把大的计算任务拆分成多个小任务并行计算。
 
 ```java
+/*  codes/edu/concurrent/aqs/ForkJoinExample.java  */
+
 public class ForkJoinExample extends RecursiveTask<Integer> {
 
     private final int threshold = 5;
@@ -1386,15 +1391,16 @@ public V put(K key, V value) {
 
 ## 互斥同步
 
-synchronized 和 ReentrantLock。
-
-## 非阻塞同步
-
 互斥同步最主要的问题就是线程阻塞和唤醒所带来的性能问题，因此这种同步也称为阻塞同步。
 
 互斥同步属于一种悲观的并发策略，总是认为只要不去做正确的同步措施，那就肯定会出现问题。无论共享数据是否真的会出现竞争，它都要进行加锁（这里讨论的是概念模型，实际上虚拟机会优化掉很大一部分不必要的加锁）、用户态核心态转换、维护锁计数器和检查是否有被阻塞的线程需要唤醒等操作。
 
+Java 中的互斥同步就是 synchronized 和 ReentrantLock。
+
+## 非阻塞同步
+
 ### 乐观锁和悲观锁
+
 #### 悲观锁
 总是假设最坏的情况，每次去拿数据的时候都认为别人会修改，所以每次在拿数据的时候都会上锁，这样别人想拿这个数据就会阻塞直到它拿到锁（共享资源每次只给一个线程使用，其它线程阻塞，用完后再把资源转让给其它线程）。传统的关系型数据库里边就用到了很多这种锁机制，比如行锁，表锁等，读锁，写锁等，都是在做操作之前先上锁。Java中synchronized和ReentrantLock等独占锁就是悲观锁思想的实现。
 

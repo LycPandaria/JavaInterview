@@ -166,6 +166,13 @@ OK
 
 <div align="center"> <img src="../pic/7bd202a7-93d4-4f3a-a878-af68ae25539a.png" width="400"/> </div><br>
 
+| 命令 | 行为 |
+| :--: | :--: |
+| HSET | 在散列里关联给定的键值对 |
+| HGET |  获取指定散列键的值 |
+| HGETALL | 获取散列包含的所有键值对 |
+| HDEL | 如果给定键存在于散列里，那么移除这个键值对 |
+
 ```html
 > hset hash-key sub-key1 value1
 (integer) 1
@@ -196,6 +203,13 @@ OK
 ## ZSET
 
 <div align="center"> <img src="../pic/1202b2d6-9469-4251-bd47-ca6034fb6116.png" width="400"/> </div><br>
+
+| 命令 | 行为 |
+| :--: | :--: |
+| ZADD | 将一个带有给定分值的成员添加到有序集合中 |
+| ZRANGE | 根据元素在有序排列中所处的位置，从有序集合里获取多个元素 |
+| ZRANGEBYSCORES |   获取有序集合在给定分值范围内的所以元素 |
+| ZREM | 如果给定成员存在于有序集合中，那么移除这个成员 |
 
 ```html
 > zadd zset-key 728 member1
@@ -295,15 +309,27 @@ rehash 操作不是一次性完成，而是采用渐进方式，这是为了避�
 
 # 四、使用场景
 
+详细的概述可以参考《Redis 实战》
+
 ## 计数器
 
 可以对 String 进行自增自减运算，从而实现计数器功能。
 
 Redis 这种内存型数据库的读写性能非常高，很适合存储频繁读写的计数量。
 
+例如：文章 ID 的自增
+```java
+String articleId = String.valueOf(conn.incr("article:"));
+```
 ## 缓存
 
 将热点数据放到内存中，设置内存的最大使用量以及淘汰策略来保证缓存的命中率。
+
+例如：缓存热门商品信息
+```java
+Inventory row = Inventory.get(rowId);                   // 读取数据
+conn.set("inv:" + rowId, gson.toJson(row));             // 缓存数据到 Redis 中
+```
 
 ## 查找表
 
@@ -322,6 +348,15 @@ List 是一个双向链表，可以通过 lpop 和 lpush 写入和读取消息�
 可以使用 Redis 来统一存储多台应用服务器的会话信息。
 
 当应用服务器不再存储用户的会话信息，也就不再具有状态，一个用户可以请求任意一个应用服务器，从而更容易实现高可用性以及可伸缩性。
+
+例如：
+```java
+// 维持令牌与已登陆用户之间的映射，相当于是一个用户与 token 一对一对应的表
+ conn.hset("login:", token, user);
+
+ // 记录该 token 的最近时间，相当于记录该用户最近的登陆时间
+ conn.zadd("recent:", timestamp, token);
+```
 
 ## 分布式锁实现
 
@@ -540,11 +575,12 @@ Sentinel（哨兵）可以监听集群中的服务器，并在主服务器进入
 
 ## 文章信息
 
-文章包括标题、作者、赞数等信息，在关系型数据库中很容易构建一张表来存储这些信息，在 Redis 中可以使用 HASH 来存储每种信息以及其对应的值的映射。
+文章包括标题、作者、赞数等信息，在关系型数据库中很容易构建一张表来存储这些信息，在 Redis 中可以使用 HASH 来存储每种信息以及其对应的值的映射。例如下图中，每一个文章都用一个 hash 来存储信息，hash 中的 key 作为这篇文章的属性，如 title，link 等。
 
 Redis 没有关系型数据库中的表这一概念来将同种类型的数据存放在一起，而是使用命名空间的方式来实现这一功能。键名的前面部分存储命名空间，后面部分的内容存储 ID，通常使用 : 来进行分隔。例如下面的 HASH 的键名为 article:92617，其中 article 为命名空间，ID 为 92617。
 
 <div align="center"> <img src="../pic/7c54de21-e2ff-402e-bc42-4037de1c1592.png" width="400"/> </div><br>
+
 
 ## 点赞功能
 
@@ -554,8 +590,25 @@ Redis 没有关系型数据库中的表这一概念来将同种类型的数据�
 
 <div align="center"> <img src="../pic/485fdf34-ccf8-4185-97c6-17374ee719a0.png" width="400"/> </div><br>
 
+用代码来表示如下：
+```python
+// article -- 文章，如 article:92617
+// article_id  -- 文章 ID，如 article:92617 的 article_id 为 92617
+// user        -- 用户，如 user:90001
+
+if conn.sadd('voted:' + article_id, user):  // 将用户增加到这个文章的点赞列表中
+  conn.zincrby('score:', article, 100)      // 用 ZINCRBY （对有序集合成员进行自增操作）命令为该文章增分 100 分
+  conn.hincrby(article, 'votes', 1)         // 用 HINCRBY （对散列存储的值进行自增操作）命令增加文章的投票数 1
+
+```
+
 ## 对文章进行排序
 
 为了按发布时间和点赞数进行排序，可以建立一个文章发布时间的有序集合和一个文章点赞数的有序集合。（下图中的 score 就是这里所说的点赞数；下面所示的有序集合分值并不直接是时间和点赞数，而是根据时间和点赞数间接计算出来的）
 
 <div align="center"> <img src="../pic/f7d170a3-e446-4a64-ac2d-cb95028f81a8.png" width="800"/> </div><br>
+
+用代码表示：
+```python
+articles = conn.zrevrange('score:')   // ZREVRANGE 分值从大到小取出元素
+```

@@ -66,7 +66,8 @@ if (isRunning(c) && workQueue.offer(command)) {
     else if (workerCountOf(recheck) == 0)
         addWorker(null, false);
 }
-// 3. 如果放入workQueue失败，则创建线程执行任务，如果这时创建线程失败(当前线程数不小于maximumPoolSize时)，就会调用reject(内部调用handler)拒绝接受任务。
+// 3. 如果放入workQueue失败，则创建线程执行任务，如果这时创建线程失败(当前线程数不小于
+// maximumPoolSize时)，就会调用reject(内部调用handler)拒绝接受任务。
 else if (!addWorker(command, false))
     reject(command);
 ```
@@ -92,6 +93,7 @@ private boolean addWorker(Runnable firstTask, boolean core) {
             if (wc >= CAPACITY ||
                 wc >= (core ? corePoolSize : maximumPoolSize))
                 return false;
+
 						// 这里可以看出，这里并不判断其他线程是不是空闲的，如果现在线程数少于 corePoolSize，就可以直接新建线程
             if (compareAndIncrementWorkerCount(c))	// cas 操作成功，进入下面的线程创建阶段
                 break retry;
@@ -222,9 +224,11 @@ private Runnable getTask() {
         }
 
         int wc = workerCountOf(c);
-				// allowCoreThreadTimeOut，这个变量默认值是false。wc>corePoolSize则是判断当前线程数是否大于corePoolSize。
+
+        // allowCoreThreadTimeOut，这个变量默认值是false。wc>corePoolSize则是判断当前线程数是否大于corePoolSize。
         boolean timed = allowCoreThreadTimeOut || wc > corePoolSize;
 
+        // 没有任务需要执行，workerCount - 1 并返回 null
         if ((wc > maximumPoolSize || (timed && timedOut))
             && (wc > 1 || workQueue.isEmpty())) {
             if (compareAndDecrementWorkerCount(c))
@@ -233,6 +237,7 @@ private Runnable getTask() {
         }
 
         try {
+
 				/* 如果当前线程数大于corePoolSize，则会调用workQueue的poll方法获取任务，超时时间是keepAliveTime。
            如果超过keepAliveTime时长，poll返回了null，上边提到的while循序就会退出，线程也就执行完了。
 
@@ -312,10 +317,9 @@ CachedThreadPool使用没有容量的SynchronousQueue作为主线程池的工作
 
 执行过程如下：
 1. 首先执行SynchronousQueue.offer(Runnable task)。如果在当前的线程池中有空闲的线程正在执行SynchronousQueue.poll()，那么主线程执行的offer操作与空闲线程执行的poll操作配对成功，主线程把任务交给空闲线程执行。，execute()方法执行成功，否则执行步骤2
-2. 当线程池为空(初始maximumPool为空)或没有空闲线程时，配对失败，将没有线程执行SynchronousQueue.poll操作。这种情况下，线程池会创建一个新的线程执行任务。
+2. 当线程池为空(初始maximumPool为空)或没有空闲线程时，配对失败，将没有线程执行SynchronousQueue.poll操作，这个时候相当于任务并没有成功的加入到任务队列中（workQueue.offer(command) 返回 false）。这种情况下，线程池会创建一个新的线程执行任务。
 3. 在创建完新的线程以后，将会执行poll操作。当步骤2的线程执行完成后，将等待60秒，如果此时主线程提交了一个新任务，那么这个空闲线程将执行新任务，否则被回收。因此长时间不提交任务的CachedThreadPool不会占用系统资源。
-
-SynchronousQueue是一个不存储元素阻塞队列，每次要进行offer操作时必须等待poll操作，否则不能继续添加元素。
+4. SynchronousQueue是一个不存储元素阻塞队列，每次要进行offer操作时必须等待poll操作，否则不能继续添加元素。
 
 # 阻塞队列（runnableTaskQueue）
 -	ArrayBlockingQueue:一个基于数组结构的有界阻塞队列，此队列按照先进先出原则对元素进行排序；

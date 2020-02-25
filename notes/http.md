@@ -98,8 +98,6 @@ URI 包含 URL 和 URN。
 
 POST 主要用来传输数据，而 GET 主要用来获取资源。
 
-更多 POST 与 GET 的比较请见第九章。
-
 ## PUT
 
 > 上传文件

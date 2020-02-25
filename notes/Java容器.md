@@ -53,6 +53,7 @@
   - [其他与 HashMap的比较](#其他与-hashmap的比较)
 - [ConcurrentHashMap 1.7](#concurrenthashmap-17)
   - [数据结构](#数据结构)
+  - [基本属性](#基本属性)
   - [get](#get-4)
   - [put()](#put-3)
   - [size](#size)
@@ -1347,6 +1348,24 @@ static final class HashEntry<K,V> {
      volatile V value;  
      final HashEntry<K,V> next;  
  }
+```
+
+## 基本属性
+```java
+/**
+ * 默认的初始容量 16
+ */
+static final int DEFAULT_INITIAL_CAPACITY = 16;
+
+/**
+ * 默认的并发数量,会影响segments数组的长度(初始化后不能修改)
+ */
+static final int DEFAULT_CONCURRENCY_LEVEL = 16;
+
+/**
+ * 每个segment中table数组的长度,必须是2^n,至少为2
+ */
+static final int MIN_SEGMENT_TABLE_CAPACITY = 2;
 ```
 
 ## get

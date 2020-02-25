@@ -113,8 +113,7 @@ public boolean duplicate(int
  numbers[],int length,int [] duplication) {
     // 数组检查
     if(numbers==null || length <=0)
-        re
-        turn false;
+        return false;
     for(Integer num : numbers)   // 迭代器只能用包装类 Integer,不能用 int
         if(num < 0 || num > length-1)
             return false;
@@ -2256,7 +2255,7 @@ public int numDecodings(String s) {
      int[] dp = new int[n+1];
      dp[0] = 1;
      dp[1] = s.charAt(0) != '0' ? 1 : 0;
-     
+
      for(int i = 2; i <= n; i++) {
          // 2. 获得前面 1 个字符 和 2 个字符组合
          int first = Integer.valueOf(s.substring(i-1, i));
