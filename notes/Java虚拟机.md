@@ -57,6 +57,11 @@
   - [Class 类文件结构](#class-类文件结构)
     - [魔数与 Class 文件的版本](#魔数与-class-文件的版本)
     - [常量池](#常量池)
+    - [访问标志](#访问标志)
+    - [类索引，父类索引与接口索引集合](#类索引父类索引与接口索引集合)
+    - [字段表集合](#字段表集合)
+    - [方法表集合](#方法表集合)
+    - [属性表集合](#属性表集合)
 - [五、类加载机制](#五类加载机制)
   - [类的生命周期](#类的生命周期)
   - [类加载过程](#类加载过程)
@@ -616,8 +621,58 @@ public class TestClass{
 
 每一种常量类型都有自己的结构。详细细节可以查阅《深入理解 Java 虚拟机》第六章。
 
+### 访问标志
+在常量池之后，紧接着的两个字节代表访问标志(access_flags)，这个标志用于识别类或接口层次的访问信息。
+
+<div align="center"> <img src="../pic/chapter6-4.PNG" width=""/> </div><br>
+
+TestClass 是一个普通类，而且用了 JDK1.2 之后的编译器，所以它的 ACC_PUBLIC，ACC_SUPER 标志应当为真，
+所以 access_flags 值为 0x0001|0x0020=0x0021。
+
+### 类索引，父类索引与接口索引集合
+
+类索引(this_class)和父类索引(super_class)都是一个 u2 类型的数据，而接口索引集合(interfaces)是一组 u2 类型的数据的集合，
+Class文件中由这三个数据来确定这个类的继承关系。
+
+类索引，父类索引和接口索引集合都按照顺序排列在访问标志之后，类索引和父类索引用两个 u2 类型的索引指表示，各自指向一个类型为 CONSTANT_Class_info 的类描述常量，通过常量中的索引值可以找到定义在 CONSTANT_Utf8_info 类型的常量中的全限定名字符串。
+
+对于接口索引集合，入口的第一项 u2 类型的数据为结构计数器(interfaces_count)表示索引的容量。后面接索引表。
+
+<div align="center"> <img src="../pic/chapter6-5.PNG" width=""/> </div><br>
+
+### 字段表集合
+字段表(field_info)用于描述接口或类中声明的变量。字段(field)包括类级变量以及实例级变量，但不包括方法内部声明的局部变量。
+
+<div align="center"> <img src="../pic/chapter6-6.png" width=""/> </div><br>
+
+字段修饰符放在 access_flags 项目中，是一个 u2 的数据类型。
+
+<div align="center"> <img src="../pic/chapter6-7.png" width=""/> </div><br>
+
+跟随 access_flags 标志的是两项索引值：name_index 和 descriptor_index。它们都是对常量池的引用，分别代表着
+字段的简单名称以及字段的描述符。
+
+简单名称是指没有类型和参数修饰的方法或者字段名称，比如 inc() 方法和 m 字段的简单名称分别是"inc"和"m"。
+描述符的作用是描述字段的数据类型，方法的参数列表（包括数量，类型以及顺序）和返回值。基本数据类型(byte, char, double, float, int, long, short, boolean)以及 void 都用一个大写字符表示，而对象类型则用字符 L 加对象的全限定名。
+
+<div align="center"> <img src="../pic/chapter6-8.png" width=""/> </div><br>
+
+比如类中的 private int m 来说，access_flags 中的 ACC_PRIVATE 标志为为真，name_index 指向 一个存储 "m" 的 CONSTANT_Utf8_info， 字段描述 descriptor_index 值为 "I"。
+
+### 方法表集合
+和字段表几乎一致。用描述符描述方法时候，按照先参数列表，后返回值的顺序描述，参数列表按照参数的严格顺序放在一组小括号之中。比如类中的 void inc() 的描述符为 "()V"，String toString() 描述符为 "()Ljava/lang/String;"
+
+### 属性表集合
+属性表(attribute_info)在前面的 Class 文件，字段表，方法表中都可以携带自己的属性表集合，以用于描述某些场景专有的信息。在《Java虚拟机规范（Java SE 7）》中规定了21项虚拟机应当能识别的属性。
+
+<div align="center"> <img src="../pic/chapter6-9.png" width=""/> </div><br>
+<div align="center"> <img src="../pic/chapter6-10.png" width=""/> </div><br>
+
+ 对于每个属性，它的名称(attribute_name_index)需要从常量池中引用一个 CONSTANT_Utf8_info 类型的常量来表示，属性值的结构则是完全自定义的，这里不一一赘述，详细可以参考书《深入理解 Java 虚拟机 6.3.7 小结。
 
 # 五、类加载机制
+
+虚拟机把描述类的数据从 Class 文件加载到内存，并对数据进行校验，转换解析和初始化，最终形成可以被虚拟机直接使用的 Java 类型，这就是虚拟机的类加载机制。
 
 类是在运行期间第一次使用时动态加载的，而不是一次性加载所有类。因为如果一次性加载，那么会占用很多的内存。
 
@@ -657,6 +712,8 @@ public class TestClass{
 - 运行时计算生成，例如动态代理技术，在 java.lang.reflect.Proxy 使用 ProxyGenerator.generateProxyClass 的代理类的二进制字节流。
 - 由其他文件生成，例如由 JSP 文件生成对应的 Class 类。
 
+加载阶段完成后，虚拟机外部的二进制字节流就按照虚拟机所需的格式存储在方法区之中，方法区的数据存储格式由虚拟机实现自行定义。然后在内存中实例化一个 java.lang.Class 类的对象，对于 HotSpot 虚拟机而言，Class 对象存放在方法去里面。这个对象将作为程序访问方法区中这些类型数据的外部接口。
+
 ### 2. 验证
 
 确保 Class 文件的字节流中包含的信息符合当前虚拟机的要求，并且不会危害虚拟机自身的安全。
@@ -673,7 +730,7 @@ public class TestClass{
 public static int value = 123;
 ```
 
-如果类变量是常量，那么它将初始化为表达式所定义的值而不是 0。例如下面的常量 value 被初始化为 123 而不是 0。
+如果类变量是常量，那么它将初始化为表达式所定义的值而不是 0。例如下面的常量 value 被初始化为 123 而不是 0（字段属性表中的 ConstanValue 属性）。
 
 ```java
 public static final int value = 123;
@@ -682,10 +739,34 @@ public static final int value = 123;
 ### 4. 解析
 
 将常量池的符号引用替换为直接引用的过程。
+  - 符号引用（Symbolic References）：符号引用以一组符号来描述所引用的目标，符号可
+以是任何形式的字面量，只要使用时能无歧义地定位到目标即可。符号引用与虚拟机实现的
+内存布局无关，引用的目标并不一定已经加载到内存中。各种虚拟机实现的内存布局可以各
+不相同，但是它们能接受的符号引用必须都是一致的，因为符号引用的字面量形式明确定义
+在Java虚拟机规范的Class文件格式中。
+  - 直接引用（Direct References）：直接引用可以是直接指向目标的指针、相对偏移量或是
+一个能间接定位到目标的句柄。直接引用是和虚拟机实现的内存布局相关的，同一个符号引
+用在不同虚拟机实例上翻译出来的直接引用一般不会相同。如果有了直接引用，那引用的目
+标必定已经在内存中存在。
 
-其中解析过程在某些情况下可以在初始化阶段之后再开始，这是为了支持 Java 的动态绑定。
+虚拟机规范之中并未规定解析阶段发生的具体时间，只要求了在执行anewarray、
+checkcast、getfield、getstatic、instanceof、invokedynamic、invokeinterface、invokespecial、
+invokestatic、invokevirtual、ldc、ldc_w、multianewarray、new、putfield和putstatic这16个用于
+操作符号引用的字节码指令之前，先对它们所使用的符号引用进行解析。
 
-<div data="补充为什么可以支持动态绑定 --> <--"></div>
+对于invokedynamic指令，上面规则则不成立。当碰到某个前面已经由invokedynamic指令
+触发过解析的符号引用时，并不意味着这个解析结果对于其他invokedynamic指令也同样生
+效。因为invokedynamic指令的目的本来就是用于动态语言支持（目前仅使用Java语言不会生
+成这条字节码指令），它所对应的引用称为“动态调用点限定符”（Dynamic Call Site
+Specifier），这里“动态”的含义就是必须等到程序实际运行到这条指令的时候，解析动作才
+能进行。相对的，其余可触发解析的指令都是“静态”的，可以在刚刚完成加载阶段，还没有
+开始执行代码时就进行解析。
+
+解析动作主要针对类或接口、字段、类方法、接口方法、方法类型、方法句柄和调用点
+限定符7类符号引用进行，分别对应于常量池的CONSTANT_Class_info、
+CONSTANT_Fieldref_info、CONSTANT_Methodref_info、
+CONSTANT_InterfaceMethodref_info、CONSTANT_MethodType_info、
+CONSTANT_MethodHandle_info和CONSTANT_InvokeDynamic_info 7种常量类型
 
 ### 5. 初始化
 
@@ -763,6 +844,8 @@ SuperClass[] sca = new SuperClass[10];
 - 常量在编译阶段会存入调用类的常量池中，本质上并没有直接引用到定义常量的类，因此不会触发定义常量的类的初始化。
 
 ```java
+public static final String HELLOWORLD="Hello World!";
+
 System.out.println(ConstClass.HELLOWORLD);
 ```
 
