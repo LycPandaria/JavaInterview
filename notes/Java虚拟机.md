@@ -1,4 +1,3 @@
-
 <!-- TOC START min:1 max:3 link:true update:true -->
 - [一、运行时数据区域](#一运行时数据区域)
   - [程序计数器](#程序计数器)
@@ -80,11 +79,22 @@
     - [2. 好处](#2-好处)
     - [3. 实现](#3-实现)
   - [自定义类加载器实现](#自定义类加载器实现)
+- [虚拟机字节码执行引擎](#虚拟机字节码执行引擎)
+  - [运行时栈帧结构](#运行时栈帧结构)
+    - [局部变量表](#局部变量表)
+    - [操作数栈](#操作数栈)
+    - [动态连接](#动态连接)
+    - [方法返回地址](#方法返回地址)
+  - [方法调用](#方法调用)
+    - [解析](#解析)
+    - [分派](#分派)
 - [一些面经上的问题](#一些面经上的问题)
   - [淘宝热门商品信息在JVM哪个内存区域？](#淘宝热门商品信息在jvm哪个内存区域)
 - [参考资料](#参考资料)
 
 <!-- TOC END -->
+
+
 
 **转载自[CyC2018](https://github.com/CyC2018/CS-Notes/blob/master/docs/notes/Java%20%E8%99%9A%E6%8B%9F%E6%9C%BA.md)的学习笔记**
 
@@ -911,9 +921,9 @@ public abstract class ClassLoader {
             if (c == null) {
                 try {
                     if (parent != null) {
-                        c = parent.loadClass(name, false);
+                        c = parent.loadClass(name, false);  // 父加载器
                     } else {
-                        c = findBootstrapClassOrNull(name);
+                        c = findBootstrapClassOrNull(name); // bootstrap加载器
                     }
                 } catch (ClassNotFoundException e) {
                     // ClassNotFoundException thrown if class not found
@@ -923,7 +933,7 @@ public abstract class ClassLoader {
                 if (c == null) {
                     // If still not found, then invoke findClass in order
                     // to find the class.
-                    c = findClass(name);
+                    c = findClass(name);  // 自己加载
                 }
             }
             if (resolve) {
@@ -987,6 +997,128 @@ public class FileSystemClassLoader extends ClassLoader {
     }
 }
 ```
+
+# 虚拟机字节码执行引擎
+
+## 运行时栈帧结构
+栈帧（Stack Frame）是用于支持虚拟机进行方法调用和方法执行的数据结构，虚拟机运行时数据区中的虚拟机栈（Virtual Machine Stack） 栈元素。栈帧存储了方法的
+局部变量表，操作数栈，动态连接和方法返回地址等信息。
+
+<div align="center"> <img src="../pic/chapter6-11.png" width=""/> </div><br>
+
+### 局部变量表
+一组变量值存储空间，用于存放方法参数和方法内部定义的局部变量。
+
+### 操作数栈
+一个后入先出的栈，每一个元素可以是任意的 Java 数据类型。
+
+当一个方法刚刚开始执行时候，这个方法的操作数栈为空，在执行过程中各种字节码指令往操作数栈中写入和读取内容，进行入栈/出栈操作。例如整数加法的字节码指令 iadd 在运行的时候
+操作数栈栈顶两个元素已经存入了两个 int 整数，当执行命令时就将两个 int 值出栈并相加。
+
+### 动态连接
+每个栈帧都包含一个指向运行时常量池中该栈帧所属方法的引用。这些符号引用一部分在类加载阶段或第一次使用的时候转化为直接引用，成为静态解析。另一部分将在每一次运行期间
+转化为直接引用，这部分成为动态连接。
+
+### 方法返回地址
+分两种：
+  - 执行引擎遇到任意一个方法返回的字节码指令，叫做正常完成出口(Normal Method Invocation Completion)
+  - 方法遇到异常而且没有在方法内得到处理，交错异常完成出口(Abrupt Method Invocation Completion)
+
+无论何种方式退出，都需要返回方法被调用位置。正常推出时候，调用者的 PC 计数器可以作为返回地址，当方案异常退出时候，返回地址要通过异常处理表来确定。
+
+## 方法调用
+不是指方法执行而是确定被调用方法的版本。
+
+Java虚拟机提供了 5 条方法调用字节码指令：
+  - invokestatic：调用静态方法。
+  - invokespecial：调用实例构造器＜init＞方法、私有方法和父类方法。
+  - invokevirtual：调用所有的虚方法。
+  - invokeinterface：调用接口方法，会在运行时再确定一个实现此接口的对象。
+  - invokedynamic：先在运行时动态解析出调用点限定符所引用的方法，然后再执行该方法，在此之前的4条调用指令，
+  分派逻辑是固化在Java虚拟机内部的，而invokedynamic指令的分派逻辑是由用户所设定的引导方法决定的。
+
+### 解析
+只能被 invokestatic 和 invokespecial 指令调用的方法，都可以在解析阶段中确定唯一的调用版本，符合的条件有
+静态方法，私有方法，实例构造器，父类方法，它们在类加载的时候就会符号引用解析为该方法直接引用。这类方法的调用就成为解析(Resolution)。
+
+解析调用一定是个静态的过程，在编译期间就完全确定，在类装载的解析阶段就会把涉及的符号引用全部转变为可确定的直接引用，不会延期到运行期再去完成。
+
+```java
+/**
+*方法静态解析演示
+*/
+public class StaticResolution{
+  public static void sayHello(){
+      System.out.println("hello world");
+  }
+  public static void main(String[]args){
+    StaticResolution.sayHello();
+  }
+}
+```
+使用javap命令查看这段程序的字节码，会发现的确是通过invokestatic命令来调用
+sayHello（）方法的。
+```text
+D：\Develop\＞javap-verbose StaticResolution
+public static void main（java.lang.String[]）；
+Code：
+Stack=0，Locals=1，Args_size=1
+0：invokestatic  #31；//Method sayHello：（）V
+3：return
+LineNumberTable：
+line 15：0
+line 16：3
+```
+
+### 分派
+
+#### 静态分配（Method Overload Resolution）
+```java
+package org.fenixsoft.polymorphic;
+/**
+*方法静态分派演示
+*/
+
+public class StaticDispatch{
+	static abstract class Human{}
+	static class Man extends Human{}
+	static class Woman extends Human{}
+
+	public void sayHello(Human guy){
+		System.out.println("hello,guy！");
+	}
+	public void sayHello(Man guy){
+		System.out.println("hello,gentleman！");
+	}
+	public void sayHello(Woman guy){
+		System.out.println("hello,lady！");
+	}
+
+	public static void main(String[]args){
+		Human man=new Man();
+		Human woman=new Woman();
+		StaticDispatch sr=new StaticDispatch();
+		sr.sayHello(man);
+		sr.sayHello(woman);
+	}
+}
+```
+```text
+hello, guy!
+hello, guy!
+```
+上面代码中"Human"称为变量的静态类型(Static Type)，后面的"Man"称为变量的实际类型(Actual Type)。
+
+main() 里面的两次sayHello()方法调用，在方法接收者已经确定是对象“sr”的前提下，使用哪个重载版本，就
+完全取决于传入参数的数量和数据类型。代码中刻意地定义了两个静态类型相同但实际类型
+不同的变量，但虚拟机（准确地说是编译器）在重载时是通过参数的静态类型而不是实际类
+型作为判定依据的。并且静态类型是编译期可知的，因此，在编译阶段，Javac编译器会根
+据参数的静态类型决定使用哪个重载版本，所以选择了sayHello（Human）作为调用目标，
+并把这个方法的符号引用写到main（）方法里的两条invokevirtual指令的参数中。
+
+
+#### 动态分配
+
 
 # 一些面经上的问题
 ## 淘宝热门商品信息在JVM哪个内存区域？
