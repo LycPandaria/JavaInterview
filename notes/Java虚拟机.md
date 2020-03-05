@@ -1117,7 +1117,78 @@ main() 里面的两次sayHello()方法调用，在方法接收者已经确定是
 并把这个方法的符号引用写到main（）方法里的两条invokevirtual指令的参数中。
 
 
-#### 动态分配
+#### 动态分配（重写）
+```java
+package org.fenixsoft.polymorphic;
+/**
+*方法动态分派演示
+*/
+public class DynamicDispatch{
+	static abstract class Human{
+		protected abstract void sayHello();
+	}
+	static class Man extends Human{
+		@Override
+		protected void sayHello(){
+			System.out.println("man say hello");
+		}
+	}
+	static class Woman extends Human{
+		@Override
+		protected void sayHello(){
+			System.out.println("woman say hello");
+		}
+	}
+
+	public static void main(String[]args){
+		Human man=new Man();
+		Human woman=new Woman();
+		man.sayHello();
+		woman.sayHello();
+		man=new Woman();
+		man.sayHello();
+	}
+}
+```
+```TEXT
+man say Hello
+woman say Hello
+woman say Hello
+```
+
+动态分配与重写（Override）有很密切的联系。
+
+将上面的代码的字节码：
+```text
+0：new#16；//class org/fenixsoft/polymorphic/DynamicDispatch $Man
+3：dup
+4：invokespecial#18；//Method org/fenixsoft/polymorphic/DynamicDispatch $Man."＜init＞"：（）V
+7：astore_1
+8：new#19；//class org/fenixsoft/polymorphic/DynamicDispatch $Woman
+11：dup
+12：invokespecial#21；//Method org/fenixsoft/polymorphic/DynamicDispatch $Woman."＜init＞"：（）V
+15：astore_2
+16：aload_1
+17：invokevirtual#22；//Method org/fenixsoft/polymorphic/DynamicDispatch $Human.sayHello：（）V
+20：aload_2
+21：invokevirtual#22；//Method org/fenixsoft/polymorphic/DynamicDispatch $Human.sayHello：（）V
+24：new#19；//class org/fenixsoft/polymorphic/Dynamic-Dispatch $Woman
+27：dup
+28：invokespecial#21；//Method org/fenixsoft/polymorphic/DynamicDispatch $Woman."＜init＞"：（）V
+31：astore_1
+32：aload_1
+33：invokevirtual#22；//Method org/fenixsoft/polymorphic/DynamicDispatch $Human.sayHello：（）V
+```
+可以看到 17 行和 22 行指令是一样的，都是 invokevirtual。invokevirtual 运行解析过程如下：
+  1. 找到操作数栈顶的第一个元素所指向的对象的实际类型，记作 C。
+  2. 如果在类型 C 中找到常量中的描述符和简单名称都相符合的方法（通过虚方法表 Virtual Method Table），则进行权限校验，如果通过则返回
+  这个方法的直接引用，查找过程结束，如果不通过，则返回 IllegalAccessError
+  3. 否则，按照继承关系从下到上以此对 C 的各个父类进行第 2 步
+  4. 始终没有，则返回 AbstractMethodError
+
+由于invokevirtual指令执行的第一步就是在运行期确定接收者的实际类型，所以两次调
+用中的invokevirtual指令把常量池中的类方法符号引用解析到了不同的直接引用上，这个过
+程就是Java语言中方法重写的本质。
 
 
 # 一些面经上的问题
