@@ -24,7 +24,7 @@
 	- [ReentrantLock](#reentrantlock)
 	- [比较](#比较)
 		- [其他不同](#其他不同)
-		- [synchronized, 偏向锁，轻量锁，重量级锁](#synchronized-偏向锁轻量锁重量级锁)
+	- [synchronized, 偏向锁，轻量锁，重量级锁](#synchronized-偏向锁轻量锁重量级锁)
 	- [公平锁和非公平锁](#公平锁和非公平锁)
 		- [实现原理](#实现原理)
 		- [公平锁示例](#公平锁示例)
@@ -499,7 +499,7 @@ synchronized使用Object对象本身的notify，wait，notifyAll控制调度，�
 1. 用法不一样。synchronized既可以加到方法上，也可以在特定代码块中。Lock需要显式地指出起始位置。
 2. 锁机制不一样。synchronized获得锁和释放的方式都是在块结构中，当获取多个锁时，必须以相反的顺序释放，并自动解锁。Lock需要开发人员手动释放锁，并且必须在finally中释放。Lock的tryLock()方法可以采用非阻塞的方式获取锁。
 
-### synchronized, 偏向锁，轻量锁，重量级锁
+## synchronized, 偏向锁，轻量锁，重量级锁
 [synchronized原理分析](https://segmentfault.com/a/1190000017255044)
 
 [synchronized的源码分析](https://www.jianshu.com/p/c13c0a80dbca)
