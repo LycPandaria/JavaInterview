@@ -58,39 +58,40 @@ public int findKthLargest(int[] nums, int k) {
 
 ```java
 public int findKthLargest(int[] nums, int k) {
-    k = nums.length - k;
-    int l = 0, h = nums.length - 1;
-    while (l < h) {
-        int j = partition(nums, l, h);
-        if (j == k) {
-            break;
-        } else if (j < k) {
-            l = j + 1;
-        } else {
-            h = j - 1;
-        }
+    if(k > nums.length || k <= 0) return Integer.MIN_VALUE;
+
+    k = nums.length - k;    // 求最 k 个最大的元素
+    int high = nums.length - 1;
+    int low = 0;
+
+    while(low < high){
+        int j = partition(nums, low, high);
+        if( j == k) break;
+        else if (j > k) high = j - 1;
+        else low = j + 1;
     }
+
     return nums[k];
 }
 
-private int partition(int[] a, int l, int h) {
-    int i = l, j = h + 1;
-    while (true) {
-        while (a[++i] < a[l] && i < h) ;
-        while (a[--j] > a[l] && j > l) ;
-        if (i >= j) {
-            break;
-        }
-        swap(a, i, j);
+private int partition(int[] a, int low, int high){
+    int i = low, j = high + 1;
+    int p = a[low];
+
+    while(true){
+        while(a[++i] < p && i < high);
+        while(a[--j] > p && j > low );
+        if(i >= j) break;
+        swap(a, i , j);
     }
-    swap(a, l, j);
+    swap(a, low, j);
     return j;
 }
 
-private void swap(int[] a, int i, int j) {
-    int t = a[i];
+private void swap(int[] a, int i, int j){
+    int tmp = a[i];
     a[i] = a[j];
-    a[j] = t;
+    a[j] = tmp;
 }
 ```
 
@@ -111,28 +112,30 @@ Given [1,1,1,2,2,3] and k = 2, return [1,2].
 把数都放到桶之后，从后向前遍历桶，最先得到的 k 个数就是出现频率最多的的 k 个数。
 
 ```java
+// 桶排序
 public List<Integer> topKFrequent(int[] nums, int k) {
-    Map<Integer, Integer> frequencyForNum = new HashMap<>();
-    for (int num : nums) {
-        frequencyForNum.put(num, frequencyForNum.getOrDefault(num, 0) + 1);
+    // 首先遍历数组，建立 num--frequency 的 map
+    Map<Integer, Integer> freqMap = new HashMap<>();
+    for(int num : nums){
+        freqMap.put(num, freqMap.getOrDefault(num, 0) + 1);
     }
-    List<Integer>[] buckets = new ArrayList[nums.length + 1];
-    for (int key : frequencyForNum.keySet()) {
-        int frequency = frequencyForNum.get(key);
-        if (buckets[frequency] == null) {
-            buckets[frequency] = new ArrayList<>();
-        }
-        buckets[frequency].add(key);
+
+    // 将 map 转换成桶，bucket[i] 即为 freq 为 i 的数字的集合
+    List<Integer>[] buckets = new ArrayList[nums.length + 1]; // 确保桶的数量足够,所以要 + 1
+    for(int key : freqMap.keySet()){
+        int freq = freqMap.get(key);    // 获取频率
+        if(buckets[freq] == null) buckets[freq] = new ArrayList<>();
+        buckets[freq].add(key);     // 将频率为 freq 的整数放入桶 buckets[freq] 中
     }
+
     List<Integer> topK = new ArrayList<>();
-    for (int i = buckets.length - 1; i >= 0 && topK.size() < k; i--) {
-        if (buckets[i] == null) {
-            continue;
-        }
-        if (buckets[i].size() <= (k - topK.size())) {
-            topK.addAll(buckets[i]);
-        } else {
+    // 从高到底遍历桶 buckets, 相当于已经是按 frequency 排序了
+    for(int i = buckets.length - 1; i >= 0; i--){
+        if(buckets[i] == null) continue;
+        if(buckets[i].size() <= (k - topK.size()))  topK.addAll(buckets[i]);
+        else {
             topK.addAll(buckets[i].subList(0, k - topK.size()));
+            break;  // topK 已经找完
         }
     }
     return topK;
@@ -185,53 +188,3 @@ public String frequencySort(String s) {
     return str.toString();
 }
 ```
-
-# 荷兰国旗问题
-
-荷兰国旗包含三种颜色：红、白、蓝。
-
-有三种颜色的球，算法的目标是将这三种球按颜色顺序正确地排列。它其实是三向切分快速排序的一种变种，在三向切分快速排序中，每次切分都将数组分成三个区间：小于切分元素、等于切分元素、大于切分元素，而该算法是将数组分成三个区间：等于红色、等于白色、等于蓝色。
-
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/7a3215ec-6fb7-4935-8b0d-cb408208f7cb.png"/> </div><br>
-
-
-## 1. 按颜色进行排序
-
-75\. Sort Colors (Medium)
-
-[Leetcode](https://leetcode.com/problems/sort-colors/description/) / [力扣](https://leetcode-cn.com/problems/sort-colors/description/)
-
-```html
-Input: [2,0,2,1,1,0]
-Output: [0,0,1,1,2,2]
-```
-
-题目描述：只有 0/1/2 三种颜色。
-
-```java
-public void sortColors(int[] nums) {
-    int zero = -1, one = 0, two = nums.length;
-    while (one < two) {
-        if (nums[one] == 0) {
-            swap(nums, ++zero, one++);
-        } else if (nums[one] == 2) {
-            swap(nums, --two, one);
-        } else {
-            ++one;
-        }
-    }
-}
-
-private void swap(int[] nums, int i, int j) {
-    int t = nums[i];
-    nums[i] = nums[j];
-    nums[j] = t;
-}
-```
-
-
-
-
-
-
-<div align="center"><img width="320px" src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/githubio/公众号二维码-2.png"></img></div>
