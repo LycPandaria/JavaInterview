@@ -94,7 +94,7 @@ private boolean addWorker(Runnable firstTask, boolean core) {
                 wc >= (core ? corePoolSize : maximumPoolSize))
                 return false;
 
-						// 这里可以看出，这里并不判断其他线程是不是空闲的，如果现在线程数少于 corePoolSize，就可以直接新建线程
+            // 这里可以看出，这里并不判断其他线程是不是空闲的，如果现在线程数少于 corePoolSize，就可以直接新建线程
             if (compareAndIncrementWorkerCount(c))	// cas 操作成功，进入下面的线程创建阶段
                 break retry;
             c = ctl.get();  // Re-read ctl
@@ -108,7 +108,7 @@ private boolean addWorker(Runnable firstTask, boolean core) {
     boolean workerAdded = false;
     Worker w = null;
     try {
-			// 新建线程用于执行任务
+        // 新建线程用于执行任务
         w = new Worker(firstTask);
         final Thread t = w.thread;
         if (t != null) {
@@ -229,6 +229,8 @@ private Runnable getTask() {
         boolean timed = allowCoreThreadTimeOut || wc > corePoolSize;
 
         // 没有任务需要执行，workerCount - 1 并返回 null
+        // 这里是为了如果此时 wc > corePoolSize 时候，该 worker 没有任务时候就可以关闭这个 worker
+        // 让 wc 的数量尽量等于 corePoolSize
         if ((wc > maximumPoolSize || (timed && timedOut))
             && (wc > 1 || workQueue.isEmpty())) {
             if (compareAndDecrementWorkerCount(c))
@@ -238,11 +240,11 @@ private Runnable getTask() {
 
         try {
 
-				/* 如果当前线程数大于corePoolSize，则会调用workQueue的poll方法获取任务，超时时间是keepAliveTime。
-           如果超过keepAliveTime时长，poll返回了null，上边提到的while循序就会退出，线程也就执行完了。
+        /* 如果当前线程数大于corePoolSize，则会调用workQueue的poll方法获取任务，超时时间是keepAliveTime。
+        如果超过keepAliveTime时长，poll返回了null，上边提到的while循序就会退出，线程也就执行完了。
 
-					如果当前线程数小于 corePoolSize，则会调用 workQueue 的 take() 方法阻塞在当前。
-          注：take() 方法如果没有取到头部元素会阻塞
+       如果当前线程数小于 corePoolSize，则会调用 workQueue 的 take() 方法阻塞在当前。
+       注：take() 方法如果没有取到头部元素会阻塞
         */
             Runnable r = timed ?
                 workQueue.poll(keepAliveTime, TimeUnit.NANOSECONDS) :
