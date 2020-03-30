@@ -249,7 +249,7 @@ dictht 是一个散列表结构，使用拉链法保存哈希冲突。
 /* This is our hash table structure. Every dictionary has two of this as we
  * implement incremental rehashing, for the old to the new table. */
 typedef struct dictht {
-    dictEntry \**table;
+    dictEntry \*\*table;
     unsigned long size;
     unsigned long sizemask;
     unsigned long used;

@@ -311,6 +311,8 @@ public boolean checkPossibility(int[] nums) {
 
 [Leetcode](https://leetcode.com/problems/maximum-subarray/description/) / [力扣](https://leetcode-cn.com/problems/maximum-subarray/description/)
 
+另见：[剑指offer-连续子数组的最大和](./剑指offer.md#42连续子数组的最大和)
+
 ```html
 For example, given the array [-2,1,-3,4,-1,2,1,-5,4],
 the contiguous subarray [4,-1,2,1] has the largest sum = 6.
@@ -318,16 +320,19 @@ the contiguous subarray [4,-1,2,1] has the largest sum = 6.
 
 ```java
 public int maxSubArray(int[] nums) {
-    if (nums == null || nums.length == 0) {
-        return 0;
+    if(nums == null || nums.length == 0) return 0;
+
+    int preMax = nums[0];
+    int max = preMax;
+
+    for(int i=1; i < nums.length; i++){
+        preMax = Math.max(nums[i], preMax + nums[i]);
+        if(max < preMax){
+            max = preMax;
+        }
     }
-    int preSum = nums[0];
-    int maxSum = preSum;
-    for (int i = 1; i < nums.length; i++) {
-        preSum = preSum > 0 ? preSum + nums[i] : nums[i];
-        maxSum = Math.max(maxSum, preSum);
-    }
-    return maxSum;
+
+    return max;
 }
 ```
 
@@ -346,29 +351,31 @@ This is a partition so that each letter appears in at most one part.
 A partition like "ababcbacadefegde", "hijhklij" is incorrect, because it splits S into less parts.
 ```
 
+策略就是不断地选择从最左边起最小的区间。可以从第一个字母开始分析，假设第一个字母是 'a'，那么第一个区间一定包含最后一次出现的 'a'。但第一个出现的 'a' 和最后一个出现的 'a' 之间可能还有其他字母，这些字母会让区间变大。举个例子，在 "abccaddbeffe" 字符串中，第一个最小的区间是 "abccaddb"。
+通过以上的分析，我们可以得出一个算法：对于遇到的每一个字母，去找这个字母最后一次出现的位置，用来更新当前的最小区间。
+
 ```java
 public List<Integer> partitionLabels(String S) {
-    int[] lastIndexsOfChar = new int[26];
-    for (int i = 0; i < S.length(); i++) {
-        lastIndexsOfChar[char2Index(S.charAt(i))] = i;
+    // 构建 last 数组，存储每个字符的最后出现位置
+    int last[] = new int[26];
+    for(int i = 0; i < S.length(); i++){
+        last[S.charAt(i) - 'a'] = i;
     }
-    List<Integer> partitions = new ArrayList<>();
-    int firstIndex = 0;
-    while (firstIndex < S.length()) {
-        int lastIndex = firstIndex;
-        for (int i = firstIndex; i < S.length() && i <= lastIndex; i++) {
-            int index = lastIndexsOfChar[char2Index(S.charAt(i))];
-            if (index > lastIndex) {
-                lastIndex = index;
-            }
-        }
-        partitions.add(lastIndex - firstIndex + 1);
-        firstIndex = lastIndex + 1;
-    }
-    return partitions;
-}
 
-private int char2Index(char c) {
-    return c - 'a';
+    ArrayList<Integer> res = new ArrayList<>();
+    // 从第一个字符起到它的最后出现位置作为初始区间
+    // 然后遍历字符串，根据最后出现位置来判断是否需要扩大分区或者新开分区
+    int j = 0, index = 0;
+    for(int i = 0; i < S.length() ; i++){
+        //  根据字符最后出现位置来判断是否需要扩大区间
+        j = Math.max(j, last[S.charAt(i) - 'a']);   
+        if(i == j){
+            // 这里说明已经确定分区，保存结果并新分区
+            res.add(j - index + 1);
+            index = j + 1;
+        }
+    }
+
+    return res;
 }
 ```
