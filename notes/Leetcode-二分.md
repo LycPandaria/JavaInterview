@@ -192,19 +192,16 @@ Output: 2
 
 ```java
 public int singleNonDuplicate(int[] nums) {
-    int l = 0, h = nums.length - 1;
-    while (l < h) {
-        int m = l + (h - l) / 2;
-        if (m % 2 == 1) {
-            m--;   // 保证 l/h/m 都在偶数位，使得查找区间大小一直都是奇数
-        }
-        if (nums[m] == nums[m + 1]) {
-            l = m + 2;
-        } else {
-            h = m;
-        }
+    int left = 0, right = nums.length-1;
+    int mid;
+    while(left < right){
+        mid = left + (right - left) / 2;
+        // 确保 mid 是一个偶数，这样方便比较
+        if(mid % 2 != 0)    mid--;
+        if(nums[mid] == nums[mid+1])  left = mid + 2;
+        else right = mid;
     }
-    return nums[l];
+    return nums[left];
 }
 ```
 
@@ -222,16 +219,14 @@ public int singleNonDuplicate(int[] nums) {
 
 ```java
 public int firstBadVersion(int n) {
-    int l = 1, h = n;
-    while (l < h) {
-        int mid = l + (h - l) / 2;
-        if (isBadVersion(mid)) {
-            h = mid;
-        } else {
-            l = mid + 1;
-        }
+    int left = 1, right = n;
+    int mid;
+    while(left < right){
+        mid = left + (right - left) / 2;
+        if(isBadVersion(mid))   right = mid;
+        else left = mid + 1;
     }
-    return l;
+    return left;
 }
 ```
 
