@@ -243,16 +243,17 @@ Output: 1
 
 ```java
 public int findMin(int[] nums) {
-    int l = 0, h = nums.length - 1;
-    while (l < h) {
-        int m = l + (h - l) / 2;
-        if (nums[m] <= nums[h]) {
-            h = m;
-        } else {
-            l = m + 1;
-        }
+    int left = 0, right = nums.length-1;
+    int mid;
+    // 让 nums[mid] 和 nums[right] 比较
+    // 如果小于，说明 mid--right 这个区间是有序的，最小的数就在[left, mid]
+    // 如果大于，说明 mid,right 这个区间存在旋转，最小的数在 [mid+1, right]
+    while(left < right){
+        mid = left + (right - left) / 2;
+        if(nums[mid] <= nums[right])    right = mid;
+        else left = mid + 1;
     }
-    return nums[l];
+    return nums[left];
 }
 ```
 
@@ -276,26 +277,34 @@ Output: [-1,-1]
 
 ```java
 public int[] searchRange(int[] nums, int target) {
-    int first = findFirst(nums, target);
-    int last = findFirst(nums, target + 1) - 1;
-    if (first == nums.length || nums[first] != target) {
-        return new int[]{-1, -1};
-    } else {
-        return new int[]{first, Math.max(first, last)};
-    }
+    if(nums.length == 0)    return new int[]{-1,-1};
+
+    int first = extremeInsertionIndex(nums, target, true);
+
+    // 数组中不存在 target
+    if(first == nums.length || nums[first] != target)
+        return new int[]{-1,-1};
+
+    // 在寻找最右位置，函数返回的是比 target 的最右插入位置，所以要 -1 为 target 的最右位置
+    int last = extremeInsertionIndex(nums, target, false) - 1;
+    return new int[] {first, last};
 }
 
-private int findFirst(int[] nums, int target) {
-    int l = 0, h = nums.length; // 注意 h 的初始值
-    while (l < h) {
-        int m = l + (h - l) / 2;
-        if (nums[m] >= target) {
-            h = m;
-        } else {
-            l = m + 1;
+// 函数返回 target 应该插入的最左位置或最右位置
+private int extremeInsertionIndex(int[] nums, int target, boolean leftMost) {
+    int left = 0, right = nums.length;  //   注意 right 的值
+    int mid;
+    while(left < right){
+        mid = left + (right - left) / 2;
+        // 后面的判断保证了在找到了 target 之后继续搜索
+        // leftMost 为真时即使 nums[mid]==target 会继续在 [left, mid) 中搜索，目的是找到最左边的插入位置
+        if(nums[mid] > target || (leftMost && nums[mid]==target)){
+            right = mid;
+        }else {
+            left = mid + 1;
         }
     }
-    return l;
+    return left;
 }
 ```
 
