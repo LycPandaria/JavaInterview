@@ -1,7 +1,7 @@
 <!-- TOC START min:1 max:3 link:true update:true -->
 - [ArratList](#arratlist)
   - [概览](#概览)
-  - [ArrayList属性](#arraylist属性)
+  - [ArrayList 属性](#arraylist-属性)
   - [构造函数](#构造函数)
   - [扩容](#扩容)
   - [Remove](#remove)
@@ -39,6 +39,7 @@
     - [hash](#hash)
     - [取模](#取模)
   - [resize 扩容](#resize-扩容)
+  - [头插法的问题](#头插法的问题)
 - [HashMap 1.8](#hashmap-18)
   - [属性区别](#属性区别)
   - [get()](#get-3)
@@ -97,26 +98,31 @@ public class ArrayList<E> extends AbstractList<E>
   /* 省略以下内容，下文会有具体代码 */
 }
 ```
-ArrayList 是一个数组队列，相当于 动态数组。与Java中的数组相比，它的容量能动态增长。它继承于AbstractList，实现了List, RandomAccess, Cloneable, java.io.Serializable这些接口。
+ArrayList 是一个数组队列，相当于 动态数组。与Java中的数组相比，它的容量能动态增长。
+它继承于AbstractList，实现了List, RandomAccess, Cloneable, java.io.Serializable这些接口。
 
 ArrayList 继承了AbstractList，实现了List。它是一个数组队列，提供了相关的添加、删除、修改、遍历等功能。
 
-ArrayList 实现了RandmoAccess接口，即提供了随机访问功能。RandmoAccess(标识接口)是java中用来被List实现，为List提供快速访问功能的。在ArrayList中，我们即可以通过元素的序号快速获取元素对象；这就是快速随机访问。
+ArrayList 实现了RandmoAccess接口，即提供了随机访问功能。RandmoAccess(标识接口)是
+java中用来被 List 实现，为 List 提供快速访问功能的。在 ArrayList 中，我们即可以通过元素的序号快速获取元素对象；这就是快速随机访问。
 
-ArrayList 实现了Cloneable(标识接口接口，即覆盖了函数clone()，能被克隆。
+ArrayList 实现了 Cloneable(标识接口接口，即覆盖了函数 clone()，能被克隆。
 
-ArrayList 实现java.io.Serializable(标识接口接口，这意味着ArrayList支持序列化，能通过序列化去传输。
+ArrayList 实现 java.io.Serializable(标识接口接口，这意味着ArrayList支持序列化，能通过序列化去传输。
 
-和Vector不同，**ArrayList中的操作不是线程安全的！** 所以，建议在单线程中才使用ArrayList，而在多线程中可以选择Vector或者CopyOnWriteArrayList。
+和 Vector 不同，**ArrayList中的操作不是线程安全的！** 所以，建议在单线程中才使用 ArrayList，
+而在多线程中可以选择Vector或者CopyOnWriteArrayList。
 
-## ArrayList属性
-ArrayList属性主要就是当前数组长度size，以及存放数组的对象elementData数组，除此之外还有一个经常用到的属性就是从AbstractList继承过来的modCount属性，代表ArrayList集合的修改次数。
+## ArrayList 属性
+- size: 当前数组长度
+- elementData: 存放数组对象的数组
+- modCount: 从 AbstractList 继承过来的属性，代表 ArrayList 集合的修改次数
+
 ```java
 // 默认容量
 private static final int DEFAULT_CAPACITY = 10;
 
-// Shared empty array instance used for empty instances. 用于空实例的空数组
-// new ArrayList(0)
+// Shared empty array instance used for empty instances. 用于空实例的空数组 new ArrayList(0)
 private static final Object[] EMPTY_ELEMENTDATA = {};
 
 /**
@@ -187,9 +193,11 @@ public ArrayList(Collection<? extends E> c) {
 ```
 
 ## 扩容
-添加元素时使用 ensureCapacityInternal() 方法来保证容量足够，如果不够时，需要使用 grow() 方法进行扩容，**新容量的大小为 oldCapacity + (oldCapacity >> 1)，也就是旧容量的 1.5 倍。**。
+添加元素时使用 ensureCapacityInternal() 方法来保证容量足够，如果不够时，需要使用 grow() 方法进行扩容，
+**新容量的大小为 oldCapacity + (oldCapacity >> 1)，也就是旧容量的 1.5 倍。**。
 
-ensureCapacityInternal(int minCapacity) 方法主要的逻辑是传入当前数组实际个数 size+1 作为数组添加完元素后需要的容量大小，如果这个大小大于了数组大小(elementData.length)，就会调用 grow(minCapacity)进行扩容。
+ensureCapacityInternal(int minCapacity) 方法主要的逻辑是传入当前数组实际个数 size+1
+作为数组添加完元素后需要的容量大小，如果这个大小大于了数组大小(elementData.length)，就会调用 grow(minCapacity)进行扩容。
 
 扩容操作需要调用 Arrays.copyOf() 把原数组整个复制到新数组中，这个操作代价很高，因此最好在创建 ArrayList 对象时就指定大概的容量大小，减少扩容操作的次数。
 ```java
@@ -373,7 +381,8 @@ public class Vector<E>
 ```
 跟 ArrayList 一致，Vector 继承了AbstractList，实现了List。它是一个数组队列，提供了相关的添加、删除、修改、遍历等功能。
 
-Vector  实现了RandmoAccess接口，即提供了随机访问功能。RandmoAccess是java中用来被List实现，为List提供快速访问功能的。在 Vector 中，我们即可以通过元素的序号快速获取元素对象；这就是快速随机访问。
+Vector  实现了RandmoAccess接口，即提供了随机访问功能。RandmoAccess是java中用来被List实现，
+为List提供快速访问功能的。在 Vector 中，我们即可以通过元素的序号快速获取元素对象；这就是快速随机访问。
 
 Vector  实现了Cloneable接口，即覆盖了函数 clone() ，能被克隆。
 
@@ -815,6 +824,7 @@ public V put(K key, V value) {
 
 ### inflateTable
 ```java
+// table == EMPTY_TABLE 时候执行，应该算是初始化
 private void inflateTable(int toSize) {
     int capacity = roundUpToPowerOf2(toSize);//capacity一定是2的次幂
     // 此处为threshold赋值，取capacity*loadFactor和MAXIMUM_CAPACITY+1的最小值，
@@ -909,7 +919,7 @@ if ((size >= threshold) && (null != table[bucketIndex])) {
     bucketIndex = indexFor(hash, table.length);
 }
 ```
-可以看出，扩容的长度是之前的两倍 *resize(2 * table.length);*
+可以看出，扩容的长度是之前的两倍 **resize(2 * table.length);**
 ```java
 void resize(int newCapacity) {
     Entry[] oldTable = table;
@@ -957,6 +967,16 @@ new capacity : 00100000
   - 如果为 1，那么得到的结果为原来的结果 +16。
 **这样做可以尽量减少之前已经散列好的数组，减少数据移动操作。**
 
+## 头插法的问题
+- 链表成环
+  并发情况下，若当前线程此时获得ertry节点，但是被线程中断无法继续执行，此时线程二进入 transfer 函数，
+  并把函数顺利执行，此时新表中的某个位置有了节点，之后线程一获得执行权继续执行，因为并发 transfer，
+  所以两者都是扩容的同一个链表，当线程一执行到 e.next = new table[i] 的时候，
+  由于线程二之前数据迁移的原因导致此时 new table[i] 上就有 ertry 存在，所以线程一执行的时候，
+  会将next节点，设置为自己，导致自己互相使用next引用对方，因此产生链表，导致死循环。
+
+- 插入顺序和 Entry 链表的顺序相反。
+
 # HashMap 1.8
 JDK 1.8对HashMap进行了比较大的优化，底层实现由之前的“数组+链表”改为“数组+链表+红黑树”
 ![hashmap18-1](../pic/hashmap18-1.png)
@@ -973,12 +993,12 @@ static final int MIN_TREEIFY_CAPACITY = 64; // 转红黑树时, table的最小�
 因为红黑树的引入，get() 和 put() 都有了变化
 
 get() 的主要流程如下：
-  1. 先对table进行校验，校验是否为空，length是否大于0
-  2. 使用table.length - 1和hash值进行位与运算，得出在table上的索引位置，将该索引位置的节点赋值给first节点，校验该索引位置是否为空
-  3. 检查first节点的hash值和key是否和入参的一样，如果一样则first即为目标节点，直接返回first节点
-  4. 如果first的next节点不为空则继续遍历
-  5. 如果first节点为TreeNode，则调用getTreeNode方法（见下文代码块1）查找目标节点
-  6. 如果first节点不为TreeNode，则调用普通的遍历链表方法查找目标节点
+  1. 先对 table 进行校验，校验是否为空，length 是否大于0
+  2. 使用 table.length - 1 和 hash 值进行位与运算，得出在 table 上的索引位置，将该索引位置的节点赋值给 first 节点，校验该索引位置是否为空
+  3. 检查 first节点的 hash 值和 key 是否和入参的一样，如果一样则 first 即为目标节点，直接返回 first 节点
+  4. 如果 first 的 next 节点不为空则继续遍历
+  5. 如果 first 节点为 TreeNode，则调用 getTreeNode 方法查找目标节点
+  6. 如果 first 节点不为 TreeNode，则调用普通的遍历链表方法查找目标节点
   7. 如果查找不到目标节点则返回空
 
 ```java
@@ -1012,15 +1032,15 @@ final Node<K,V> getNode(int hash, Object key) {
 ```
 
 ## put()
-1. 校验table是否为空或者length等于0，如果是则调用resize方法（见下文resize方法）进行初始化
-2. 通过hash值计算索引位置，将该索引位置的头节点赋值给p节点，如果该索引位置节点为空则使用传入的参数新增一个节点并放在该索引位置
-3. 判断p节点的key和hash值是否跟传入的相等，如果相等, 则p节点即为要查找的目标节点，将p节点赋值给e节点
-4. 如果p节点不是目标节点，则判断p节点是否为TreeNode，如果是则调用红黑树的putTreeVal方法（见下文代码块4）查找目标节点
-5. 走到这代表p节点为普通链表节点，则调用普通的链表方法进行查找，并定义变量binCount来统计该链表的节点数
-6. 如果p的next节点为空时，则代表找不到目标节点，则新增一个节点并插入链表尾部，并校验节点数是否超过8个，如果超过则调用treeifyBin方法将链表节点转为红黑树节点
-7. 如果遍历的e节点存在hash值和key值都与传入的相同，则e节点即为目标节点，跳出循环
-8. 如果e节点不为空，则代表目标节点存在，使用传入的value覆盖该节点的value，并返回oldValue
-9. 如果插入节点后节点数超过阈值，则调用resize方法（见下文resize方法）进行扩容
+1. 校验 table 是否为空或者 length 等于0，如果是则调用 resize() 方法（见下文 resize()方法）进行初始化
+2. 通过 hash 值计算索引位置，将该索引位置的头节点赋值给 p 节点，如果该索引位置节点为空则使用传入的参数新增一个节点并放在该索引位置
+3. 判断 p 节点的 key 和 hash 值是否跟传入的相等，如果相等, 则 p 节点即为要查找的目标节点，将 p 节点赋值给 e 节点
+4. 如果 p 节点不是目标节点，则判断 p 节点是否为 TreeNode，如果是则调用红黑树的 putTreeVal()方法查找目标节点
+5. 走到这代表 p 节点为普通链表节点，则调用普通的链表方法进行查找，并定义变量 binCount 来统计该链表的节点数
+6. 如果 p 的 next 节点为空时，则代表找不到目标节点，则新增一个节点并插入链表尾部，并校验节点数是否超过 8 个，如果超过则调用 treeifyBin() 方法将链表节点转为红黑树节点
+7. 如果遍历的 e 节点存在 hash 值和 key 值都与传入的相同，则 e 节点即为目标节点，跳出循环
+8. 如果 e 节点不为空，则代表目标节点存在，使用传入的 value 覆盖该节点的 value，并返回 oldValue
+9. 如果插入节点后节点数超过阈值，则调用 resize() 方法（见下文resize方法）进行扩容
 
 ```java
 public V put(K key, V value) {
@@ -1262,11 +1282,10 @@ private void addEntry(int hash, K key, V value, int index) {
 }
 ```
 在上面的put方法中可以看到很多点与 HashMap 中不同的地方:
-1. Hashtable的put()是线程安全的，而HashMap的put()方法不是线程安全的
-2. HashMap中键和值均允许为null；Hashtable中均不允许
-3. 计算hash的方式不同。Hashtable中使用键的哈希码作为哈希值，而HashMap中的哈希值将根据键的哈希值经过计算得到
-4. 得到数组中桶的方式不一样。HashMap 中采用 h & (length-1)，因为 HashMap 中桶的个数必须是 2 的指数倍数，但是 HashTable 因为桶个数并不限制在 2 的指数倍数，所以在写法上跟 HashMap 不一致
-  (hash & 0x7FFFFFFF) % tab.length
+1. Hashtable 的 put() 是线程安全的，而 HashMap 的 put() 方法不是线程安全的
+2. HashMap 中键和值均允许为 null；Hashtable 中均不允许
+3. 计算 hash 的方式不同。Hashtable 中使用键的哈希码作为哈希值，而 HashMap 中的哈希值将根据键的哈希值经过计算得到
+4. 得到数组中桶的方式不一样。HashMap 中采用 h & (length-1)，因为 HashMap 中桶的个数必须是 2 的指数倍数，但是 HashTable 因为桶个数并不限制在 2 的指数倍数，所以在写法上跟 HashMap 不一致: (hash & 0x7FFFFFFF) % tab.length
 
 ## rehash()
 从上面可以看出，在当插入一个节点时，如果哈希表的尺寸已经达到了扩容的阈值，那么进行 rehash()，之后再将节点插入到链表的头部，这一点和 HashMap(1.7) 是一样的，即新节点总是位于桶的头结点。
@@ -1309,24 +1328,27 @@ protected void rehash() {
 - HashMap 的迭代器是 fail-fast 迭代器(因为不是线程安全的)。
 
 # ConcurrentHashMap 1.7
-HashMap 不是线程安全的，但是 HashTable 在线程多的情况下效率会下降很快(所以线程争一个锁)
+HashMap 不是线程安全的，但是 HashTable 在线程多的情况下效率会下降很快(所有线程争一个锁)
 所以在多线程情况也不是很理想.
 
-ConcurrentHashMap所使用的锁分段技术，首先将数据分成一段一段的存储，然后给每一段数据配一把锁，当一个线程占用锁访问其中一个段数据的时候，其他段的数据也能被其他线程访问。有些方法需要跨段，比如size()和containsValue()，它们可能需要锁定整个表而而不仅仅是某个段，这需要按顺序锁定所有段，操作完毕后，又按顺序释放所有段的锁。
+ConcurrentHashMap 所使用的锁分段技术，首先将数据分成一段一段的存储，然后给每一段数据配一把锁，当一个线程占用锁访问其中一个段数据的时候，其他段的数据也能被其他线程访问。有些方法需要跨段，比如size()和containsValue()，它们可能需要锁定整个表而而不仅仅是某个段，这需要按顺序锁定所有段，操作完毕后，又按顺序释放所有段的锁。
 ![ConcurrentHashMap](../pic/concurrentHashMap.png)
 
 ## 数据结构
-ConcurrentHashMap是由Segment数组结构和HashEntry数组结构组成。
+ConcurrentHashMap 是由 Segment 数组结构和 HashEntry 数组结构组成。
 
-Segment是一种可重入锁ReentrantLock，在ConcurrentHashMap里扮演锁的角色，HashEntry则用于存储键值对数据。
+Segment 是一种可重入锁 ReentrantLock，在 ConcurrentHashMap 里扮演锁的角色，HashEntry 则用于存储键值对数据。
 
-一个ConcurrentHashMap里包含一个Segment数组，Segment的结构和HashMap类似，是一种数组和链表结构， 一个Segment里包含一个HashEntry数组，每个HashEntry是一个链表结构的元素， 每个Segment守护者一个HashEntry数组里的元素,当对HashEntry数组的数据进行修改时，必须首先获得它对应的Segment锁。
+一个 ConcurrentHashMap 里包含一个 Segment 数组，Segment 的结构和 HashMap 类似，是一种数组和链表结构， 一个 Segment 里包含一个 HashEntry 数组，每个 HashEntry 是一个链表结构的元素， 每个 Segment 守护者一个 HashEntry 数组里的元素,当对 HashEntry 数组的数据进行修改时，必须首先获得它对应的 Segment 锁。
 ```java
 final Segment<K,V>[] segments;
 ```
 ```java
 static final class Segment<K,V> extends ReentrantLock implements Serializable {
 
+    /**
+       * scanAndLockForPut中自旋循环获取锁的最大自旋次数。
+       */
     static final int MAX_SCAN_RETRIES =
         Runtime.getRuntime().availableProcessors() > 1 ? 64 : 1;
 
@@ -1363,7 +1385,7 @@ static final int DEFAULT_INITIAL_CAPACITY = 16;
 static final int DEFAULT_CONCURRENCY_LEVEL = 16;
 
 /**
- * 每个segment中table数组的长度,必须是2^n,至少为2
+ * 每个segment 中 table(HashEntry<K,V>[] table) 数组的长度,必须是2^n,至少为2
  */
 static final int MIN_SEGMENT_TABLE_CAPACITY = 2;
 ```
@@ -1381,10 +1403,10 @@ final Segment<K,V> segmentFor(int hash) {
     return segments[(hash >>> segmentShift) & segmentMask];
 }
 ```
-这个函数用了位操作来确定Segment，根据传入的hash值向右无符号右移segmentShift位，然后和segmentMask进行与操作，结合我们之前说的segmentShift和segmentMask的值，就可以得出以下结论：假设Segment的数量是2的n次方，根据元素的hash值的高n位就可以确定元素到底在哪一个Segment中。
-
 segmentShift和segmentMask:假设构造函数确定了Segment的数量是2的n次方，那么segmentShift就等于32减去n，而segmentMask就等于2的n次方减一.
 (这种确定 Segment 位置的方法和 HashMap 中 h & (length-1) 是一个意思)。
+
+这个函数用了位操作来确定Segment，根据传入的hash值向右无符号右移segmentShift位，然后和segmentMask进行与操作，结合我们之前说的segmentShift和segmentMask的值，就可以得出以下结论：假设Segment的数量是2的n次方，根据元素的hash值的高n位就可以确定元素到底在哪一个Segment中。
 
 ConcurrentHashMap的get操作是直接委托给Segment的get方法，直接看Segment的get方法：
 ```java
@@ -1565,7 +1587,9 @@ private void rehash(HashEntry<K,V> node) {
                 // idx 是当前链表的头结点 e 的新位置  
                 int lastIdx = idx;  
 
-                // 下面这个 for 循环会找到一个 lastRun 节点，这个节点之后的所有元素是将要放到一起的  
+                // 下面这个 for 循环会找到一个 lastRun 节点，这个节点之后的所有元素是将要放到一起的
+                // lastRun 节点到末尾的节点计算出的 k = last.hash & sizeMask 是一样的, 不一定是 低位或者高位
+                // 但是只需要把 lastRun 到末尾的节点统一放到 newTable[k] 即可。
                 for (HashEntry<K,V> last = next;  
                      last != null;  
                      last = last.next) {  
@@ -1607,17 +1631,18 @@ static final int TREEIFY_THRESHOLD = 8; // 链表节点转换红黑树节点的�
 static final int UNTREEIFY_THRESHOLD = 6;   // 红黑树节点转换链表节点的阈值, 6个节点转
 static final int MIN_TREEIFY_CAPACITY = 64; // 转红黑树时, table的最小长度
 
-// 默认为0，用来控制table的初始化和扩容操作 -1-代表table正在初始化  -N 表示有N-1个线程正在进行扩容操作
-// 如果table未初始化，表示table需要初始化的大小。如果table初始化完成，表示table的容量阈值，超过了就要进行扩容，默认是table大小的0.75倍
+// 默认为0，用来控制 table 的初始化和扩容操作
+//-1 代表 table正在初始化  -N 表示有 N-1 个线程正在进行扩容操作
+// 如果 table 未初始化，表示 table 需要初始化的大小。如果 table 初始化完成，表示 table 的容量阈值，超过了就要进行扩容，默认是table大小的0.75倍
 private transient volatile int sizeCtl;
 
-// Node：保存key，value及key的hash值的数据结构。
+// Node：保存 key, value 及 key 的 hash 值的数据结构。
 class Node<K,V> implements Map.Entry<K,V> {
     final int hash;   // final 确保不被修改和线程安全
     final K key;
     volatile V val;   // 其中value和next都用volatile修饰，保证并发的可见性。
     volatile Node<K,V> next;
-    ... 省略部分代码
+    // 省略部分代码
 }
 
 // ForwardingNode：一个特殊的Node节点，hash值为-1，其中存储nextTable的引用。
@@ -1669,7 +1694,7 @@ private final Node<K,V>[] initTable() {
                     @SuppressWarnings("unchecked")
                     Node<K,V>[] nt = (Node<K,V>[])new Node<?,?>[n];
                     table = tab = nt;
-                    sc = n - (n >>> 2);
+                    sc = n - (n >>> 2); // 这一步相当于 sc = n * 0.75
                 }
             } finally {
                 sizeCtl = sc;
@@ -1697,7 +1722,6 @@ final V putVal(K key, V value, boolean onlyIfAbsent) {
         if (tab == null || (n = tab.length) == 0)
             tab = initTable();  // 初始化 table
         // 2.i 指的就是该 hash 值在表中对应的 index 位置
-        // 3.
         else if ((f = tabAt(tab, i = (n - 1) & hash)) == null) {  
             if (casTabAt(tab, i, null, new Node<K,V>(hash, key, value, null)))
                 break;                   // no lock when adding to empty bin
@@ -1872,7 +1896,8 @@ private final void transfer(Node<K,V>[] tab, Node<K,V>[] nextTab) {
     boolean advance = true;
     // 完成状态，如果是 true，就结束此方法。
     boolean finishing = false; // to ensure sweep before committing nextTab
-    // 死循环,i 表示下标，bound 表示当前线程可以处理的当前桶区间最小下标
+    //这个循环用于处理一个 stride 长度的任务，i 后面会被赋值为该 stride 内最大的下标，而 bound 后面会被赋值为该 stride 内最小的下标
+    //通过循环不断减小 i 的值，从右往左依次迁移桶上面的数据，直到 i 小于 bound 时结束该次长度为 stride 的迁移任务
     for (int i = 0, bound = 0;;) {
         Node<K,V> f; int fh;
         // 如果当前线程可以向后推进；这个循环就是控制 i 递减。同时，每个线程都会进入这里取得自己需要转移的桶的区间
@@ -1909,10 +1934,13 @@ private final void transfer(Node<K,V>[] tab, Node<K,V>[] nextTab) {
                 sizeCtl = (n << 1) - (n >>> 1); // 更新阈值
                 return;// 结束方法。
             }// 如果没完成
-            if (U.compareAndSwapInt(this, SIZECTL, sc = sizeCtl, sc - 1)) {// 尝试将 sc -1. 表示这个线程结束帮助扩容了，将 sc 的低 16 位减一。
-                if ((sc - 2) != resizeStamp(n) << RESIZE_STAMP_SHIFT)// 如果 sc - 2 不等于标识符左移 16 位。如果他们相等了，说明没有线程在帮助他们扩容了。也就是说，扩容结束了。
-                    return;// 不相等，说明没结束，当前线程结束方法。
-                finishing = advance = true;// 如果相等，扩容结束了，更新 finising 变量
+            //每当一条线程扩容结束就会更新一次 sizeCtl 的值，进行减 1 操作
+            if (U.compareAndSwapInt(this, SIZECTL, sc = sizeCtl, sc - 1)) {
+               //(sc - 2) != resizeStamp(n) << RESIZE_STAMP_SHIFT 成立，说明该线程不是扩容大军里面的最后一条线程，直接return回到上层while循环
+                if ((sc - 2) != resizeStamp(n) << RESIZE_STAMP_SHIFT)
+                    return;
+                // 如果相等，扩容结束了，更新 finising 变量
+                finishing = advance = true;
                 i = n; // 再次循环检查一下整张表
             }
         }

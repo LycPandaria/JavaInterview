@@ -31,7 +31,6 @@
 	- [运算符优先级](#运算符优先级)
 	- ["<<" 和 ">>"异同](#异同)
 	- ["==",equals 和 hashCode](#equals-和-hashcode)
-	- [String，StringBuffer，StringBuilder，StringTokenizer](#stringstringbufferstringbuilderstringtokenizer)
 		- [Java 8 和 Java 9 的 String](#java-8-和-java-9-的-string)
 		- [不可变的好处](#不可变的好处)
 		- [String实例化](#string实例化)
@@ -111,9 +110,8 @@ public class Test{
 
 ## 为什么有些接口没有任何方法?
 1. 接口中成员的作用域修饰符都是public，接口中的常量默认使用public static final修饰
-2. **有些接口内部没有声明任何办法，叫做标识接口**
-3. Java中已存在的标识接口有Cloneable和Serializable等
-4. 主要的作用是配合instanceof来判断对象的类型是否实现了一个给定的标识接口  
+2. **有些接口内部没有声明任何办法，叫做标识接口**,Java中已存在的标识接口有Cloneable和Serializable等
+3. 主要的作用是配合instanceof来判断对象的类型是否实现了一个给定的标识接口  
 
 例子见书([Java程序员面试笔试宝典](https://book.douban.com/subject/20270192/))54页
 
@@ -161,18 +159,23 @@ public class Test{
 
 5. 反射优点：
 	1. 可扩展性 ：应用程序可以利用全限定名创建可扩展对象的实例，来使用来自外部的用户自定义类。
-	2. 类浏览器和可视化开发环境 ：一个类浏览器需要可以枚举类的成员。可视化开发环境（如 IDE）可以从利用反射中可用的类型信息中受益，以帮助程序员编写正确的代码。
-	3. 调试器和测试工具 ： 调试器需要能够检查一个类里的私有成员。测试工具可以利用反射来自动地调用类里定义的可被发现的 API 定义，以确保一组测试中有较高的代码覆盖率。
+	2. 类浏览器和可视化开发环境 ：一个类浏览器需要可以枚举类的成员。可视化开发环境（如 IDE
+	）可以从利用反射中可用的类型信息中受益，以帮助程序员编写正确的代码。
+	3. 调试器和测试工具 ： 调试器需要能够检查一个类里的私有成员。测试工具可以利用反射来
+	自动地调用类里定义的可被发现的 API 定义，以确保一组测试中有较高的代码覆盖率。
 
 6. 反射的缺点
-	1. 性能开销 ：反射涉及了动态类型的解析，所以 JVM 无法对这些代码进行优化。因此，反射操作的效率要比那些非反射操作低得多。我们应该避免在经常被执行的代码或对性能要求很高的程序中使用反射。
-	2. 安全限制 ：使用反射技术要求程序必须在一个没有安全限制的环境中运行。如果一个程序必须在有安全限制的环境中运行，如 Applet，那么这就是个问题了。
-	3. 内部暴露 ：由于反射允许代码执行一些在正常情况下不被允许的操作（比如访问私有的属性和方法），所以使用反射可能会导致意料之外的副作用，这可能导致代码功能失调并破坏可移植性。反射代码破坏了抽象性，因此当平台发生改变的时候，代码的行为就有可能也随着变化。
+	1. 性能开销 ：反射涉及了动态类型的解析，所以 JVM 无法对这些代码进行优化。因此，反射操
+	作的效率要比那些非反射操作低得多。我们应该避免在经常被执行的代码或对性能要求很高的程序中使用反射。
+	2. 安全限制 ：使用反射技术要求程序必须在一个没有安全限制的环境中运行。如果一个程序必须
+	在有安全限制的环境中运行，如 Applet，那么这就是个问题了。
+	3. 内部暴露 ：由于反射允许代码执行一些在正常情况下不被允许的操作（比如访问私有的属性和方法），
+	所以使用反射可能会导致意料之外的副作用，这可能导致代码功能失调并破坏可移植性。反射代码破坏了抽象性，因此当平台发生改变的时候，代码的行为就有可能也随着变化。
 
 ## 如何实现C语言的函数指针
 1. 可以先定义一个接口
 2. 然后在接口中声明要调用的方法
-3. 接着用不同类实现这个接口
+3. 接着用不同实体类实现这个接口
 4. 最后把这个实体类的一个对象作为参数传递给调用程序，程序可以用参数对象的方法。
 ```java
 //接口中定义了一个用来比较大小的方法
@@ -208,8 +211,8 @@ public class Test{
 ## 面向对象的主要特征：抽象，继承，封装和多态。
 
 ## 继承
-1. Java不支持多重继承，但是可以通过实现多个接口
-2. 子类只能继承父类的非私有（public和protected）成员变量和方法
+1. Java不支持多重继承，但是可以通过实现多个接口达到效果。
+2. 子类只能继承父类的非私有（public和protected）成员变量和方法。
 3. 子类成员变量或是函数签名（相同的方法名，参数个数和类型）与父类相同时，覆盖父类的成员变量和方法。
 
 ## 多态的实现机制
@@ -254,7 +257,8 @@ class SubClass extends SuperClass {
    }
 }
 ```
-在调用一个方法时，先从本类中查找看是否有对应的方法，如果没有查找到再到父类中查看，看是否有继承来的方法。否则就要对参数进行转型，转成父类之后看是否有对应的方法。总的来说，方法调用的优先级为：
+在调用一个方法时，先从本类中查找看是否有对应的方法，如果没有查找到再到父类中查看，看是否有继承来的方法。
+否则就要对参数进行转型，转成父类之后看是否有对应的方法。总的来说，方法调用的优先级为：
 	- this.func(this)
 	- super.func(this)
 	- this.func(super)
@@ -269,8 +273,6 @@ class SubClass extends SuperClass {
    |
    D
 */
-
-
 class A {
 
    public void show(A obj) {
@@ -332,12 +334,13 @@ public static void main(String[] args) {
 2. 不同：
    1. 接口只有定义
    2. 接口用implements，抽象类用extends
-   3. 接口中定义的成员变量默认为**public static final修饰,而且必须赋值,所以方法只能用public，abstract修饰**
-	 4. 抽象类中可以有自己的成员数据变量，默认为default，可以用private，protected，public，方法不能用private, static,synchronized,native等修饰
+   3. 接口中定义的成员变量默认为 **public static final修饰,而且必须赋值,所以方法只能用public，abstract修饰**
+	 4. 抽象类中可以有自己的成员数据变量，默认为default，可以用private，protected，public，**抽象方法不能用private, static,synchronized,native修饰**
 
 ## 内部类
 1. 静态内部类只能访问外部类中的静态成员和静态方法
-2. 非静态内部类可以自由引用外部类的属性和方法，但是不可以定义静态的属性和方法。**非静态内部类中不能有静态成员**
+2. 非静态内部类(成员内部类)可以无条件访问外部类的所有成员属性和成员方法（包括private成员和静态成员），
+但是不可以定义静态的属性和方法。**非静态内部类中不能有静态成员**
 3. 局部内部类就像局部变量，不能被public protected，private和static修饰，只能访问方法中定义为final类型的局部变量。
 例：
 ```java
@@ -351,6 +354,26 @@ class OuterClass{
    3. 不能定义静态成员，方法和类
    4. 不能是public,protected,private,static
    5. 一个匿名内部类一定是在new后面，这个匿名类必须继承一个父类或实现一个接口。
+```java
+// 匿名内部类例子
+scan_bt.setOnClickListener(new OnClickListener() {
+    @Override
+    public void onClick(View v) {
+        // TODO Auto-generated method stub
+
+    }
+});
+
+history_bt.setOnClickListener(new OnClickListener() {
+
+    @Override
+    public void onClick(View v) {
+        // TODO Auto-generated method stub
+
+    }
+});
+```
+
 
 # 关键字
 ## static关键字有什么用
@@ -543,8 +566,21 @@ class ImmutableClass{
    1. 一般来讲，equals是给用户调用的，hashCode()一般不会，它更多用在hashmap，hashset，hashtable中判断key是不是重复的
    2. 一般在覆盖equals方法的同时就应该覆盖hashCode方法，不然会导致该类在和基于三列的集合类结合一起使用时候会出问题。
 
-## String，StringBuffer，StringBuilder，StringTokenizer
-String是不可变类，StringBuffer是可变类。当一个字符串需要经常被修改的时候，使用StringBuffer比String好很多。  
+```java
+// String.hashCode()
+public int hashCode() {
+		int h = hash;
+		if (h == 0 && value.length > 0) {
+				char val[] = value;
+
+				for (int i = 0; i < value.length; i++) {
+						h = 31 * h + val[i];
+				}
+				hash = h;
+		}
+		return h;
+}
+```
 
 ### Java 8 和 Java 9 的 String
 在 Java 8 中，String 内部使用 char 数组存储数据。
@@ -603,7 +639,8 @@ StringBuffer sb = new StringBuffer(s);
 sb.append("World");
 s=sb.toString();
 ```
-StringBuilder和StringBuffer一样都是字符串缓冲区，**StringBuilder不是线程安全的**，在单线程环境下，Stringbuilder效率会更高一点。**StringBuffer 是线程安全的**，内部使用 synchronized 进行同步
+StringBuilder和StringBuffer一样都是字符串缓冲区，**StringBuilder不是线程安全的**，
+在单线程环境下，Stringbuilder效率会更高一点。**StringBuffer 是线程安全的**，内部使用 synchronized 进行同步
 
 StringTokenizer是用来分割字符串的工具类。
 
@@ -680,8 +717,9 @@ public final void wait() throws InterruptedException
 Integer x = new Integer(1);
 Integer y = new Integer(1);
 System.out.println(x.equals(y)); // true
-System.out.println(x == y);      // false
+System.out.println(x == y);      // false, 这里用了 new Integer，并没有引用常量池
 ```
+
 ```java
 /*
 检查是否为同一个对象的引用，如果是直接返回 true；
@@ -748,12 +786,12 @@ System.out.println(example.toString());	// ToStringExample@4554617c
 ```
 
 ## clone()
-1. Java在处理基本数据类型（int,char,double）时候，采用按值传递，除此之外其他类型都是采用引用传递。
-2. 对象除了在函数调用时候是按引用传递，在使用“=”赋值时候也是引用传递。
-3. 在不影响原对象的情况下创建一个具有相同状态的对象，就需要使用clone()方法。
-   1. 实现clone()的类需要继承Cloneable接口（这是一个标识接口）
-   2. 在类中重写Object类的clone方法(clone方法是Object的一个protected方法)
-   3. 在clone方法中调用super.clone()方法。
+1. Java在处理基本数据类型(int,char,double)时候，采用按值传递，除此之外其他类型都是采用引用传递。
+2. 对象除了在函数调用时候是按引用传递，在使用"="赋值时候也是引用传递。
+3. 在不影响原对象的情况下创建一个具有相同状态的对象，就需要使用 clone() 方法。
+   1. 实现 clone() 的类需要继承 Cloneable 接口（这是一个标识接口）
+   2. 在类中重写 Object 类的 clone() 方法(clone() 方法是 Object 的一个 protected 方法)
+   3. 在 clone() 方法中调用 super.clone() 方法。
    4. 把浅复制的引用指向原型对象新的克隆体。
 ```java
 // 浅复制
@@ -795,7 +833,8 @@ class Obj implements Cloneable{
 }
 ```
 3. clone() 的替代方案
-使用 clone() 方法来拷贝一个对象即复杂又有风险，它会抛出异常，并且还需要类型转换。Effective Java 书上讲到，最好不要去使用 clone()，可以使用拷贝构造函数或者拷贝工厂来拷贝一个对象。
+使用 clone() 方法来拷贝一个对象即复杂又有风险，它会抛出异常，并且还需要类型转换。
+Effective Java 书上讲到，最好不要去使用 clone()，可以使用拷贝构造函数或者拷贝工厂来拷贝一个对象。
 ```java
 public class CloneConstructorExample {
     private int[] arr;
@@ -833,14 +872,16 @@ finally是不是一定执行？
 
 ## 运行时异常和普通异常
 Java提供了两种错误异常类：Error和Exception,父类都是Throwable
-1. Error表示程序在运行期间出了非常严重的错误，这种错误是不克恢复的，属于JVM层次的错误。会导致程序终止执行。也不推荐程序去捕捉Error，因为这是应该被修复的错误。OutOfMemoryError，ThreadDeath都属于错误。
+1. Error表示程序在运行期间出了非常严重的错误，这种错误是不克恢复的，属于JVM层次的错误。会导致程序终止执行。也不推荐程序去捕捉Error，
+因为这是应该被修复的错误。OutOfMemoryError，ThreadDeath都属于错误。
 2. Exception包含checked exception和runtime exception
    1. 检查异常 checked exception
    常见于IO（IOException及其子类）和SQL异常，这种异常都发生在编译阶段，Java编译器强制程序去捕捉此类型异常，一般在如下几种情况中使用：
       1. 异常发生不会导致程序出错，进行处理之后可以继续。比如：连接数据库失败之后，重新尝试连接
 	    2. 程序依赖于不可靠的外部条件，例如系统IO
    2. runtime exception
-   编译器没有强制对其进行捕获并处理。如果不对这类异常进行处理，当出现这种异常时候，JVM会来处理。常见的包括：NullPointerException,ClassCastException,ArrayIndexOutOfBoundsException,ArithmeticException等。
+   编译器没有强制对其进行捕获并处理。如果不对这类异常进行处理，当出现这种异常时候，
+	 JVM会来处理。常见的包括：NullPointerException,ClassCastException,ArrayIndexOutOfBoundsException,ArithmeticException等。
    出现运行时异常时候，系统会把异常一直往上层抛，知道遇到处理代码为止。如果没有处理快，就会由线程或者main抛出，线程或程序也就退出了。
 3. 在处理异常时候，还要注意：
    1. 先捕获子类，再捕获基类的异常处理
@@ -927,7 +968,7 @@ Java中容易引起内存泄漏的几个方面：
 
 
 ## 迭代器 Iterator
-迭代器(Iterator)是一个对象，工作室遍历并选择序列中的对象。使用的注意事项：
+迭代器(Iterator)是一个对象，工作是遍历并选择序列中的对象。使用的注意事项：
 1. 使用容器的iterator()方法返回一个Iterator对象，然后通过Iterator的next()方法返回第一个元素
 2. Iterator的hasNext()方法判断容器是否还有元素，如果有可以通过next()访问
 3. remove()可以删除容器中元素
