@@ -20,6 +20,7 @@
 	- [interrupt()](#interrupt)
 	- [Executor 的中断操作](#executor-的中断操作)
 - [互斥同步](#互斥同步)
+	- [volatile](#volatile)
 	- [synchronized](#synchronized)
 	- [ReentrantLock](#reentrantlock)
 	- [比较](#比较)
@@ -148,7 +149,8 @@ public class Test{
 Callable接口实际是属于Executor框架中的功能类：
    1. Callable可以在任务结束后提供一个返回值，Runnable不行
    2. Callable中的call()可以抛出异常
-   3. 运行Callable可以拿到一个Future对象，表示异步计算的结果，它提供了检查计算是否完成的方法。可以使用Future监视目标线程调用call()方法的情况，当调用Future的get()方法获取结果，当前线程就会阻塞，直到call()方法结束返回结果。
+   3. 运行Callable可以拿到一个Future对象，表示异步计算的结果，它提供了检查计算是否完成的方法。
+	 可以使用Future监视目标线程调用call()方法的情况，当调用Future的get()方法获取结果，当前线程就会阻塞，直到call()方法结束返回结果。
 ```java
 import java.util.concurrent.*;
 public class CallableAndFuture{
@@ -187,7 +189,8 @@ public class CallableAndFuture{
 持的线程，这种线程由内核来完成线程切换，内核通过操纵调度器（Scheduler）对线程进行
 调度，并负责将线程的任务映射到各个处理器上。
 
-程序一般使用内核线程的一种高级接口——轻量级进程（Light Weight Process,LWP），轻量级进程就是线程，由于每个轻量级进程都由一个内核线程支持，因此只有先支持内核线程，才能有轻量级进程。这种轻量
+程序一般使用内核线程的一种高级接口——轻量级进程（Light Weight Process,LWP），轻量级进程就是线程，
+由于每个轻量级进程都由一个内核线程支持，因此只有先支持内核线程，才能有轻量级进程。这种轻量
 级进程与内核线程之间1:1的关系称为一对一的线程模型。
 
 <div align="center"> <img src="../pic/chapter12-3.png" width=""/> </div><br>
@@ -403,7 +406,7 @@ future.cancel(true);
     // ...
 	}
 	```
-	它和同步代码块一样，作用于同一个对象
+	它和同步代码块一样，**作用于同一个对象**。
 
 3. 同步一个类
 	```java
@@ -439,13 +442,12 @@ future.cancel(true);
 	```
 
 4. 同步一个静态方法
-	作用于整个类
+	**作用于整个类**。
 	```java
 	public synchronized static void fun() {
     // ...
 	}
 	```
-
 
 ## ReentrantLock
 ReentrantLock 是 java.util.concurrent（J.U.C）包中的锁。
@@ -694,7 +696,7 @@ Thread-4启动
 Thread-4获得了锁
 ```
 ### 优缺点
-非公平锁性能高于公平锁性能。首先，在恢复一个被挂起的线程与该线程真正运行之间存在着严重的延迟。而且，非公平锁能更充分的利用cpu的时间片，尽量的减少cpu空闲的状态时间。
+非公平锁性能高于公平锁性能。因为在恢复一个被挂起的线程与该线程真正运行之间存在着严重的延迟，非公平锁能更充分的利用cpu的时间片，尽量的减少cpu空闲的状态时间。
 
 ## 使用选择
 

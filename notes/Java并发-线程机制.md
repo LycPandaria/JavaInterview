@@ -1,3 +1,25 @@
+<!-- TOC START min:1 max:3 link:true update:true -->
+- [Executor（线程池种类）](#executor线程池种类)
+  - [线程池(ThreadPoolExecutor)详解](#线程池threadpoolexecutor详解)
+    - [线程池创建](#线程池创建)
+    - [线程池执行流程](#线程池执行流程)
+    - [execute(Runnable command) 源码：](#executerunnable-command-源码)
+    - [addWorker(Runnable firstTask, boolean core) 源码：](#addworkerrunnable-firsttask-boolean-core-源码)
+    - [Worker](#worker)
+    - [runWorker()](#runworker)
+    - [getTask()](#gettask)
+  - [流程图](#流程图)
+    - [FixedThreadPool](#fixedthreadpool)
+    - [SingleThreadExecutor](#singlethreadexecutor)
+    - [CachedThreadPool](#cachedthreadpool)
+- [阻塞队列（runnableTaskQueue）](#阻塞队列runnabletaskqueue)
+- [Daemon](#daemon)
+- [sleep()](#sleep)
+- [yield()](#yield)
+- [参考资料](#参考资料)
+
+<!-- TOC END -->
+
 
 # Executor（线程池种类）
 Executor 管理多个异步任务的执行，而无需程序员显式地管理线程的生命周期。这里的异步是指多个任务的执行互不干扰，不需要进行同步操作。
@@ -45,7 +67,7 @@ public ThreadPoolExecutor(int corePoolSize,
 当一个任务通过execute(Runnable)方法欲添加到线程池时：
 
 	1. 如果此时线程池中的数量小于corePoolSize，即使线程池中的线程都处于空闲状态，也要创建新的线程来处理被添加的任务。
-	2. 如果此时线程池中的数量等于 corePoolSize，但是缓冲队列 workQueue未满，那么任务被放入缓冲队列。
+	2. 如果此时线程池中的数量等于 corePoolSize，但是缓冲队列 workQueue 未满，那么任务被放入缓冲队列。
 	3. 如果此时线程池中的数量大于corePoolSize，缓冲队列workQueue满，并且线程池中的数量小于maximumPoolSize，建新的线程来处理被添加的任务。
 	4. 如果此时线程池中的数量大于corePoolSize，缓冲队列workQueue满，并且线程池中的数量等于maximumPoolSize，那么通过 handler所指定的策略来处理此任务,表示线程池拒绝接收任务。
 
@@ -301,6 +323,7 @@ SingleThreadExecutor的corePoolSize和maxiumPoolSize都被设置1。
 1. 如果当前工作中的线程数量少于corePool的数量，就创建一个新的线程来执行任务。
 2. 当线程池的工作中的线程数量达到了corePool，则将任务加入LinkedBlockingQueue。
 3. 线程执行完1中的任务后会从队列中去任务。
+
 注意：由于在线程池中只有一个工作线程，所以任务可以按照添加顺序执行。
 
 ### CachedThreadPool
