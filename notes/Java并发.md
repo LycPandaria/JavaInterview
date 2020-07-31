@@ -1527,7 +1527,7 @@ public class AtomicInteger extends Number implements java.io.Serializable {
 
 ```java
 public final int incrementAndGet() {
-    return unsafe.getAndAddInt(this, valueOffset, 1) + 1;
+    return unsafe.getAndAddInt(this, valueOffset, 1);
 }
 ```
 
