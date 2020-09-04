@@ -140,6 +140,8 @@ Java堆是被所有线程共享的一块内存区域，在虚拟机启动时创�
 - 新生代（Young Generation）(复制回收)
 - 老年代（Old Generation）(标记 - 清除 或者 标记 - 整理)
 
+<div align="center"> <img src="../pic/xnj14.png" width="600"/> </div><br>
+
 堆不需要连续内存，并且可以动态增加其内存，增加失败会抛出 OutOfMemoryError 异常。
 
 可以通过 **-Xms 和 -Xmx** 这两个虚拟机参数来指定一个程序的堆内存大小，第一个参数设置初始值，第二个参数设置最大值。
@@ -149,11 +151,9 @@ java -Xms1M -Xmx2M HackTheJava
 ```
 
 ### JVM 中存放变量的位置！
-静态变量    位于方法区
-
-实例变量    作为对象的一部分，保存在堆中。
-
-临时变量    保存于栈中，栈随线程的创建而被分配。
+- 静态变量    位于方法区
+- 实例变量    作为对象的一部分，保存在堆中。
+- 临时变量    保存于栈中，栈随线程的创建而被分配。
 
 ## 方法区
 
@@ -322,11 +322,11 @@ obj = null;
 ### 枚举根节点
 
 可达性分析中从 GC Roots 节点找到引用链来说，可作为 GC Roots 的节点主要在全局性的引用（例如常量或类静态属性）
-与执行上下文（例如栈帧中的本地变量表）。
+与执行上下文（例如栈帧中的本地变量表）中。
 
 同时在这个过程中，为了保证在整个分析期间不可以出现分析过程中对象引用关系还在不断变化的情况，所以导致 GC 进行时候必须停顿所以 JAVA 线程（“Stop The World”）,即使在号称（几乎）不会发生停顿的 CMS 收集器中，枚举根节点也是必须要停顿的。
 
-在 HotSpot 实现中，为了缩短这个过程，使用了一组称为 OppMap 的数据结构来达到这个目的，在类加载完成时候，HotSpot 把对象内什么偏移量是什么类型计算出来，GC 在扫描时候就鞥直接获得这个信息。
+在 HotSpot 实现中，为了缩短这个过程，使用了一组称为 OppMap 的数据结构来达到这个目的，在类加载完成时候，HotSpot 把对象内什么偏移量是什么类型计算出来，GC 在扫描时候就能直接获得这个信息。
 
 ### 安全点
 
@@ -346,7 +346,7 @@ obj = null;
 
 安全区域是指在一段代码片段中，引用关系不会发生变化。在这个区域中的任何地方开始 GC 都是安全的。安全区域可以看作是被扩展的 Safepoint。
 
-在线程执行到 Safe Region 中的代码时，首先标识自己已经进入到 Safe Region，那样，挡在这段时间 JVM 要发起 GC 时，就不管标识自己为 Safe Region 状态的线程了。在线程要离开 Safe Region，要检查系统是否完成了 GC Roots 枚举(或者整个 GC 过程)，如果完成了，线程继续执行，否则必须等待直到可以安全离开 Safe Region 的信号为止。
+在线程执行到 Safe Region 中的代码时，首先标识自己已经进入到 Safe Region，那样，当在这段时间 JVM 要发起 GC 时，就不管标识自己为 Safe Region 状态的线程了。在线程要离开 Safe Region，要检查系统是否完成了 GC Roots 枚举(或者整个 GC 过程)，如果完成了，线程继续执行，否则必须等待直到可以安全离开 Safe Region 的信号为止。
 
 
 ## 垃圾收集算法
@@ -586,7 +586,7 @@ G1 把堆划分成多个大小相等的独立区域（Region），新生代和�
 
 ## Class 类文件结构
 
-Java 虚拟机规范规定，Class 文件格式采用一种类似于 C 语言结构体的伪结构来存放数据，这种伪结构只有两种数据类型：无符号和表：
+Java 虚拟机规范规定，Class 文件格式采用一种类似于 C 语言结构体的伪结构来存放数据，这种伪结构只有两种数据类型：无符号数和表：
   - 无符号数属于基本的数据类型，以 u1, u2, u4, u8 来分表代表 1个字节，2个字节，4个字节和8个字节的无符号数，可以用来描述数字，索引引用，数量值或者按照 UTF-8 编码构成的字符串值。
   - 表是由多个无符号数或者其他表作为数据项构成的符合数据类型，所以表都以“\_info”结尾。表用于描述有层次关系的符合结构的数据，整个 Class 文件本质上就是一张表。
 
@@ -618,7 +618,7 @@ public class TestClass{
 可以清楚看到开头 4 个字节是 0xCAFEBABE，次版本 0x0000，主版本 0x0032
 
 ### 常量池
-常量池可以理解为 Class 文件的资源仓库。由于常量池中常量数量不固定，所以在常量池的入口需要放置一项 u2 类型的数据，代表常量池容量技术值(constant_pool_count)。
+常量池可以理解为 Class 文件的资源仓库。由于常量池中常量数量不固定，所以在常量池的入口需要放置一项 u2 类型的数据，代表常量池容量计数值(constant_pool_count)。
 
 常量中主要存放：
   - 字面量（Literal）：文本字符串、声明为 final 的常量池等。
@@ -714,7 +714,6 @@ Class文件中由这三个数据来确定这个类的继承关系。
 - 将该字节流表示的静态存储结构转换为方法区的运行时存储结构。
 - 在内存中生成一个代表该类的 Class 对象，作为方法区中该类各种数据的访问入口。
 
-
 其中二进制字节流可以从以下方式中获取：
 
 - 从 ZIP 包读取，成为 JAR、EAR、WAR 格式的基础。
@@ -722,7 +721,7 @@ Class文件中由这三个数据来确定这个类的继承关系。
 - 运行时计算生成，例如动态代理技术，在 java.lang.reflect.Proxy 使用 ProxyGenerator.generateProxyClass 的代理类的二进制字节流。
 - 由其他文件生成，例如由 JSP 文件生成对应的 Class 类。
 
-加载阶段完成后，虚拟机外部的二进制字节流就按照虚拟机所需的格式存储在方法区之中，方法区的数据存储格式由虚拟机实现自行定义。然后在内存中实例化一个 java.lang.Class 类的对象，对于 HotSpot 虚拟机而言，Class 对象存放在方法去里面。这个对象将作为程序访问方法区中这些类型数据的外部接口。
+加载阶段完成后，虚拟机外部的二进制字节流就按照虚拟机所需的格式存储在方法区之中，方法区的数据存储格式由虚拟机实现自行定义。然后在内存中实例化一个 java.lang.Class 类的对象，对于 HotSpot 虚拟机而言，Class 对象存放在方法区里面。这个对象将作为程序访问方法区中这些类型数据的外部接口。
 
 ### 2. 验证
 
@@ -881,8 +880,6 @@ System.out.println(ConstClass.HELLOWORLD);
 
 - 应用程序类加载器（Application ClassLoader）这个类加载器是由 AppClassLoader（sun.misc.Launcher$AppClassLoader）实现的。由于这个类加载器是 ClassLoader 中的 getSystemClassLoader() 方法的返回值，因此一般称为系统类加载器。它负责加载用户类路径（ClassPath）上所指定的类库，开发者可以直接使用这个类加载器，如果应用程序中没有自定义过自己的类加载器，一般情况下这个就是程序中默认的类加载器。
 
-<div data="modify <--"></div>
-
 ## 双亲委派模型
 
 应用程序是由三种类加载器互相配合从而实现类加载，除此之外还可以加入自己定义的类加载器。
@@ -897,7 +894,7 @@ System.out.println(ConstClass.HELLOWORLD);
 
 ### 2. 好处
 
-使得 Java 类随着它的类加载器一起具有一种带有优先级的层次关系，从而使得基础类得到统一。
+**使得 Java 类随着它的类加载器一起具有一种带有优先级的层次关系，从而使得基础类得到统一。**
 
 例如 java.lang.Object 存放在 rt.jar 中，如果编写另外一个 java.lang.Object 并放到 ClassPath 中，程序可以编译通过。由于双亲委派模型的存在，所以在 rt.jar 中的 Object 比在 ClassPath 中的 Object 优先级更高，这是因为 rt.jar 中的 Object 使用的是启动类加载器，而 ClassPath 中的 Object 使用的是应用程序类加载器。rt.jar 中的 Object 优先级更高，那么程序中所有的 Object 都是这个 Object。
 
@@ -933,7 +930,7 @@ public abstract class ClassLoader {
                 if (c == null) {
                     // If still not found, then invoke findClass in order
                     // to find the class.
-                    c = findClass(name);  // 自己加载
+                    c = findClass(name);  // 通过该 ClassLoader 重写 findClass() 方法实现由该 ClassLoader 自行加载该类
                 }
             }
             if (resolve) {
@@ -1022,9 +1019,9 @@ public class FileSystemClassLoader extends ClassLoader {
 ### 方法返回地址
 分两种：
   - 执行引擎遇到任意一个方法返回的字节码指令，叫做正常完成出口(Normal Method Invocation Completion)
-  - 方法遇到异常而且没有在方法内得到处理，交错异常完成出口(Abrupt Method Invocation Completion)
+  - 方法遇到异常而且没有在方法内得到处理，叫做异常完成出口(Abrupt Method Invocation Completion)
 
-无论何种方式退出，都需要返回方法被调用位置。正常推出时候，调用者的 PC 计数器可以作为返回地址，当方案异常退出时候，返回地址要通过异常处理表来确定。
+无论何种方式退出，都需要返回方法被调用位置。正常退出时候，调用者的 PC 计数器可以作为返回地址，当方案异常退出时候，返回地址要通过异常处理表来确定。
 
 ## 方法调用
 不是指方法执行而是确定被调用方法的版本。
@@ -1113,8 +1110,8 @@ main() 里面的两次sayHello()方法调用，在方法接收者已经确定是
 完全取决于传入参数的数量和数据类型。代码中刻意地定义了两个静态类型相同但实际类型
 不同的变量，但虚拟机（准确地说是编译器）在重载时是通过参数的静态类型而不是实际类
 型作为判定依据的。并且静态类型是编译期可知的，因此，在编译阶段，Javac编译器会根
-据参数的静态类型决定使用哪个重载版本，所以选择了sayHello（Human）作为调用目标，
-并把这个方法的符号引用写到main（）方法里的两条invokevirtual指令的参数中。
+据参数的静态类型决定使用哪个重载版本，所以选择了 sayHello(Human) 作为调用目标，
+并把这个方法的符号引用写到 main() 方法里的两条invokevirtual指令的参数中。
 
 
 #### 动态分配（重写）
@@ -1158,7 +1155,7 @@ woman say Hello
 
 动态分配与重写（Override）有很密切的联系。
 
-将上面的代码的字节码：
+上面的代码的字节码：
 ```text
 0：new#16；//class org/fenixsoft/polymorphic/DynamicDispatch $Man
 3：dup
