@@ -196,12 +196,13 @@ public int singleNonDuplicate(int[] nums) {
     int mid;
     while(left < right){
         mid = left + (right - left) / 2;
-        // 确保 mid 是一个偶数，这样方便比较
-        if(mid % 2 != 0)    mid--;
-        if(nums[mid] == nums[mid+1])  left = mid + 2;
-        else right = mid;
+        if(mid % 2 != 0) mid--; //   确保mid是偶数
+        // 如果 nums[mid] == nums[mid + 1],说明之前的数都是成对出现，
+        // target在[mid + 2, right]中
+        if(nums[mid] == nums[mid + 1]) left = mid + 2;
+        else right = mid;   // 否则 target 在 [left, mid] 中
     }
-    return nums[left];
+    return nums[right]; // 最后都是收敛到 left==right,所以返回 left 或 right 都错
 }
 ```
 
