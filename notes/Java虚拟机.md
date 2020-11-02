@@ -1208,9 +1208,3 @@ woman say Hello
 - [深入探讨 Java 类加载器](https://www.ibm.com/developerworks/cn/java/j-lo-classloader/index.html#code6)
 - [Guide to WeakHashMap in Java](http://www.baeldung.com/java-weakhashmap)
 - [Tomcat example source code file (ConcurrentCache.java)](https://alvinalexander.com/java/jwarehouse/apache-tomcat-6.0.16/java/org/apache/el/util/ConcurrentCache.java.shtml)
-
-
-
-
-</br><div align="center">🎨️欢迎关注Cyc2018的公众号 CyC2018，在公众号后台回复关键字 **资料** 可领取复习大纲</div></br>
-<div align="center"><img width="180px" src="https://cyc-1256109796.cos.ap-guangzhou.myqcloud.com/%E5%85%AC%E4%BC%97%E5%8F%B7.jpg"></img></div>
