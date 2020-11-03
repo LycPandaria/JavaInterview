@@ -224,10 +224,12 @@ public int firstBadVersion(int n) {
     int mid;
     while(left < right){
         mid = left + (right - left) / 2;
-        if(isBadVersion(mid))   right = mid;
-        else left = mid + 1;
+        if(isBadVersion(mid))
+            right = mid;
+        else
+            left = mid + 1;
     }
-    return left;
+    return left; // 返回 left, right 都可以，最后收敛到 left = right 退出循环
 }
 ```
 
@@ -283,7 +285,8 @@ public int[] searchRange(int[] nums, int target) {
     int first = extremeInsertionIndex(nums, target, true);
 
     // 数组中不存在 target
-    if(first == nums.length || nums[first] != target)
+    if(first == nums.length || // nums 中的数都比 target 小
+      nums[first] != target)  // nums 中的数都比target 大
         return new int[]{-1,-1};
 
     // 在寻找最右位置，函数返回的是比 target 的最右插入位置，所以要 -1 为 target 的最右位置
