@@ -58,40 +58,52 @@ public int findKthLargest(int[] nums, int k) {
 
 ```java
 public int findKthLargest(int[] nums, int k) {
-    if(k > nums.length || k <= 0) return Integer.MIN_VALUE;
+    /* 快速选择 */
+    if(k > nums.length || k <= 0)
+        return Integer.MIN_VALUE;
 
-    k = nums.length - k;    // 求最 k 个最大的元素
+    // 排序为升序排序，求第 k 大的元素，就是找 nums[nums.length - k]
+    k = nums.length - k;    
     int high = nums.length - 1;
     int low = 0;
 
     while(low < high){
+        // 得到 nums[low] 在数组中的位置
         int j = partition(nums, low, high);
-        if( j == k) break;
-        else if (j > k) high = j - 1;
-        else low = j + 1;
+        if(j == k) break;
+        // 如果 j > k, 说明 nums[low] < nums[k] < nums[j]
+        if(j > k) high = j - 1;
+        else low = j + 1;   
     }
-
     return nums[k];
 }
 
-private int partition(int[] a, int low, int high){
+public int partition(int[] arr, int low, int high){
+    // j = high + 1 是为了下面的 a[--j] 第一次得到的 a[high] 而不会越界
     int i = low, j = high + 1;
-    int p = a[low];
-
+    int p = arr[low];  // 哨兵
+    // 把哨兵放在 nums[low .. high] 合适的位置上
+    // 即把小于 p 的元素放在左边，大于 p 的元素放在右边，返回 p 的位置
     while(true){
-        while(a[++i] < p && i < high);
-        while(a[--j] > p && j > low );
+        // 从左边寻找第一个比 p 大的数，否则一直 ++i
+        while(arr[++i] < p && i < high);
+        // 从右边寻找第一个比 p 小的数，否则一直 --j
+        while(arr[--j] > p && j > low);
+        // j 左边的元素都比 p 小，j 右边的元素都比 p 大，可以退出
         if(i >= j) break;
-        swap(a, i , j);
+        // 找到一个元素在高位但是比 p 小，将其交换到低位，再进入循环
+        swap(arr, i, j);
     }
-    swap(a, low, j);
+    // p 归位
+    swap(arr, low, j);
     return j;
 }
 
-private void swap(int[] a, int i, int j){
-    int tmp = a[i];
-    a[i] = a[j];
-    a[j] = tmp;
+private void swap(int[] arr, int i, int j){
+    int tmp = arr[i];
+    arr[i] = arr[j];
+    arr[j] = tmp;
+}
 }
 ```
 
@@ -113,7 +125,7 @@ Given [1,1,1,2,2,3] and k = 2, return [1,2].
 
 ```java
 // 桶排序
-public List<Integer> topKFrequent(int[] nums, int k) {
+public int[] topKFrequent(int[] nums, int k) {
     // 首先遍历数组，建立 num--frequency 的 map
     Map<Integer, Integer> freqMap = new HashMap<>();
     for(int num : nums){
@@ -128,17 +140,23 @@ public List<Integer> topKFrequent(int[] nums, int k) {
         buckets[freq].add(key);     // 将频率为 freq 的整数放入桶 buckets[freq] 中
     }
 
+    // itor
     List<Integer> topK = new ArrayList<>();
-    // 从高到底遍历桶 buckets, 相当于已经是按 frequency 排序了
-    for(int i = buckets.length - 1; i >= 0; i--){
-        if(buckets[i] == null) continue;
-        if(buckets[i].size() <= (k - topK.size()))  topK.addAll(buckets[i]);
-        else {
+    for(int i = buckets.length - 1; i >= 0; i --){
+        if(buckets[i] == null)   continue;
+        // 出现频率为 i 的元素个数 <= k - topK.size()
+        // 就把元素全部放入 topK
+        if(buckets[i].size() <= (k - topK.size()))
+            topK.addAll(buckets[i]);
+        else{
+            // topK 中的元素个数不足以容纳出现频率为 i 的元素个数
+            // 例如 出现1次的元素有3个，但是topK中只剩一个位置
             topK.addAll(buckets[i].subList(0, k - topK.size()));
-            break;  // topK 已经找完
-        }
+            break;
+            }
     }
-    return topK;
+    // List<Integer> -> int[]
+    return topK.stream().mapToInt(Integer::valueOf).toArray();
 }
 ```
 
