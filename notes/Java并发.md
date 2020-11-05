@@ -83,7 +83,7 @@
 
 <!-- TOC END -->
 
-
+**转载自[CyC2018](https://github.com/CyC2018/CS-Notes)的学习笔记**
 
 # 一、线程状态转换
 ![线程状态转换](../pic/线程状态转换.jpg)
