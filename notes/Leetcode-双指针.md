@@ -222,21 +222,29 @@ public void merge(int[] nums1, int m, int[] nums2, int n) {
     int j = n - 1;  // num2 last index
     int k = m + n - 1;  // last index of combined array
 
-    while(i >=0 || j >= 0) { // 要考虑边界情况, 考虑当 i 或者 j 为 0
-
-        if(i < 0){
-            nums1[k--] = nums2[j--];
-        }else if(j < 0){
-            nums1[k--] = nums1[i--];
+    // 要考虑边界情况, 考虑当 i 或者 j 为 0
+    while(i >= 0 || j >= 0){
+        if(i < 0){  
+            // i < 0 说明原nums1中的元素已经处理完，把剩余nums2中的元素接到nums1的前端
+            while(j >= 0)
+                nums1[k--] = nums2[j--];
+            break;
         }
-        // 从尾遍历
-        else if(nums1[i] > nums2[j]){
-            nums1[k--] = nums1[i--];
-        }else{
-            nums1[k--] = nums2[j--];
+        else if(j < 0){
+            // 和 i<0 的原来一样
+            while(i >= 0)
+                nums1[k--] = nums1[i--];
+            break;
+        }    
+        else {
+            if(nums1[i] < nums2[j])
+                nums1[k--] = nums2[j--];
+            else
+                nums1[k--] = nums1[i--];
         }
     }
 }
+
 ```
 
 # 6. 判断链表是否存在环
