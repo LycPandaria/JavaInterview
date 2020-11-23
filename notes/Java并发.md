@@ -698,7 +698,7 @@ Thread-4获得了锁
 ### 优缺点
 非公平锁性能高于公平锁性能。因为在恢复一个被挂起的线程与该线程真正运行之间存在着严重的延迟，非公平锁能更充分的利用cpu的时间片，尽量的减少cpu空闲的状态时间。
 
-## 使用选择
+## synchronized 和 ReentrantLock 使用选择
 
 除非需要使用 ReentrantLock 的高级功能，否则优先使用 synchronized。这是因为 synchronized 是 JVM 实现的一种锁机制，JVM 原生地支持它，而 ReentrantLock 不是所有的 JDK 版本都支持。并且使用 synchronized 不用担心没有释放锁而导致死锁问题，因为 JVM 会确保锁的释放。
 

@@ -84,28 +84,26 @@ Explanation: You don't need to remove any of the intervals since they're already
 
 ```java
 public int eraseOverlapIntervals(int[][] intervals) {
-    if(intervals.length == 0) return 0;
-
-    // 将区间按照区间结尾进行排序
-    Arrays.sort(intervals, new Comparator<int[]>() {
+    if(intervals.length < 2) return 0;
+    // 先区间结尾排序
+    Arrays.sort(intervals, new Comparator<int[]>(){
         @Override
         public int compare(int[] o1, int[] o2){
             return o1[1] - o2[1];
         }
     });
 
-    int cnt = 1; // 不重叠区间个数
-    int end = intervals[0][1];  //   第一个区间的结尾
+    int cnt = 1;    // 不重复区间
+    int end = intervals[0][1];  // 第一个区间的结尾
 
-    for(int i = 1; i < intervals.length; i ++){
-        // 取下一个区间的头，和上一个区间的结尾比较，重叠了则说明这个区间要删去
-        if(intervals[i][0] < end) continue;
-
-        // 不重叠则更新end
-        end = intervals[i][1];
+    for(int i = 1; i < intervals.length; i++){
+        // 取下一个区间的开头，如果小于上一个区间的结尾，则说明重叠，这个区间就应该删去
+        if(intervals[i][0] < end)
+            continue;
+        // 到这来说明没有重叠，增加不重复区间 cnt 个数，更新 end 为该区间的结尾
         cnt++;
+        end = intervals[i][1];  //  
     }
-
     return intervals.length - cnt;
 }
 

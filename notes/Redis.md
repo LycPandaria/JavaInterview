@@ -195,11 +195,6 @@ OK
 > hget hash-key sub-key1
 "value1"
 
-> hgetall hash-key
-1) "sub-key1"
-2) "value1"
-```
-
 ## ZSET
 
 <div align="center"> <img src="../pic/1202b2d6-9469-4251-bd47-ca6034fb6116.png" width="400"/> </div><br>

@@ -223,21 +223,29 @@ public void merge(int[] nums1, int m, int[] nums2, int n) {
     int j = n - 1;  // num2 last index
     int k = m + n - 1;  // last index of combined array
 
-    while(i >=0 || j >= 0) { // 要考虑边界情况, 考虑当 i 或者 j 为 0
-
-        if(i < 0){
-            nums1[k--] = nums2[j--];
-        }else if(j < 0){
-            nums1[k--] = nums1[i--];
+    // 要考虑边界情况, 考虑当 i 或者 j 为 0
+    while(i >= 0 || j >= 0){
+        if(i < 0){  
+            // i < 0 说明原nums1中的元素已经处理完，把剩余nums2中的元素接到nums1的前端
+            while(j >= 0)
+                nums1[k--] = nums2[j--];
+            break;
         }
-        // 从尾遍历
-        else if(nums1[i] > nums2[j]){
-            nums1[k--] = nums1[i--];
-        }else{
-            nums1[k--] = nums2[j--];
+        else if(j < 0){
+            // 和 i<0 的原来一样
+            while(i >= 0)
+                nums1[k--] = nums1[i--];
+            break;
+        }    
+        else {
+            if(nums1[i] < nums2[j])
+                nums1[k--] = nums2[j--];
+            else
+                nums1[k--] = nums1[i--];
         }
     }
 }
+
 ```
 
 # 6. 判断链表是否存在环
@@ -290,33 +298,31 @@ public String findLongestWord(String s, List<String> d) {
     if(s.length() == 0 || d.size() == 0) return "";
 
     String longest = "";
-
-    for(String tar : d){
-        if(isSubstr(s, tar)){
-            if(tar.length() > longest.length() ||
-            (tar.length() == longest.length() && tar.compareTo(longest) < 0)){
-                longest = tar;
-            }
+    for(String str : d){
+        if(isSubstr(s, str)){
+            // 返回长度最长且字典顺序最小的字符串
+            if(str.length() > longest.length() ||
+            (str.length() == longest.length() && str.compareTo(longest) < 0))
+                longest  = str;
         }
     }
+
     return longest;
 }
 
-// 判断 tar 字符串是否是 ori 的字串
+// 判断 tar 字符串是否是 ori 的子串
 private boolean isSubstr(String ori, String tar){
-    int ol = ori.length(), tl = tar.length();
-    int i = 0, j = 0;
+    int ol = ori.length() , tl = tar.length();
+    int i = 0, j = 0;   // 双指针
 
-    if(tl > ol) return false;
-
+    // 最坏的情况是遍历到 ori 的末尾
     while(i < ol){
-        // 判断两个字符串的 i 位和 j 位，如果相等，则同时步进
-        // 如果不等，步进 i，相当于删除 ori 中的字符来跟 tar 做比较
-        if(ori.charAt(i) == tar.charAt(j)){
-            j++;
-            if(j == tl) return true;
+        // 步进比较
+        if(tar.charAt(j) == ori.charAt(i)){
+            if(j == tl - 1) return true;    //   j 到达 tar末尾，说明 tar 是 ori 的子串
+            j++;    // 比对成功, tar 步进
         }
-        i++;
+        i++;    // ori 不管有没有比对上都要步进
     }
     return false;
 }
