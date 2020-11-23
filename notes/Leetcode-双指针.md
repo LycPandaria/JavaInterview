@@ -78,6 +78,7 @@ public boolean judgeSquareSum(int c) {
     if(c < 0) return false;
     int i = 0;
     int j = (int)Math.sqrt(c);
+    // 需考虑 a 和 b 相等的情况, 所以 i <= j
     while(i <= j){
         int sum = i * i + j * j;
         if( sum == c){
