@@ -242,16 +242,20 @@ Output: True
 ```java
 public boolean canPlaceFlowers(int[] flowerbed, int n) {
     int length = flowerbed.length;
-    int index = 0;
 
-    for(int i = 0; i < length; i ++){
+    for(int i = 0; i < length; i++){
         if(n == 0) return true;
-        if(flowerbed[i] == 1) continue; // 已经有花
+        // 有花，跳过本次循环
+        if(flowerbed[i] == 1) continue;
 
-        int pre = i == 0 ? 0 : flowerbed[i-1];  // i-1位置是否为0，考虑i==0的情况
-        int next = i == length - 1? 0 : flowerbed[i+1];
+        // 本花前面一个位置的情况，如果 i == 0，则 pre 设置为 0，
+        // 如果 i > 0， pre = flowered[i-1]
+        int pre = i == 0 ? 0 : flowerbed[i-1];  
+        // 本花后一个位置的情况, 如果 i == length - 1，说明这是花坛末尾, next 设置为 0
+        // 否则 next = flowered[i+1]
+        int next = i == length-1 ? 0 : flowerbed[i+1];
 
-        if(pre == 0 && next == 0){  // 满足种植条件
+        if(pre == 0 && next == 0){
             n--;
             flowerbed[i] = 1;
         }
