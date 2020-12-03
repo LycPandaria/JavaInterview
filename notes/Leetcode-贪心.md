@@ -357,27 +357,25 @@ A partition like "ababcbacadefegde", "hijhklij" is incorrect, because it splits 
 通过以上的分析，我们可以得出一个算法：对于遇到的每一个字母，去找这个字母最后一次出现的位置，用来更新当前的最小区间。
 
 ```java
-public List<Integer> partitionLabels(String S) {
+public List<Integer> partitionLabels(String str) {
     // 构建 last 数组，存储每个字符的最后出现位置
-    int last[] = new int[26];
-    for(int i = 0; i < S.length(); i++){
-        last[S.charAt(i) - 'a'] = i;
-    }
+    int[] last = new int[26];
+    for(int i = 0; i < str.length(); i++)
+        last[str.charAt(i) - 'a'] = i;
 
     ArrayList<Integer> res = new ArrayList<>();
     // 从第一个字符起到它的最后出现位置作为初始区间
     // 然后遍历字符串，根据最后出现位置来判断是否需要扩大分区或者新开分区
-    int j = 0, index = 0;
-    for(int i = 0; i < S.length() ; i++){
-        //  根据字符最后出现位置来判断是否需要扩大区间
-        j = Math.max(j, last[S.charAt(i) - 'a']);   
-        if(i == j){
-            // 这里说明已经确定分区，保存结果并新分区
-            res.add(j - index + 1);
-            index = j + 1;
+    int end = 0;  // 当前片段的结束位置
+    int index = 0;  // 当前片段的开始位置
+    for(int i = 0; i < str.length(); i++){
+        end = Math.max(end, last[str.charAt(i) - 'a']);
+        if(i == end){
+            // 当前片段结束
+            res.add(end - index + 1);
+            index = end + 1;
         }
     }
-
     return res;
 }
 ```
